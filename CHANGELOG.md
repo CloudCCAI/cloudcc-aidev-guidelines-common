@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.2.0 - 2026-04-24
+
+- Added `Brownfield Adoption Mode` so legacy projects can adopt the protocol without requiring full historical backfill.
+- Added `PROJECT-BASELINE.md` guidance and a `project-baseline-template.md` scaffold for undocumented existing projects.
+- Updated bootstrapping, validation wording, and README guidance to cover greenfield and brownfield entry paths.
+
 ## 3.1.0 - 2026-04-24
 
 - Added the canonical `skill_version` marker to `SKILL.md` front matter so agents can detect the installed skill version directly.

@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 3.0.0
+version: 3.2.0
 ---
 
 # State Model Reference
@@ -12,10 +12,11 @@ This file defines the detailed state model used by `SKILL.md`.
 1. `current-status.md` is the mandatory entry point for every session.
 2. `task-board.md` is the authoritative execution queue for implementation and handoff work.
 3. Non-trivial feature work should have a primary spec under `docs/specs/`.
-4. Other files are read and updated only when their trigger conditions fire.
-5. A fact must have exactly one source-of-truth file.
-6. Snapshots and history should be separated.
-7. Verified evidence must be distinguishable from inference.
+4. Brownfield projects should establish `PROJECT-BASELINE.md` before broad legacy changes.
+5. Other files are read and updated only when their trigger conditions fire.
+6. A fact must have exactly one source-of-truth file.
+7. Snapshots and history should be separated.
+8. Verified evidence must be distinguishable from inference.
 
 ## Canonical File Semantics
 
@@ -224,6 +225,28 @@ Recommended statuses:
 - `verified`
 - `archived`
 
+### `docs/specs/PROJECT-BASELINE.md`
+
+Use as the brownfield adoption baseline for a legacy project that lacks prior state discipline.
+
+The baseline should record:
+
+- current project purpose and active delivery slice
+- verified architecture facts
+- inferred architecture facts
+- active unknowns and pending verification
+- legacy hotspots and risky modules
+- known run, build, and dependency entry points
+- first adoption tasks
+
+Recommended statuses:
+
+- `draft`
+- `adopting`
+- `active_reference`
+- `verified`
+- `archived`
+
 ## Front Matter Schema
 
 Every state file should start with YAML front matter. Keep it small and stable.
@@ -256,9 +279,10 @@ Use this read order:
 1. Read `current-status.md`.
 2. Inspect its `read_next` or equivalent hints.
 3. Read `task-board.md` for implementation, prioritization, or handoff work.
-4. Open the feature spec referenced by `spec_path` before non-trivial implementation.
-5. Read only the additional files needed for the task.
-6. Avoid loading cold files or unrelated specs unless the task truly needs them.
+4. In brownfield projects, open `PROJECT-BASELINE.md` before major legacy implementation when it exists.
+5. Open the feature spec referenced by `spec_path` before non-trivial implementation.
+6. Read only the additional files needed for the task.
+7. Avoid loading cold files or unrelated specs unless the task truly needs them.
 
 ## Update Strategy
 
@@ -266,9 +290,10 @@ Apply these rules:
 
 1. Update `current-status.md` at the end of every meaningful session.
 2. Update `task-board.md` whenever task state, owner role, dependency, or handoff context changed.
-3. Update at most the triggered warm/cold files and referenced feature specs.
-4. Prefer appending concise structured entries over rewriting unrelated content.
-5. If a task changes no durable state, update only `current-status.md`.
+3. In brownfield projects, update `PROJECT-BASELINE.md` whenever verified legacy understanding materially changed.
+4. Update at most the triggered warm/cold files and referenced delivery docs.
+5. Prefer appending concise structured entries over rewriting unrelated content.
+6. If a task changes no durable state, update only `current-status.md`.
 
 ## Conflict Resolution
 
@@ -282,6 +307,7 @@ If files disagree:
 Priority examples:
 
 - `task-board.md` wins over `current-status.md` for task status, dependencies, and owner role.
+- `PROJECT-BASELINE.md` wins over `current-status.md` for legacy-baseline notes and current architectural unknowns.
 - `docs/specs/FEAT-xxx-*.md` wins over `task-board.md` for feature-specific acceptance criteria and design details.
 - `issue-list.md` wins over task cards for blocker details and root-cause status.
 
@@ -316,6 +342,7 @@ Record:
 - durable decisions
 - task ownership by role
 - task dependencies and handoff notes
+- legacy baseline facts and active unknowns
 - feature acceptance criteria
 - verified commands
 - verified failures
@@ -331,6 +358,7 @@ Avoid:
 - unsupported assumptions presented as facts
 - free-floating todos with no task id, status, or owner role
 - feature specs that drift from the implemented approach
+- brownfield baseline notes that do not distinguish `verified` from `inferred`
 
 ## Maintenance Guidelines
 

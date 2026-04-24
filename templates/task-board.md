@@ -62,4 +62,5 @@ board_status: active
 - `owner_role` 是稳定责任角色，不依赖智能体自我身份。
 - `claimed_by` 是可选运行时标签，环境知道就写，不知道可留空。
 - 非平凡功能任务应填写 `spec_path` 并指向 `docs/specs/` 下真实文件。
+- Brownfield 接入任务可先指向 `docs/specs/PROJECT-BASELINE.md`，后续再拆成具体 feature spec。
 - 任务状态、依赖和交接说明变化时立即更新。

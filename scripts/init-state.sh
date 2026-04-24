@@ -62,9 +62,16 @@ done
 
 SPEC_TEMPLATE_SOURCE="${DOC_TEMPLATES_DIR}/feature-spec-template.md"
 SPEC_TEMPLATE_DESTINATION="${DOCS_SPEC_DIR}/_feature-spec-template.md"
+BASELINE_TEMPLATE_SOURCE="${DOC_TEMPLATES_DIR}/project-baseline-template.md"
+BASELINE_TEMPLATE_DESTINATION="${DOCS_SPEC_DIR}/_project-baseline-template.md"
 
 if [[ ! -f "${SPEC_TEMPLATE_SOURCE}" ]]; then
   echo "Feature spec template not found: ${SPEC_TEMPLATE_SOURCE}" >&2
+  exit 1
+fi
+
+if [[ ! -f "${BASELINE_TEMPLATE_SOURCE}" ]]; then
+  echo "Project baseline template not found: ${BASELINE_TEMPLATE_SOURCE}" >&2
   exit 1
 fi
 
@@ -75,6 +82,13 @@ else
   echo "Created: ${SPEC_TEMPLATE_DESTINATION}"
 fi
 
+if [[ -e "${BASELINE_TEMPLATE_DESTINATION}" ]]; then
+  echo "Skip existing file: ${BASELINE_TEMPLATE_DESTINATION}"
+else
+  render_template "${BASELINE_TEMPLATE_SOURCE}" "${BASELINE_TEMPLATE_DESTINATION}"
+  echo "Created: ${BASELINE_TEMPLATE_DESTINATION}"
+fi
+
 echo
 echo "State directory initialized at: ${STATE_DIR_PATH}"
 echo "Feature specs directory initialized at: ${DOCS_SPEC_DIR}"
@@ -82,5 +96,6 @@ echo "Next steps:"
 echo "1. Fill ${STATE_DIR_NAME}/current-status.md"
 echo "2. Fill ${STATE_DIR_NAME}/goals.md"
 echo "3. Create or update ${STATE_DIR_NAME}/task-board.md"
-echo "4. For non-trivial work, copy docs/specs/_feature-spec-template.md to docs/specs/FEAT-xxx-feature-name.md"
-echo "5. Run validation: python3 \"${ROOT_DIR}/scripts/validate-state.py\" \"${STATE_DIR_PATH}\""
+echo "4. For existing projects, copy docs/specs/_project-baseline-template.md to docs/specs/PROJECT-BASELINE.md"
+echo "5. For non-trivial work, copy docs/specs/_feature-spec-template.md to docs/specs/FEAT-xxx-feature-name.md"
+echo "6. Run validation: python3 \"${ROOT_DIR}/scripts/validate-state.py\" \"${STATE_DIR_PATH}\""

@@ -47,6 +47,13 @@ FEATURE_SPEC_STATUSES = {
     "verified",
     "archived",
 }
+PROJECT_BASELINE_STATUSES = {
+    "draft",
+    "adopting",
+    "active_reference",
+    "verified",
+    "archived",
+}
 TIMESTAMP_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$")
 TASK_HEADER_RE = re.compile(r"^###\s+(TASK-[0-9]+)\s+-\s+(.+?)\s*$")
 TASK_FIELD_RE = re.compile(r"^- ([a-z_]+):\s*(.+?)\s*$")
@@ -168,7 +175,7 @@ def parse_task_cards(body: str) -> list[dict[str, object]]:
     return tasks
 
 
-def validate_feature_spec(path: Path) -> list[str]:
+def validate_delivery_doc(path: Path) -> list[str]:
     errors: list[str] = []
     front_matter, _body, fm_errors = read_front_matter(path)
     errors.extend(fm_errors)
@@ -176,22 +183,32 @@ def validate_feature_spec(path: Path) -> list[str]:
     if not front_matter:
         return errors
 
-    required_fields = {"kind", "feature_id", "title", "status", "updated_at", "updated_by"}
+    kind = front_matter.get("kind", "")
+    required_fields = {"kind", "title", "status", "updated_at", "updated_by"}
+    if kind == "feature-spec":
+        required_fields.add("feature_id")
     missing = required_fields - front_matter.keys()
     for field in sorted(missing):
         errors.append(f"{path}: missing front matter field `{field}`")
 
-    if front_matter.get("kind") != "feature-spec":
-        errors.append(f"{path}: expected kind `feature-spec`, got `{front_matter.get('kind', '')}`")
+    if kind not in {"feature-spec", "project-baseline"}:
+        errors.append(f"{path}: expected kind `feature-spec` or `project-baseline`, got `{kind}`")
 
     status = front_matter.get("status", "")
-    if status and status not in FEATURE_SPEC_STATUSES:
+    if kind == "feature-spec" and status and status not in FEATURE_SPEC_STATUSES:
         errors.append(f"{path}: invalid feature spec status `{status}`")
+    if kind == "project-baseline" and status and status not in PROJECT_BASELINE_STATUSES:
+        errors.append(f"{path}: invalid project baseline status `{status}`")
 
-    for field in ("feature_id", "title", "updated_by"):
+    for field in ("title", "updated_by"):
         value = front_matter.get(field, "")
         if value and is_placeholder_value(value):
             errors.append(f"{path}: unresolved placeholder in `{field}`")
+
+    if kind == "feature-spec":
+        feature_id = front_matter.get("feature_id", "")
+        if feature_id and is_placeholder_value(feature_id):
+            errors.append(f"{path}: unresolved placeholder in `feature_id`")
 
     validate_timestamp(path, front_matter, errors)
     return errors
@@ -240,7 +257,7 @@ def validate_task_board(path: Path, body: str, project_root: Path) -> list[str]:
             if not resolved_spec_path.exists():
                 errors.append(f"{path.name}: task `{task_id}` references missing spec `{spec_path}`")
             else:
-                errors.extend(validate_feature_spec(resolved_spec_path))
+                errors.extend(validate_delivery_doc(resolved_spec_path))
 
     return errors
 
