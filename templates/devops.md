@@ -1,9 +1,9 @@
 ---
 kind: devops
-version: 2
+version: 3
 updated_at: YYYY-MM-DDTHH:MM:SSZ
 updated_by: ai
-verification_status: partial
+verification_status: pending
 ---
 
 # 项目部署运维手册
@@ -12,81 +12,33 @@ verification_status: partial
 
 ## 构建
 
-### 命令
-
-```bash
-# 安装依赖
-[install command]
-
-# 构建项目
-[build command]
-```
-
-### 产物
-
-- 输出目录：`[dist/build/target]`
-- 主产物：`[artifact]`
-
-### 环境要求
-
-| 依赖 | 版本 | 说明 |
-|------|------|------|
-| [依赖] | [版本] | [说明] |
+- 暂无已验证的构建命令。
+- 一旦确认真实命令，请记录安装、构建、打包和产物位置。
 
 ## 启动
 
-### 环境变量
-
-| 变量名 | 说明 | 默认值 | 必填 |
-|--------|------|--------|------|
-| `PORT` | 服务端口 | 3000 | 是 |
-| `DB_HOST` | 数据库地址 | localhost | 是 |
-
-### 配置文件
-
-- 主配置：`[path/to/config]`
-- 日志配置：`[path/to/log-config]`
-
-### 启动命令
-
-```bash
-# 开发环境
-[dev command]
-
-# 生产环境
-[prod command]
-```
+- 暂无已验证的启动命令、环境变量或配置文件路径。
+- 补充时优先记录开发启动、生产启动和必要环境变量。
 
 ## 依赖服务
 
-- 数据库：[类型 + 地址]
-- 缓存：[类型 + 地址]
-- 消息队列：[类型 + 地址]
-- 其他：[服务说明]
+- 暂无已记录依赖服务。
 
 ## 部署与发布
 
-1. [部署步骤 1]
-2. [部署步骤 2]
-3. [回滚方式]
+- 暂无已验证的部署步骤。
+- 如果流程未验证，明确标注 `pending verification`。
 
 ## 排障
 
-### [问题标题]
-
-- 现象：[现象]
-- 原因：[仅写已验证或明确标注为推断]
-- 处理：
-
-```bash
-[处理命令]
-```
+- 暂无已验证排障条目。
+- 补充时区分已验证处理和待确认假设。
 
 ## 健康检查
 
-- 健康检查地址：`[url]`
-- 预期响应：[response]
-- 日志位置：`[log path]`
+- 健康检查地址：`pending verification`
+- 预期响应：`pending verification`
+- 日志位置：`pending verification`
 
 ## 维护规则
 

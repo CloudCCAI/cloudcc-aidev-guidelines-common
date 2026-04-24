@@ -1,6 +1,6 @@
 ---
 kind: issue-list
-version: 2
+version: 3
 updated_at: 2026-04-01T09:25:00Z
 updated_by: ai
 ---
@@ -16,6 +16,7 @@ updated_by: ai
 - owner: `ai`
 - created_at: `2026-03-31`
 - related_files: [`src/api/login.test.ts`, `src/lib/rate-limit.ts`]
+- related_tasks: [`TASK-001`]
 
 #### Summary
 

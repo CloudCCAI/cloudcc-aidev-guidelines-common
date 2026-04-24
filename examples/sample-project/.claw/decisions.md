@@ -1,6 +1,6 @@
 ---
 kind: decisions
-version: 2
+version: 3
 updated_at: 2026-03-28T16:00:00Z
 updated_by: ai
 ---

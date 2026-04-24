@@ -1,19 +1,23 @@
 # 示例项目状态
 
-`examples/sample-project/.claw/` 提供了一套完整的示例状态文件，用来展示：
+`examples/sample-project/` 展示了一个完整的多智能体交付样例，包括：
 
-- `current-status.md` 如何作为热状态入口
-- `goals.md` 如何定义范围与成功标准
-- `decisions.md` 如何记录 ADR
-- `issue-list.md` 如何记录问题与风险
-- `test-report.md` 如何记录真实测试结果
-- `devops.md` 如何记录可执行运维知识
+- `.claw/current-status.md` 作为热状态入口
+- `.claw/task-board.md` 作为执行任务和交接队列
+- `.claw/goals.md` 定义范围与成功标准
+- `.claw/decisions.md` 记录 ADR
+- `.claw/issue-list.md` 记录问题与风险
+- `.claw/test-report.md` 记录真实测试结果
+- `.claw/devops.md` 记录可执行运维知识
+- `docs/specs/FEAT-001-login-reliability.md` 记录功能设计与落地过程
 
 建议阅读顺序：
 
 1. `examples/sample-project/.claw/current-status.md`
-2. `examples/sample-project/.claw/goals.md`
-3. `examples/sample-project/.claw/issue-list.md`
-4. `examples/sample-project/.claw/test-report.md`
-5. `examples/sample-project/.claw/decisions.md`
-6. `examples/sample-project/.claw/devops.md`
+2. `examples/sample-project/.claw/task-board.md`
+3. `examples/sample-project/docs/specs/FEAT-001-login-reliability.md`
+4. `examples/sample-project/.claw/goals.md`
+5. `examples/sample-project/.claw/issue-list.md`
+6. `examples/sample-project/.claw/test-report.md`
+7. `examples/sample-project/.claw/decisions.md`
+8. `examples/sample-project/.claw/devops.md`

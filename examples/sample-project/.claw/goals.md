@@ -1,6 +1,6 @@
 ---
 kind: goals
-version: 2
+version: 3
 updated_at: 2026-03-30T12:00:00Z
 updated_by: user
 lifecycle: active

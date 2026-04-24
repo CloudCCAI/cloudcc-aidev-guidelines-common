@@ -1,6 +1,6 @@
 ---
 kind: test-report
-version: 2
+version: 3
 updated_at: 2026-04-01T09:20:00Z
 updated_by: ai
 last_run_at: 2026-04-01T09:18:00Z

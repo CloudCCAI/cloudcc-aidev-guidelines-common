@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 2.0.0
+version: 3.0.0
 ---
 
 # State Model Reference
@@ -10,10 +10,12 @@ This file defines the detailed state model used by `SKILL.md`.
 ## Core Principles
 
 1. `current-status.md` is the mandatory entry point for every session.
-2. Other files are read and updated only when their trigger conditions fire.
-3. A fact must have exactly one source-of-truth file.
-4. Snapshots and history should be separated.
-5. Verified evidence must be distinguishable from inference.
+2. `task-board.md` is the authoritative execution queue for implementation and handoff work.
+3. Non-trivial feature work should have a primary spec under `docs/specs/`.
+4. Other files are read and updated only when their trigger conditions fire.
+5. A fact must have exactly one source-of-truth file.
+6. Snapshots and history should be separated.
+7. Verified evidence must be distinguishable from inference.
 
 ## Canonical File Semantics
 
@@ -49,6 +51,53 @@ Must contain:
 - hard constraints
 
 Update only when product intent changes.
+
+### `task-board.md`
+
+Use as the queue for executable work items and handoff state.
+
+Each task should record:
+
+- task id
+- status
+- priority
+- owner role
+- optional claimed-by runtime label
+- dependencies or blockers
+- related issues
+- scope files
+- spec path when required
+- done-when checklist
+- next action
+- handoff note
+
+Recommended statuses:
+
+- `todo`
+- `ready`
+- `in_progress`
+- `blocked`
+- `review`
+- `done`
+- `canceled`
+
+Recommended priority values:
+
+- `critical`
+- `high`
+- `medium`
+- `low`
+
+Recommended `owner_role` values:
+
+- `backend-agent`
+- `frontend-agent`
+- `fullstack-agent`
+- `qa-agent`
+- `release-agent`
+- `human`
+- `shared`
+- `unassigned`
 
 ### `decisions.md`
 
@@ -145,6 +194,36 @@ Store:
 
 Do not store speculative commands as final guidance.
 
+### `docs/specs/FEAT-xxx-*.md`
+
+Use as the primary delivery document for one feature or non-trivial change.
+
+Each feature spec should record:
+
+- feature id
+- title
+- status
+- background and goals
+- scope and out-of-scope
+- current constraints
+- design approach
+- interfaces or data-shape changes
+- task breakdown
+- acceptance criteria
+- risks and rollback notes
+- implementation progress
+- handoff notes
+
+Recommended statuses:
+
+- `draft`
+- `in_design`
+- `approved`
+- `in_implementation`
+- `implemented`
+- `verified`
+- `archived`
+
 ## Front Matter Schema
 
 Every state file should start with YAML front matter. Keep it small and stable.
@@ -154,7 +233,7 @@ Recommended minimum fields:
 ```yaml
 ---
 kind: current-status
-version: 2
+version: 3
 updated_at: 2026-04-01T10:30:00Z
 updated_by: ai
 ---
@@ -166,6 +245,7 @@ Recommended `kind` values:
 - `goals`
 - `decisions`
 - `issue-list`
+- `task-board`
 - `test-report`
 - `devops`
 
@@ -175,17 +255,20 @@ Use this read order:
 
 1. Read `current-status.md`.
 2. Inspect its `read_next` or equivalent hints.
-3. Read only the additional files needed for the task.
-4. Avoid loading cold files unless the task truly needs them.
+3. Read `task-board.md` for implementation, prioritization, or handoff work.
+4. Open the feature spec referenced by `spec_path` before non-trivial implementation.
+5. Read only the additional files needed for the task.
+6. Avoid loading cold files or unrelated specs unless the task truly needs them.
 
 ## Update Strategy
 
 Apply these rules:
 
 1. Update `current-status.md` at the end of every meaningful session.
-2. Update at most the triggered warm/cold files.
-3. Prefer appending concise structured entries over rewriting unrelated content.
-4. If a task changes no durable state, update only `current-status.md`.
+2. Update `task-board.md` whenever task state, owner role, dependency, or handoff context changed.
+3. Update at most the triggered warm/cold files and referenced feature specs.
+4. Prefer appending concise structured entries over rewriting unrelated content.
+5. If a task changes no durable state, update only `current-status.md`.
 
 ## Conflict Resolution
 
@@ -196,6 +279,12 @@ If files disagree:
 3. Repair summaries and references in non-authoritative files.
 4. If the conflict involves user intent, preserve the user-authored version and mark the discrepancy for confirmation.
 
+Priority examples:
+
+- `task-board.md` wins over `current-status.md` for task status, dependencies, and owner role.
+- `docs/specs/FEAT-xxx-*.md` wins over `task-board.md` for feature-specific acceptance criteria and design details.
+- `issue-list.md` wins over task cards for blocker details and root-cause status.
+
 ## Suggested `current-status.md` Read Index
 
 Use a small hint block such as:
@@ -205,6 +294,7 @@ read_next:
   goals: false
   decisions: false
   issue_list: true
+  task_board: true
   test_report: false
   devops: false
 ```
@@ -224,6 +314,9 @@ Either format is acceptable as long as it is explicit.
 Record:
 
 - durable decisions
+- task ownership by role
+- task dependencies and handoff notes
+- feature acceptance criteria
 - verified commands
 - verified failures
 - active blockers
@@ -236,6 +329,8 @@ Avoid:
 - duplicate summaries of the same fact
 - noisy line-by-line diaries
 - unsupported assumptions presented as facts
+- free-floating todos with no task id, status, or owner role
+- feature specs that drift from the implemented approach
 
 ## Maintenance Guidelines
 

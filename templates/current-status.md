@@ -1,15 +1,16 @@
 ---
 kind: current-status
-version: 2
+version: 3
 updated_at: YYYY-MM-DDTHH:MM:SSZ
 updated_by: ai
-phase: discovery
-active_task: "[当前正在推进的单句任务]"
-next_action: "[下一步动作]"
+phase: bootstrap
+active_task: "Capture project goals and create the first task card"
+next_action: "Fill goals.md, update task-board.md, and create the first feature spec when required"
 read_next:
-  goals: false
+  goals: true
   decisions: false
   issue_list: false
+  task_board: true
   test_report: false
   devops: false
 ---
@@ -20,47 +21,59 @@ read_next:
 
 ## 快照
 
-- 会话目标：
-- 当前关注点：
+- 会话目标：建立可持续推进和可交接的项目状态
+- 当前关注点：补齐 goals、task board 和首个 feature spec
+- 活跃任务：见 `TASK-001`；如果还没有任务卡，先在 `task-board.md` 中创建
 - 阻塞状态：无 / 见 `ISSUE-xxx`
 
 ## 本次会话进展
 
 ### 已完成
-- [已完成事项]
+- 初始化状态目录和交付文档目录
 
 ### 进行中
-- [进行中事项]
+- 梳理项目目标、任务拆分和首个功能设计
 
 ### 下一步
-- [下一步 1]
-- [下一步 2]
+- 补齐 `goals.md`
+- 创建或更新 `task-board.md` 中的活跃任务
+- 当任务为非平凡功能时，创建 `docs/specs/FEAT-xxx-*.md`
 
 ## 修改文件
 
-- `path/to/file` - [修改原因]
+- `.claw/current-status.md` - 会话快照与下一步
+- `.claw/task-board.md` - 任务拆分与交接
+- `docs/specs/FEAT-xxx-*.md` - 功能级设计与落地记录
 
 ## 已验证事实
 
-- Build: [passed/failed/not-run]
-- Tests: [passed/failed/partial/not-run]
-- Lint: [passed/failed/not-run]
-- 依赖变更: 无 / `[package]`
+- Build: `not_run`
+- Tests: `not_run`
+- Lint: `not_run`
+- 依赖变更: `none`
 
 ## 待确认
 
-- [需要用户或后续会话确认的事项]
+- 项目目标、范围和优先级是否已经固化
+- 当前要推进的第一个非平凡功能是否需要单独 spec
 
 ## 相关状态文件
 
-- `goals.md` - [仅在目标或范围变化时填写]
-- `decisions.md` - [仅在技术选型影响当前任务时填写]
-- `issue-list.md` - [仅在存在活跃问题时填写]
-- `test-report.md` - [仅在本次实际运行测试后填写]
-- `devops.md` - [仅在涉及构建/部署/环境时填写]
+- `goals.md` - 项目目标、范围和成功标准
+- `task-board.md` - 任务、依赖、责任角色和交接说明
+- `decisions.md` - 技术选型影响当前任务时再细读
+- `issue-list.md` - 存在活跃问题时再细读
+- `test-report.md` - 本次实际运行测试后再更新
+- `devops.md` - 涉及构建、部署或环境时再更新
+
+## 相关设计文档
+
+- `docs/specs/FEAT-xxx-*.md` - 当前任务涉及非平凡功能时填写真实路径
 
 ## 维护规则
 
 - 保持简短，只记录当前快照。
+- 当前会话的活跃任务 ID 应与 `task-board.md` 保持一致。
 - 不复制完整 issue、ADR 或测试详情。
+- 不在这里写长篇功能设计，功能设计写到 `docs/specs/`。
 - 如需历史归档，放到独立历史文件，不放在这里。
