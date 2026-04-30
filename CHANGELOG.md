@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.4.0 - 2026-04-30
+
+- Added `scripts/ensure-agent-guidance.sh` to create or refresh the managed `README.md` and `AGENTS.md` declaration block.
+- Updated `scripts/init-state.sh` to write the project-level skill declaration automatically during bootstrap.
+- Extended `scripts/validate-state.py` to require `README.md` and `AGENTS.md` guidance blocks, including the GitHub install source.
+- Updated the skill protocol, state model, and README to require the declaration for both greenfield and brownfield adoption.
+
+## 3.3.0 - 2026-04-24
+
+- Added `task-archive.md` as the history file for completed or canceled tasks beyond the active board retention window.
+- Defined the `Completed Tasks <= 20` retention rule for `task-board.md`.
+- Updated README, state model, and task-board guidance to document the archive workflow.
+
 ## 3.2.0 - 2026-04-24
 
 - Added `Brownfield Adoption Mode` so legacy projects can adopt the protocol without requiring full historical backfill.

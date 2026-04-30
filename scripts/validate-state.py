@@ -13,9 +13,14 @@ EXPECTED_KINDS = {
     "decisions.md": "decisions",
     "issue-list.md": "issue-list",
     "task-board.md": "task-board",
+    "task-archive.md": "task-archive",
     "test-report.md": "test-report",
     "devops.md": "devops",
 }
+SKILL_REPO_URL = "https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common"
+GUIDANCE_MARKER_BEGIN = "<!-- cc-aidev-guidelines-common:begin -->"
+GUIDANCE_MARKER_END = "<!-- cc-aidev-guidelines-common:end -->"
+GUIDANCE_REQUIRED_FILES = ("README.md", "AGENTS.md")
 
 REQUIRED_FRONTMATTER_FIELDS = {"kind", "version", "updated_at", "updated_by"}
 CURRENT_STATUS_REQUIRED_FIELDS = {"phase", "active_task", "next_action"}
@@ -54,9 +59,11 @@ PROJECT_BASELINE_STATUSES = {
     "verified",
     "archived",
 }
+TASK_BOARD_COMPLETED_LIMIT = 20
 TIMESTAMP_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$")
 TASK_HEADER_RE = re.compile(r"^###\s+(TASK-[0-9]+)\s+-\s+(.+?)\s*$")
 TASK_FIELD_RE = re.compile(r"^- ([a-z_]+):\s*(.+?)\s*$")
+SECTION_HEADER_RE = re.compile(r"^##\s+(.+?)\s*$")
 TEST_REPORT_STATUS_RE = re.compile(r"- 状态：`([^`]+)`")
 
 
@@ -146,9 +153,14 @@ def validate_current_status(path: Path, front_matter: dict[str, str], errors: li
 def parse_task_cards(body: str) -> list[dict[str, object]]:
     tasks: list[dict[str, object]] = []
     current: dict[str, object] | None = None
+    current_section = ""
 
     for raw_line in body.splitlines():
         line = raw_line.rstrip()
+        section_match = SECTION_HEADER_RE.match(line)
+        if section_match:
+            current_section = section_match.group(1).strip()
+
         header_match = TASK_HEADER_RE.match(line)
         if header_match:
             if current is not None:
@@ -156,6 +168,7 @@ def parse_task_cards(body: str) -> list[dict[str, object]]:
             current = {
                 "id": header_match.group(1),
                 "title": header_match.group(2).strip(),
+                "section": current_section,
                 "fields": {},
             }
             continue
@@ -218,10 +231,12 @@ def validate_task_board(path: Path, body: str, project_root: Path) -> list[str]:
     errors: list[str] = []
     seen_ids: set[str] = set()
     tasks = parse_task_cards(body)
+    completed_task_count = 0
 
     for task in tasks:
         task_id = str(task["id"])
         title = str(task["title"]).strip()
+        section = str(task.get("section", "")).strip()
         fields = task["fields"]
         assert isinstance(fields, dict)
 
@@ -237,6 +252,16 @@ def validate_task_board(path: Path, body: str, project_root: Path) -> list[str]:
             errors.append(f"{path.name}: task `{task_id}` is missing `status`")
         elif status not in TASK_STATUSES:
             errors.append(f"{path.name}: task `{task_id}` has invalid status `{status}`")
+
+        if section == "Completed Tasks":
+            completed_task_count += 1
+            if status not in {"done", "canceled"}:
+                errors.append(
+                    f"{path.name}: task `{task_id}` is in `Completed Tasks` but has status `{status}`"
+                )
+
+        if section == "Active Tasks" and status in {"done", "canceled"}:
+            errors.append(f"{path.name}: task `{task_id}` is in `Active Tasks` but has terminal status `{status}`")
 
         owner_role = clean_value(str(fields.get("owner_role", "")))
         if owner_role and owner_role not in OWNER_ROLES:
@@ -258,6 +283,36 @@ def validate_task_board(path: Path, body: str, project_root: Path) -> list[str]:
                 errors.append(f"{path.name}: task `{task_id}` references missing spec `{spec_path}`")
             else:
                 errors.extend(validate_delivery_doc(resolved_spec_path))
+
+    if completed_task_count > TASK_BOARD_COMPLETED_LIMIT:
+        errors.append(
+            f"{path.name}: `Completed Tasks` has {completed_task_count} task cards; archive the oldest items to `task-archive.md` so at most {TASK_BOARD_COMPLETED_LIMIT} remain"
+        )
+
+    return errors
+
+
+def validate_task_archive(path: Path, body: str) -> list[str]:
+    errors: list[str] = []
+    seen_ids: set[str] = set()
+    tasks = parse_task_cards(body)
+
+    for task in tasks:
+        task_id = str(task["id"])
+        section = str(task.get("section", "")).strip()
+        fields = task["fields"]
+        assert isinstance(fields, dict)
+
+        if task_id in seen_ids:
+            errors.append(f"{path.name}: duplicate task id `{task_id}`")
+        seen_ids.add(task_id)
+
+        status = clean_value(str(fields.get("status", "")))
+        if status not in {"done", "canceled"}:
+            errors.append(f"{path.name}: archived task `{task_id}` must have status `done` or `canceled`")
+
+        if section and section != "Archived Tasks":
+            errors.append(f"{path.name}: archived task `{task_id}` must be placed under `Archived Tasks`")
 
     return errors
 
@@ -290,8 +345,32 @@ def validate_file(path: Path, project_root: Path) -> list[str]:
         validate_current_status(path, front_matter, errors)
     elif path.name == "task-board.md":
         errors.extend(validate_task_board(path, body, project_root))
+    elif path.name == "task-archive.md":
+        errors.extend(validate_task_archive(path, body))
     elif path.name == "test-report.md":
         validate_test_report(path, front_matter, body, errors)
+
+    return errors
+
+
+def validate_project_guidance(project_root: Path) -> list[str]:
+    errors: list[str] = []
+
+    for filename in GUIDANCE_REQUIRED_FILES:
+        path = project_root / filename
+        if not path.exists():
+            errors.append(
+                f"missing required project guidance file: {path}. Run scripts/ensure-agent-guidance.sh to create or update it"
+            )
+            continue
+
+        text = path.read_text(encoding="utf-8")
+        if GUIDANCE_MARKER_BEGIN not in text or GUIDANCE_MARKER_END not in text:
+            errors.append(f"{filename}: missing managed `cc-aidev-guidelines-common` guidance block")
+        if "cc-aidev-guidelines-common" not in text:
+            errors.append(f"{filename}: missing skill name `cc-aidev-guidelines-common`")
+        if SKILL_REPO_URL not in text:
+            errors.append(f"{filename}: missing GitHub install source `{SKILL_REPO_URL}`")
 
     return errors
 
@@ -312,6 +391,8 @@ def main() -> int:
             errors.append(f"missing required file: {path}")
             continue
         errors.extend(validate_file(path, project_root))
+
+    errors.extend(validate_project_guidance(project_root))
 
     if errors:
         print("State validation failed:")

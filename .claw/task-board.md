@@ -1,8 +1,8 @@
 ---
 kind: task-board
 version: 3
-updated_at: YYYY-MM-DDTHH:MM:SSZ
-updated_by: ai
+updated_at: 2026-04-30T01:31:01Z
+updated_by: codex
 board_status: active
 ---
 
@@ -26,31 +26,32 @@ board_status: active
 
 ## Active Tasks
 
-### TASK-001 - Establish the first delivery slice
+### TASK-001 - Add project-root skill declaration automation
 
-- status: `ready`
+- status: `review`
 - priority: `high`
-- owner_role: `shared`
-- claimed_by: ``
-- spec_path: ``
+- owner_role: `fullstack-agent`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-001-project-skill-declaration.md`
 - depends_on: `none`
 - blocked_by: `none`
 - related_issues: `none`
-- scope_files: `.claw/current-status.md, .claw/goals.md, .claw/task-board.md`
+- scope_files: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, scripts/init-state.sh, scripts/ensure-agent-guidance.sh, scripts/validate-state.py, AGENTS.md, examples/README.md, examples/sample-project/README.md, examples/sample-project/AGENTS.md, .claw/current-status.md, .claw/goals.md, .claw/task-board.md, .claw/test-report.md, docs/specs/PROJECT-BASELINE.md, docs/specs/FEAT-001-project-skill-declaration.md`
 
 #### Done When
 
-- 项目目标已经补齐
-- 第一个活跃任务已经拆出
-- 非平凡功能已建立 feature spec
+- 技能协议明确要求项目根目录 README/AGENTS 声明块
+- 初始化脚本会自动刷新声明块
+- 校验器会检查声明块、技能名和 GitHub 安装来源
+- 仓库自身和示例项目都体现新的声明要求
 
 #### Next Action
 
-- 根据当前优先级创建真正的 `TASK-001`
+- 复查差异并确认是否还需要补充更多老项目接入说明
 
 #### Handoff Note
 
-- 如果这是首轮初始化，下一位接手者应先补齐 `goals.md`，再决定是否新建 feature spec
+- 下一位接手者先看 `docs/specs/FEAT-001-project-skill-declaration.md`，再根据真实外部项目反馈决定是否调整声明块策略
 
 ## Completed Tasks
 

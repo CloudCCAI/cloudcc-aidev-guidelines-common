@@ -20,7 +20,7 @@ It now covers three layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`3.2.0`
+当前 skill 版本：`3.4.0`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -30,7 +30,8 @@ It now covers three layers:
 |------|------|
 | `SKILL.md` | 主 skill 协议 / main skill protocol |
 | `STATE-MODEL.md` | 详细状态模型 / detailed state model |
-| `templates/` | 7 个状态文件模板 / seven state file templates |
+| `templates/` | 8 个状态文件模板 / eight state file templates |
+| `scripts/ensure-agent-guidance.sh` | 项目级 README/AGENTS 声明写入器 / managed README/AGENTS declaration writer |
 | `templates/docs/feature-spec-template.md` | 功能设计模板 / feature spec template |
 | `templates/docs/project-baseline-template.md` | 老项目基线模板 / legacy baseline template |
 | `scripts/` | 初始化与校验脚本 / init and validation scripts |
@@ -42,10 +43,26 @@ It now covers three layers:
 - 默认最小读取，而不是默认全量读取
 - 触发式更新，而不是机械回写全部文件
 - 热状态、任务队列、长文档设计分层
+- 活跃任务与历史任务分层保存
+- 项目根目录必须有 README/AGENTS 双锚点声明技能要求
 - 摘要、任务、问题、设计各自有唯一事实源
 - 已验证事实与推断结论分离
 - 非平凡功能先写 spec，再进入主开发
 - 老项目先建 baseline，再渐进纳入完整协议
+
+## 项目级技能声明 | Project-Level Skill Declaration
+
+凡是采用此技能的项目，都必须在项目根目录的 `README.md` 和 `AGENTS.md` 中保留一个受控声明块，明确说明：
+
+- 当前项目遵循 `cc-aidev-guidelines-common`
+- 所有 AI 智能体必须自动使用此技能
+- 如果当前环境尚未安装此技能，必须先从 GitHub 安装：`https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common`
+
+推荐使用：
+
+```bash
+bash /path/to/this-skill/scripts/ensure-agent-guidance.sh /path/to/your-project
+```
 
 ## 快速开始
 
@@ -59,10 +76,13 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 
 它会创建：
 
+- 项目根目录中的 `README.md` 技能声明块
+- 项目根目录中的 `AGENTS.md` 技能声明块
 - `.claw/` 状态目录
 - `docs/specs/` 文档目录
 - `docs/specs/_feature-spec-template.md` 模板文件
 - `docs/specs/_project-baseline-template.md` 老项目基线模板
+- `.claw/task-archive.md` 任务归档文件
 
 ### 2. 先判断项目类型
 
@@ -80,6 +100,8 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 
 初始化后优先确认这些文件：
 
+- `README.md`
+- `AGENTS.md`
 - `.claw/current-status.md`
 - `.claw/goals.md`
 - `.claw/task-board.md`
@@ -97,12 +119,13 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 推荐按这个顺序：
 
 1. 运行初始化脚本
-2. 填写 `.claw/current-status.md`
-3. 填写 `.claw/goals.md`
-4. 在 `.claw/task-board.md` 中创建首批任务
-5. 对非平凡功能创建 `docs/specs/FEAT-xxx-feature-name.md`
-6. 开发过程中持续同步 `task-board.md`、feature spec、`current-status.md`
-7. 会话结束时更新必要状态文件并运行校验
+2. 确认 `README.md` 和 `AGENTS.md` 中的技能声明块已生成
+3. 填写 `.claw/current-status.md`
+4. 填写 `.claw/goals.md`
+5. 在 `.claw/task-board.md` 中创建首批任务
+6. 对非平凡功能创建 `docs/specs/FEAT-xxx-feature-name.md`
+7. 开发过程中持续同步 `task-board.md`、feature spec、`current-status.md`
+8. 会话结束时更新必要状态文件并运行校验
 
 适用于：
 
@@ -115,12 +138,13 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 推荐按这个顺序：
 
 1. 运行初始化脚本
-2. 先创建 `docs/specs/PROJECT-BASELINE.md`
-3. 在 baseline 里记录当前已确认事实、推断事实、待验证项、关键入口和热点模块
-4. 在 `.claw/task-board.md` 里创建“接管/接入”任务，必要时让任务先指向 `PROJECT-BASELINE.md`
-5. 从当前正在推进的工作开始，逐步要求 `task-board + feature spec`
-6. 只有当某个老模块真的被改动时，才为它补对应 `FEAT-xxx-*.md`
-7. 每次确认了新的 legacy 理解，就回写 `PROJECT-BASELINE.md`
+2. 检查并补齐 `README.md` 和 `AGENTS.md` 中的技能声明块
+3. 先创建 `docs/specs/PROJECT-BASELINE.md`
+4. 在 baseline 里记录当前已确认事实、推断事实、待验证项、关键入口和热点模块
+5. 在 `.claw/task-board.md` 里创建“接管/接入”任务，必要时让任务先指向 `PROJECT-BASELINE.md`
+6. 从当前正在推进的工作开始，逐步要求 `task-board + feature spec`
+7. 只有当某个老模块真的被改动时，才为它补对应 `FEAT-xxx-*.md`
+8. 每次确认了新的 legacy 理解，就回写 `PROJECT-BASELINE.md`
 
 适用于：
 
@@ -139,6 +163,8 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 
 每次会话：
 
+- 先确认当前环境已经安装 `cc-aidev-guidelines-common`；如果没有，先从 `https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common` 安装
+- 先看项目根目录 `README.md` 和 `AGENTS.md` 中的技能声明块
 - 先读 `current-status.md`
 - 做实现或交接时再读 `task-board.md`
 - 任务有 `spec_path` 时先读对应 spec
@@ -153,6 +179,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 校验器会检查：
 
 - 必需状态文件是否存在
+- 项目根目录 `README.md` 和 `AGENTS.md` 是否存在技能声明块
 - front matter 是否完整且时间戳有效
 - `task-board.md` 里的任务卡是否有效
 - `spec_path` 引用的 feature spec 或 baseline 文档是否真实存在且 front matter 合法
@@ -163,6 +190,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 |------|------|----------|------|
 | Hot | `current-status.md` | 每次读，每次更新 | 当前快照、下一步、读取索引 |
 | Warm | `task-board.md` | 实现/交接时读写 | 任务、依赖、责任角色、交接 |
+| Cold | `task-archive.md` | 仅在看历史任务时读写 | 超出保留窗口的已完成/已取消任务 |
 | Warm | `issue-list.md` | 按需读写 | bug、阻塞、风险 |
 | Warm | `test-report.md` | 按需读写 | 已验证的测试结果 |
 | Cold | `goals.md` | 触发式读写 | 项目目标、范围、成功标准 |
@@ -177,6 +205,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 |------|------------|
 | `current-status.md` | 当前会话、阶段、下一步 |
 | `task-board.md` | 执行队列、`owner_role`、依赖、交接说明 |
+| `task-archive.md` | 超出保留窗口的已完成/已取消任务历史 |
 | `goals.md` | 项目目标、范围、成功标准 |
 | `docs/specs/PROJECT-BASELINE.md` | 老项目当前基线、推断架构、未知项和接管说明 |
 | `docs/specs/*.md` | 单个功能的完整设计与落地过程 |
@@ -230,6 +259,24 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - `owner_role` 是稳定责任角色，不依赖智能体自我身份
 - `claimed_by` 是可选运行时标签，环境知道就写，不知道就留空
 
+## `task-board.md` 更新与归档机制
+
+`task-board.md` 需要始终保持“当前最新状态”，但不会在任务完成后直接删除任务卡。
+
+推荐机制：
+
+- 活跃任务保留在 `Active Tasks`
+- 已完成或已取消任务先进入 `Completed Tasks`
+- `Completed Tasks` 最多保留最近 20 条任务卡
+- 超过 20 条后，把最旧的 completed/canceled 任务卡移动到 `.claw/task-archive.md`
+
+这意味着：
+
+- 完成任务不会自动清空
+- 任务历史不会丢失
+- `task-board.md` 会维持较短、适合日常协作的窗口
+- 更老的完成记录统一进入 `task-archive.md`
+
 ## `docs/specs/` 规则 | Spec-Driven Delivery
 
 以下情况默认必须先建 spec：
@@ -282,10 +329,12 @@ docs/specs/
 ## 最佳实践 | Best Practices
 
 - 保持 `current-status.md` 足够短，确保 AI 每次都能快速读完
+- 把项目遵循此技能的要求同时落在 `README.md` 和 `AGENTS.md`
 - 用 ID 和引用代替长段复制
 - 把交接信息放到 `task-board.md` 或 feature spec，而不是聊天记录
 - 功能实现偏离原设计时，先更新 spec 再继续写代码
 - 老项目先更新 `PROJECT-BASELINE.md`，再做大范围 legacy 改动
+- 当 `Completed Tasks` 超过 20 条时，及时归档最旧任务到 `task-archive.md`
 - 让 AI 记录项目知识，不记录临时思考过程
 
 ## 避免 | Anti-Patterns
@@ -293,6 +342,8 @@ docs/specs/
 - 每次会话都读完整个状态目录和所有 spec
 - 在多个文件里复制同一个事实
 - 把 `task-board.md` 当成 bug 列表或设计文档
+- 项目已经接入此协议，但 `README.md` 或 `AGENTS.md` 没有明确声明必须自动使用该技能
+- 任务完成后直接删除任务卡，导致交接和审计历史丢失
 - 没有验证就写“测试通过”或“问题已解决”
 - 先写大量代码，再补 feature spec
 - 要求老项目一次性补齐全部历史文档
@@ -307,4 +358,20 @@ docs/specs/
 
 ---
 
-*版本 3.2.0 | 面向 AI 多智能体协作与老项目渐进接入的项目状态与交付规范*
+*版本 3.4.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明与任务归档机制的项目状态与交付规范*
+
+<!-- cc-aidev-guidelines-common:begin -->
+## AI Development Protocol
+
+This project follows the `cc-aidev-guidelines-common` skill.
+
+- All AI agents must automatically use this skill before project analysis, planning, implementation, testing, or maintenance.
+- If the current agent does not have this skill installed, install it first from GitHub: https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common
+- When the environment supports `AGENTS.md`, treat both this README section and `AGENTS.md` as mandatory project instructions.
+
+本项目遵循 `cc-aidev-guidelines-common` 技能规范。
+
+- 所有 AI 智能体在进行项目分析、规划、编码、测试和维护前，必须自动使用此技能。
+- 如果当前智能体尚未安装此技能，必须先从 GitHub 安装：https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common
+- 如果当前环境支持 `AGENTS.md`，应将 README 中的本节和 `AGENTS.md` 同时视为必须遵守的项目级指令。
+<!-- cc-aidev-guidelines-common:end -->

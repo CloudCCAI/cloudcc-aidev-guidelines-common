@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 3.2.0
+version: 3.4.0
 ---
 
 # State Model Reference
@@ -11,12 +11,26 @@ This file defines the detailed state model used by `SKILL.md`.
 
 1. `current-status.md` is the mandatory entry point for every session.
 2. `task-board.md` is the authoritative execution queue for implementation and handoff work.
-3. Non-trivial feature work should have a primary spec under `docs/specs/`.
-4. Brownfield projects should establish `PROJECT-BASELINE.md` before broad legacy changes.
-5. Other files are read and updated only when their trigger conditions fire.
-6. A fact must have exactly one source-of-truth file.
-7. Snapshots and history should be separated.
-8. Verified evidence must be distinguishable from inference.
+3. `task-archive.md` stores older completed or canceled work once the active board exceeds its retention window.
+4. Non-trivial feature work should have a primary spec under `docs/specs/`.
+5. Brownfield projects should establish `PROJECT-BASELINE.md` before broad legacy changes.
+6. Other files are read and updated only when their trigger conditions fire.
+7. A fact must have exactly one source-of-truth file.
+8. Snapshots and history should be separated.
+9. Verified evidence must be distinguishable from inference.
+10. Project-root `README.md` and `AGENTS.md` must anchor the skill requirement for every agent.
+
+## Project Instruction Anchors
+
+Projects using this protocol must keep a managed declaration block in the project-root `README.md` and `AGENTS.md`.
+
+That block must say:
+
+- the project follows `cc-aidev-guidelines-common`
+- every AI agent must automatically use the skill
+- if the skill is missing locally, install it from `https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common`
+
+The recommended writer is `scripts/ensure-agent-guidance.sh`.
 
 ## Canonical File Semantics
 
@@ -99,6 +113,31 @@ Recommended `owner_role` values:
 - `human`
 - `shared`
 - `unassigned`
+
+Retention rule:
+
+- Keep active work in `Active Tasks`.
+- Keep only the most recent 20 task cards in `Completed Tasks`.
+- Move older completed or canceled task cards to `task-archive.md` instead of deleting them.
+
+### `task-archive.md`
+
+Use as the historical archive for completed and canceled task cards that aged out of `task-board.md`.
+
+Archived tasks should retain:
+
+- task id
+- final status
+- owner role
+- related issues
+- scope files
+- handoff summary or completion context
+- archived timestamp when available
+
+Archived tasks should use only these statuses:
+
+- `done`
+- `canceled`
 
 ### `decisions.md`
 
@@ -269,6 +308,7 @@ Recommended `kind` values:
 - `decisions`
 - `issue-list`
 - `task-board`
+- `task-archive`
 - `test-report`
 - `devops`
 
@@ -279,10 +319,11 @@ Use this read order:
 1. Read `current-status.md`.
 2. Inspect its `read_next` or equivalent hints.
 3. Read `task-board.md` for implementation, prioritization, or handoff work.
-4. In brownfield projects, open `PROJECT-BASELINE.md` before major legacy implementation when it exists.
-5. Open the feature spec referenced by `spec_path` before non-trivial implementation.
-6. Read only the additional files needed for the task.
-7. Avoid loading cold files or unrelated specs unless the task truly needs them.
+4. Read `task-archive.md` only when archived completed-work history matters.
+5. In brownfield projects, open `PROJECT-BASELINE.md` before major legacy implementation when it exists.
+6. Open the feature spec referenced by `spec_path` before non-trivial implementation.
+7. Read only the additional files needed for the task.
+8. Avoid loading cold files or unrelated specs unless the task truly needs them.
 
 ## Update Strategy
 
@@ -290,10 +331,11 @@ Apply these rules:
 
 1. Update `current-status.md` at the end of every meaningful session.
 2. Update `task-board.md` whenever task state, owner role, dependency, or handoff context changed.
-3. In brownfield projects, update `PROJECT-BASELINE.md` whenever verified legacy understanding materially changed.
-4. Update at most the triggered warm/cold files and referenced delivery docs.
-5. Prefer appending concise structured entries over rewriting unrelated content.
-6. If a task changes no durable state, update only `current-status.md`.
+3. When completed or canceled task cards exceed 20 items on the board, move the oldest cards into `task-archive.md`.
+4. In brownfield projects, update `PROJECT-BASELINE.md` whenever verified legacy understanding materially changed.
+5. Update at most the triggered warm/cold files and referenced delivery docs.
+6. Prefer appending concise structured entries over rewriting unrelated content.
+7. If a task changes no durable state, update only `current-status.md`.
 
 ## Conflict Resolution
 
@@ -307,6 +349,7 @@ If files disagree:
 Priority examples:
 
 - `task-board.md` wins over `current-status.md` for task status, dependencies, and owner role.
+- `task-archive.md` wins over `task-board.md` for older completed or canceled tasks that have already been archived.
 - `PROJECT-BASELINE.md` wins over `current-status.md` for legacy-baseline notes and current architectural unknowns.
 - `docs/specs/FEAT-xxx-*.md` wins over `task-board.md` for feature-specific acceptance criteria and design details.
 - `issue-list.md` wins over task cards for blocker details and root-cause status.
@@ -342,6 +385,8 @@ Record:
 - durable decisions
 - task ownership by role
 - task dependencies and handoff notes
+- archived completed-work history
+- project-root skill declaration anchors in `README.md` and `AGENTS.md`
 - legacy baseline facts and active unknowns
 - feature acceptance criteria
 - verified commands
@@ -359,6 +404,8 @@ Avoid:
 - free-floating todos with no task id, status, or owner role
 - feature specs that drift from the implemented approach
 - brownfield baseline notes that do not distinguish `verified` from `inferred`
+- unbounded growth in `Completed Tasks` when those tasks should have been archived
+- projects that claim to use this protocol but omit the managed declaration block from `README.md` or `AGENTS.md`
 
 ## Maintenance Guidelines
 

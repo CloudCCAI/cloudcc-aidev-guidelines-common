@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 TEMPLATES_DIR="${ROOT_DIR}/templates"
 DOC_TEMPLATES_DIR="${TEMPLATES_DIR}/docs"
+GUIDANCE_SCRIPT="${ROOT_DIR}/scripts/ensure-agent-guidance.sh"
 
 TARGET_DIR="${1:-.}"
 STATE_DIR_NAME="${2:-.claw}"
@@ -20,12 +21,18 @@ STATE_TEMPLATE_FILES=(
   "decisions.md"
   "issue-list.md"
   "task-board.md"
+  "task-archive.md"
   "test-report.md"
   "devops.md"
 )
 
 if [[ ! -d "${TEMPLATES_DIR}" ]]; then
   echo "Templates directory not found: ${TEMPLATES_DIR}" >&2
+  exit 1
+fi
+
+if [[ ! -f "${GUIDANCE_SCRIPT}" ]]; then
+  echo "Agent guidance script not found: ${GUIDANCE_SCRIPT}" >&2
   exit 1
 fi
 
@@ -41,6 +48,8 @@ render_template() {
 
 mkdir -p "${STATE_DIR_PATH}"
 mkdir -p "${DOCS_SPEC_DIR}"
+
+bash "${GUIDANCE_SCRIPT}" "${TARGET_DIR}"
 
 for filename in "${STATE_TEMPLATE_FILES[@]}"; do
   template="${TEMPLATES_DIR}/${filename}"
@@ -92,10 +101,12 @@ fi
 echo
 echo "State directory initialized at: ${STATE_DIR_PATH}"
 echo "Feature specs directory initialized at: ${DOCS_SPEC_DIR}"
+echo "Project guidance refreshed in: ${TARGET_DIR}/README.md and ${TARGET_DIR}/AGENTS.md"
 echo "Next steps:"
-echo "1. Fill ${STATE_DIR_NAME}/current-status.md"
-echo "2. Fill ${STATE_DIR_NAME}/goals.md"
-echo "3. Create or update ${STATE_DIR_NAME}/task-board.md"
-echo "4. For existing projects, copy docs/specs/_project-baseline-template.md to docs/specs/PROJECT-BASELINE.md"
-echo "5. For non-trivial work, copy docs/specs/_feature-spec-template.md to docs/specs/FEAT-xxx-feature-name.md"
-echo "6. Run validation: python3 \"${ROOT_DIR}/scripts/validate-state.py\" \"${STATE_DIR_PATH}\""
+echo "1. Review README.md and AGENTS.md to confirm the managed skill declaration still fits the project context"
+echo "2. Fill ${STATE_DIR_NAME}/current-status.md"
+echo "3. Fill ${STATE_DIR_NAME}/goals.md"
+echo "4. Create or update ${STATE_DIR_NAME}/task-board.md"
+echo "5. For existing projects, copy docs/specs/_project-baseline-template.md to docs/specs/PROJECT-BASELINE.md"
+echo "6. For non-trivial work, copy docs/specs/_feature-spec-template.md to docs/specs/FEAT-xxx-feature-name.md"
+echo "7. Run validation: python3 \"${ROOT_DIR}/scripts/validate-state.py\" \"${STATE_DIR_PATH}\""
