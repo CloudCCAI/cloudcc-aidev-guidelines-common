@@ -2,17 +2,21 @@
 
 **Bilingual project-state and delivery protocol for AI coding agents**
 
-这个 skill 现在覆盖三件事：
+这个 skill 现在覆盖五件事：
 
 1. 把项目状态外存到 `.claw/` 或 `.ai-dev/`
 2. 用 `task-board.md` 管理任务、依赖和交接
 3. 用 `docs/specs/` 强制功能级设计先落盘再开发，并支持老项目渐进接入
+4. 用身份、公钥、任务授权、分片状态和集成队列支持异步多开发者并行交付
+5. 用项目经理门控授权、Git 平台账号绑定、SSH commit signing 和 preflight 检查阻止越权开发
 
-It now covers three layers:
+It now covers five layers:
 
 1. durable project state in `.claw/` or `.ai-dev/`
 2. executable task tracking and handoff in `task-board.md`
 3. spec-driven delivery in `docs/specs/`, including brownfield adoption
+4. identity-based async parallel delivery with assignments, status slices, and integration queues
+5. project-manager-gated authorization with Git account binding, SSH commit signing, and preflight scope checks
 
 ## 一句话介绍 | One-Line Pitch
 
@@ -20,7 +24,7 @@ It now covers three layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`3.4.0`
+当前 skill 版本：`3.6.0`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -30,8 +34,14 @@ It now covers three layers:
 |------|------|
 | `SKILL.md` | 主 skill 协议 / main skill protocol |
 | `STATE-MODEL.md` | 详细状态模型 / detailed state model |
-| `templates/` | 8 个状态文件模板 / eight state file templates |
+| `templates/` | 核心状态与可选并行协作模板 / core state and optional parallel coordination templates |
 | `scripts/ensure-agent-guidance.sh` | 项目级 README/AGENTS 声明写入器 / managed README/AGENTS declaration writer |
+| `scripts/check-assignment.py` | 开发前身份、任务、分支和文件范围检查 / preflight identity, task, branch, and file-scope check |
+| `scripts/summarize-team-status.py` | 团队状态汇总器 / derived team status summarizer |
+| `templates/github-workflows/check-assignment.yml` | GitHub Actions 授权检查示例 / GitHub Actions assignment gate example |
+| `templates/team-status.md` | 管理者团队状态汇总模板 / manager team status view template |
+| `templates/integration-queue.md` | 异步并行集成队列模板 / async parallel integration queue template |
+| `templates/parallel/` | 开发者身份、任务授权、单任务状态模板 / identity, assignment, and task-status templates |
 | `templates/docs/feature-spec-template.md` | 功能设计模板 / feature spec template |
 | `templates/docs/project-baseline-template.md` | 老项目基线模板 / legacy baseline template |
 | `scripts/` | 初始化与校验脚本 / init and validation scripts |
@@ -45,6 +55,11 @@ It now covers three layers:
 - 热状态、任务队列、长文档设计分层
 - 活跃任务与历史任务分层保存
 - 项目根目录必须有 README/AGENTS 双锚点声明技能要求
+- 异步并行开发时，用公钥身份和任务授权记录替代仓库内口令或 bearer token
+- 多人开发默认由项目经理门控授权，绑定 Git 平台账号和 SSH commit signing 指纹
+- 开发前必须通过身份、任务、分支和文件范围 preflight 检查；不通过就停止开发
+- 多开发者进度写入单任务状态文件，`current-status.md` 只做热索引和主线快照
+- 最终合并走集成队列、集成分支和真实验证记录
 - 摘要、任务、问题、设计各自有唯一事实源
 - 已验证事实与推断结论分离
 - 非平凡功能先写 spec，再进入主开发
@@ -83,6 +98,9 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 - `docs/specs/_feature-spec-template.md` 模板文件
 - `docs/specs/_project-baseline-template.md` 老项目基线模板
 - `.claw/task-archive.md` 任务归档文件
+- `.claw/integration-queue.md` 异步并行集成队列
+- `.claw/team-status.md` 管理者团队状态派生视图
+- `.claw/developers/`、`.claw/assignments/`、`.claw/tasks/` 可选并行协作目录
 
 ### 2. 先判断项目类型
 
@@ -113,6 +131,14 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 如果这是老项目首次接入，再先创建：
 
 - `docs/specs/PROJECT-BASELINE.md`
+
+如果这是两个或更多开发者异步并行开发，再启用：
+
+- `.claw/developers/DEV-xxx.yaml`
+- `.claw/assignments/TASK-xxx.yaml`
+- `.claw/tasks/TASK-xxx.md`
+- `.claw/integration-queue.md`
+- `.claw/team-status.md`
 
 ### 4. 新项目如何使用 | Greenfield Workflow
 
@@ -159,7 +185,99 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 - 不要一边大改 legacy，一边不更新 baseline
 - 目标是先建立“可继续推进的共同基线”，不是补作文档库存
 
-### 6. 让 AI 按协议执行
+### 6. 异步多开发者并行开发 | Async Parallel Delivery
+
+当两个独立开发者不在同一物理环境、只能通过 Git 远端和项目文件异步协作时，推荐使用这一层。
+
+核心原则：
+
+- 不把管理者口令、开发者 bearer token、私钥或可复用密钥写入仓库，即使加密后也不推荐。
+- 仓库只记录公钥、开发者 ID、任务授权、写入范围、状态分片和集成队列。
+- 真实身份强校验交给 Git signed commits、代码托管平台 verified identity、CI 或专用验签工具。
+- 开发者只更新自己分配到的 `.claw/tasks/TASK-xxx.md` 和授权范围内的代码。
+- `current-status.md` 只做主线热索引，由项目管理者或集成者在合并时刷新。
+
+推荐流程：
+
+1. 项目管理者登记自己的公钥或 Git verified identity。
+2. 管理者在 `.claw/developers/DEV-xxx.yaml` 中登记开发者公钥、角色和状态。
+3. 管理者为每个并行任务创建 task card 和 `.claw/assignments/TASK-xxx.yaml`。
+4. 开发者从主分支创建授权分支，只改 `scope_files` 内的文件。
+5. 开发者把进度、验证和交接写入 `.claw/tasks/TASK-xxx.md`。
+6. 集成者按 `.claw/integration-queue.md` 的顺序合并分支、解决冲突、运行真实验证。
+7. 集成通过后再更新 `task-board.md`、`current-status.md` 和 `test-report.md`。
+
+### 7. 项目经理门控授权 | Project-Manager-Gated Authorization
+
+多人异步协作默认推荐启用这一层：每个项目指定一个或多个 `MANAGER-xxx`，只有项目经理能添加团队成员、暂停成员、分配任务、扩大范围或批准越界修改。
+
+默认 Git 级身份方案：
+
+1. 项目内身份 `developer_id` 绑定 GitHub/GitLab 等平台账号。
+2. 开发者使用专门的 SSH commit signing key。
+3. `.claw/developers/DEV-xxx.yaml` 只记录 Git 平台账号和 SSH signing key fingerprint。
+4. `.claw/assignments/TASK-xxx.yaml` 记录项目经理授权的任务、分支、文件范围和签名验证引用。
+5. 分支保护要求 signed commits 和 CI 检查通过。
+
+开发前或 PR CI 推荐运行：
+
+```bash
+python3 /path/to/this-skill/scripts/check-assignment.py /path/to/your-project/.claw \
+  --developer DEV-alice \
+  --task TASK-001 \
+  --branch feat/TASK-001-feature-title \
+  --git-username alice-dev \
+  --ssh-signing-key-fingerprint SHA256:abc123 \
+  --files src/example/file.ts tests/example/test.ts
+```
+
+检查通过会输出 `allowed`；如果身份未知、成员未激活、任务未分配给当前开发者、分支不匹配或文件越界，会返回非 0 并输出阻止原因。
+
+注意：Git author name 和 email 不能作为强身份依据。它们可以作为辅助信息，但真正可信的门禁应结合 Git 平台账号、SSH commit signing、分支保护和 CI。
+
+默认身份绑定规则：
+
+- 一个 Git 平台账号默认只能绑定一个 active `developer_id`
+- 如果同一个 Git 账号必须同时承担项目经理和开发者等多个身份，必须为每个身份使用不同 SSH signing key fingerprint，并在身份记录里显式说明
+- 默认不允许同一个 Git 账号 + 同一个 SSH signing key 同时代表 `MANAGER-xxx` 和 `DEV-xxx`
+
+GitHub Actions 示例：
+
+```bash
+mkdir -p .github/workflows
+cp /path/to/this-skill/templates/github-workflows/check-assignment.yml .github/workflows/check-assignment.yml
+```
+
+这个 workflow 会从 PR 分支名、标题或正文解析 `TASK-xxx`，用 PR author 匹配 `.claw/developers/*.yaml` 里的 `git_username`，收集 changed files，然后调用 `scripts/check-assignment.py`。项目启用后应在分支保护里要求这个 check 通过。
+
+### 8. 管理者团队状态汇总 | Manager Team Status
+
+当管理者需要查看团队成员列表、任务分配、贡献状态和集成状态时，使用标准汇总方法生成派生视图。
+
+推荐命令：
+
+```bash
+python3 /path/to/this-skill/scripts/summarize-team-status.py /path/to/your-project/.claw
+```
+
+写入 `.claw/team-status.md`：
+
+```bash
+python3 /path/to/this-skill/scripts/summarize-team-status.py /path/to/your-project/.claw --write
+```
+
+标准汇总顺序：
+
+1. 读取 `.claw/developers/*.yaml` 获取团队成员、角色、公钥身份和身份状态。
+2. 读取 `.claw/assignments/*.yaml` 获取授权任务、负责人、分支、PR、写入范围和共享契约。
+3. 读取 `.claw/tasks/*.md` 获取单任务进度、验证状态、阻塞点和交接说明。
+4. 读取 `.claw/task-board.md` 补充任务标题、优先级、owner role 和主看板状态。
+5. 读取 `.claw/integration-queue.md` 补充合并顺序、集成负责人和 integration status。
+6. 生成每个开发者的 `assigned_tasks`、`active_tasks`、`contribution_status`、`validation_status` 和 `integration_status`。
+
+`team-status.md` 不是事实源。它只是一份可重新生成的管理者快照。如果它和 `developers/`、`assignments/`、`tasks/`、`task-board.md` 或 `integration-queue.md` 冲突，应修复事实源后重新生成。
+
+### 9. 让 AI 按协议执行
 
 每次会话：
 
@@ -168,9 +286,13 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 - 先读 `current-status.md`
 - 做实现或交接时再读 `task-board.md`
 - 任务有 `spec_path` 时先读对应 spec
+- 任务有 `assignment_path` 或 `task_status_path` 时，只读取对应授权和单任务状态
+- 异步多人开发时，先识别 `developer_id`，再用 `scripts/check-assignment.py` 或等价逻辑检查 assignment、branch 和 `scope_files`
+- 如果 preflight 不通过，停止开发并要求项目经理更新授权
+- 管理者询问团队状态时，用标准汇总脚本生成或读取 `.claw/team-status.md`
 - 结束时至少回写 `current-status.md`
 
-### 7. 运行校验
+### 10. 运行校验
 
 ```bash
 python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.claw
@@ -183,6 +305,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - front matter 是否完整且时间戳有效
 - `task-board.md` 里的任务卡是否有效
 - `spec_path` 引用的 feature spec 或 baseline 文档是否真实存在且 front matter 合法
+- 可选的 `team-status.md`、`integration-queue.md`、`developers/*.yaml`、`assignments/*.yaml` 和 `tasks/*.md` 是否具备最低结构
 
 ## 状态分层 | State Layers
 
@@ -190,6 +313,11 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 |------|------|----------|------|
 | Hot | `current-status.md` | 每次读，每次更新 | 当前快照、下一步、读取索引 |
 | Warm | `task-board.md` | 实现/交接时读写 | 任务、依赖、责任角色、交接 |
+| Warm | `integration-queue.md` | 异步并行集成时读写 | 集成分支、合并顺序、验证门禁 |
+| Warm | `team-status.md` | 管理者查看团队状态时生成/读取 | 团队成员、任务分配、贡献状态、集成状态的派生视图 |
+| Warm | `developers/*.yaml` | 身份/授权相关时读写 | 开发者 ID、Git 平台账号、SSH 签名指纹、角色、状态 |
+| Warm | `assignments/*.yaml` | 分配任务时读写 | 项目经理、任务负责人、分支、写入范围、签名授权 |
+| Warm | `tasks/*.md` | 单任务推进时读写 | 开发者进度、验证证据、交接说明 |
 | Cold | `task-archive.md` | 仅在看历史任务时读写 | 超出保留窗口的已完成/已取消任务 |
 | Warm | `issue-list.md` | 按需读写 | bug、阻塞、风险 |
 | Warm | `test-report.md` | 按需读写 | 已验证的测试结果 |
@@ -205,6 +333,11 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 |------|------------|
 | `current-status.md` | 当前会话、阶段、下一步 |
 | `task-board.md` | 执行队列、`owner_role`、依赖、交接说明 |
+| `.claw/developers/*.yaml` | 开发者身份、Git 平台账号、SSH 签名指纹、角色状态、长期范围 |
+| `.claw/assignments/*.yaml` | 项目经理任务授权、分支、写入范围、管理者签名 |
+| `.claw/tasks/*.md` | 单个任务的开发者进度、验证证据、交接说明 |
+| `.claw/integration-queue.md` | 集成分支、合并顺序、集成门禁 |
+| `.claw/team-status.md` | 派生团队状态汇总；不作为事实源 |
 | `task-archive.md` | 超出保留窗口的已完成/已取消任务历史 |
 | `goals.md` | 项目目标、范围、成功标准 |
 | `docs/specs/PROJECT-BASELINE.md` | 老项目当前基线、推断架构、未知项和接管说明 |
@@ -230,6 +363,16 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - `blocked_by`
 - `related_issues`
 - `scope_files`
+- `branch`
+- `pr_url`
+- `assignment_path`
+- `task_status_path`
+- `parallel_group`
+- `touch_policy`
+- `shared_contracts`
+- `merge_policy`
+- `integration_queue`
+- `integration_owner`
 - `next_action`
 - `handoff_note`
 
@@ -250,6 +393,8 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - `fullstack-agent`
 - `qa-agent`
 - `release-agent`
+- `project-manager`
+- `integration-agent`
 - `human`
 - `shared`
 - `unassigned`
@@ -258,6 +403,8 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 
 - `owner_role` 是稳定责任角色，不依赖智能体自我身份
 - `claimed_by` 是可选运行时标签，环境知道就写，不知道就留空
+- `assignment_path` 和 `task_status_path` 只在异步多开发者协作中必须填写
+- `scope_files` 是写入边界，不应被当成普通说明随意突破
 
 ## `task-board.md` 更新与归档机制
 
@@ -286,6 +433,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - API 或数据结构变更
 - 非平凡重构
 - 预计会跨会话或跨智能体交接的工作
+- 预计会由两个或更多开发者并行推进并最终合并的工作
 
 以下情况可以只用任务卡：
 
@@ -326,12 +474,84 @@ docs/specs/
 
 这样做的目标不是“补历史”，而是“建立可继续推进的共同基线”。
 
+## 身份与授权文件 | Identity And Assignment Files
+
+`.claw/developers/DEV-xxx.yaml` 推荐记录：
+
+- `developer_id`
+- `display_name`
+- `role`
+- `public_key`
+- `git_platform`
+- `git_username`
+- `ssh_signing_key_fingerprint`
+- `status`
+- `managed_by`
+- `allowed_scopes`
+- `role_sharing_exception`
+- `allowed_until`
+
+`.claw/assignments/TASK-xxx.yaml` 推荐记录：
+
+- `task_id`
+- `assignee`
+- `assigned_by`
+- `status`
+- `branch`
+- `scope_files`
+- `touch_policy`
+- `shared_contracts`
+- `signature`
+
+约束：
+
+- `assigned_by` 应指向 `MANAGER-xxx`
+- 默认签名方案是 SSH commit signing
+- Git author name/email 只可作为辅助信息，不能单独作为强身份依据
+- 默认一个 Git 平台账号只绑定一个 active 身份；同账号多身份必须使用不同 SSH signing key fingerprint
+- 开发前或 PR CI 应运行 `scripts/check-assignment.py`
+
+`.claw/tasks/TASK-xxx.md` 推荐记录：
+
+- 当前状态
+- 已完成内容
+- 修改范围
+- 已运行验证
+- 阻塞点
+- 交接说明
+
+这些文件是协作协议，不是完整权限系统。真正的权限、分支保护、签名验签和 CI 门禁仍应由 Git 平台或外部工具执行。
+
+## 团队状态汇总 | Team Status Aggregation
+
+`team-status.md` 是管理者视图，用来快速查看团队成员和贡献状态。它应由脚本生成，不应手工长期维护。
+
+推荐状态枚举：
+
+- `contribution_status`: `not_started` / `assigned` / `claimed` / `in_progress` / `code_submitted` / `review_requested` / `merged` / `blocked` / `canceled`
+- `validation_status`: `not_run` / `partial` / `passed` / `failed` / `unknown`
+- `integration_status`: `not_ready` / `waiting_review` / `ready_to_merge` / `merging` / `integrated` / `blocked`
+
+事实源优先级：
+
+1. `.claw/developers/*.yaml`
+2. `.claw/assignments/*.yaml`
+3. `.claw/tasks/*.md`
+4. `.claw/task-board.md`
+5. `.claw/integration-queue.md`
+6. Git/PR/CI 外部证据（如已写入 task status 或由后续脚本接入）
+
 ## 最佳实践 | Best Practices
 
 - 保持 `current-status.md` 足够短，确保 AI 每次都能快速读完
 - 把项目遵循此技能的要求同时落在 `README.md` 和 `AGENTS.md`
 - 用 ID 和引用代替长段复制
 - 把交接信息放到 `task-board.md` 或 feature spec，而不是聊天记录
+- 异步多开发者协作时，把单人进度放到 `.claw/tasks/TASK-xxx.md`，让 `current-status.md` 保持短小
+- 管理者查看团队状态时，使用 `scripts/summarize-team-status.py` 生成 `.claw/team-status.md`
+- 异步多人开发时，使用项目经理授权、SSH commit signing 和 `scripts/check-assignment.py` 做开发前门禁
+- 同一 Git 账号兼任多个身份时，用不同 SSH signing key 区分项目经理身份和开发者身份
+- 共享接口、数据结构、配置 key 和迁移顺序先写进 spec，再让下游任务并行
 - 功能实现偏离原设计时，先更新 spec 再继续写代码
 - 老项目先更新 `PROJECT-BASELINE.md`，再做大范围 legacy 改动
 - 当 `Completed Tasks` 超过 20 条时，及时归档最旧任务到 `task-archive.md`
@@ -348,6 +568,13 @@ docs/specs/
 - 先写大量代码，再补 feature spec
 - 要求老项目一次性补齐全部历史文档
 - 把 `current-status.md` 写成流水账
+- 把管理者口令、开发者 token、私钥或可复用密钥提交到仓库
+- 多个开发者频繁改同一个 `current-status.md` 来记录个人进度
+- 手工维护 `team-status.md` 并把它当成事实源
+- 没有任务授权和 `scope_files` 就让两个分支同时修改高风险共享文件
+- 只依赖 Git author name/email 判断开发者身份
+- 让开发者自行扩大自己的授权范围或添加团队成员
+- 同一个 Git 账号和同一把 SSH signing key 同时代表项目经理和开发者
 
 ## 参考文档 | References
 
@@ -358,7 +585,7 @@ docs/specs/
 
 ---
 
-*版本 3.4.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明与任务归档机制的项目状态与交付规范*
+*版本 3.6.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付和项目经理门控授权的项目状态与交付规范*
 
 <!-- cc-aidev-guidelines-common:begin -->
 ## AI Development Protocol

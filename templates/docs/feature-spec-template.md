@@ -47,6 +47,27 @@ updated_by: ai
 - 关键流程
 - 为什么采用这个方案
 
+## 身份与授权计划
+
+- 是否启用异步多开发者协作：`no`
+- 项目管理者身份：`MANAGER-xxx` / `n/a`
+- 开发者身份文件：`.claw/developers/DEV-xxx.yaml` / `n/a`
+- 任务授权文件：`.claw/assignments/TASK-xxx.yaml` / `n/a`
+- 单任务状态文件：`.claw/tasks/TASK-xxx.md` / `n/a`
+- 团队状态汇总：`.claw/team-status.md` / `n/a`
+- 项目经理门控授权：`yes` / `no`
+- 默认身份绑定：Git 平台账号 + SSH commit signing
+- 开发前检查：`scripts/check-assignment.py` / `n/a`
+- 不允许提交管理者口令、开发者 token、私钥或可复用密钥
+
+## 并行与集成计划
+
+- 可并行任务组
+- 每个任务的 `scope_files` 和 `touch_policy`
+- 共享接口、数据结构、配置 key 或迁移顺序
+- 集成分支和合并顺序
+- 集成负责人和验证门禁
+
 ## 接口与数据影响
 
 - API、事件、消息、数据库或配置层面的变更
@@ -57,6 +78,7 @@ updated_by: ai
 - 对应 `task-board.md` 中的任务 ID
 - 任务依赖关系
 - 推荐责任角色
+- 异步并行任务应列出 `assignment_path`、`task_status_path` 和 `integration_queue`
 
 ## 验收标准
 

@@ -1,5 +1,25 @@
 # Changelog
 
+## 3.6.0 - 2026-05-16
+
+- Added project-manager-gated authorization for async multi-developer delivery.
+- Made Git platform account binding plus SSH commit signing the default recommended identity model for new teams.
+- Added `scripts/check-assignment.py` for local and CI preflight checks of developer identity, assignment status, branch, and file scope.
+- Added `templates/github-workflows/check-assignment.yml` as a GitHub Actions PR gate example for assignment-scope enforcement.
+- Updated developer and assignment templates with manager ownership, Git username, SSH signing fingerprint, assignment status, and preflight policy fields.
+- Updated protocol docs and state model to block development when identity, assignment, branch, or `scope_files` checks fail.
+- Extended validation expectations for manager-assigned task authorization metadata.
+
+## 3.5.0 - 2026-05-01
+
+- Added an optional identity-based asynchronous parallel delivery model for independent developers working through Git branches.
+- Added public developer identity records, manager assignment records, per-task status slices, and an integration queue to the protocol.
+- Added `team-status.md` as a derived manager view plus `scripts/summarize-team-status.py` for standard team status aggregation.
+- Updated templates for feature specs, task cards, current status, integration queues, developer identities, task assignments, and task status files.
+- Updated `scripts/init-state.sh` to create async parallel coordination directories and seed `.claw/integration-queue.md`.
+- Extended `scripts/validate-state.py` to validate optional async parallel coordination files, team status files, and task references.
+- Documented that manager passwords, bearer tokens, private keys, and reusable secrets must not be stored in repository documents.
+
 ## 3.4.0 - 2026-04-30
 
 - Added `scripts/ensure-agent-guidance.sh` to create or refresh the managed `README.md` and `AGENTS.md` declaration block.

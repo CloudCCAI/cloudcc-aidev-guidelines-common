@@ -1,0 +1,20 @@
+task_id: TASK-001
+assignee: DEV-alice
+assigned_by: MANAGER-001
+status: active
+assigned_at: YYYY-MM-DDTHH:MM:SSZ
+expires_at: YYYY-MM-DDTHH:MM:SSZ
+spec_path: docs/specs/FEAT-001-feature-title.md
+task_status_path: .claw/tasks/TASK-001.md
+branch: feat/TASK-001-feature-title
+pr_url: n/a
+scope_files:
+  - src/example/**
+  - tests/example/**
+touch_policy: exclusive
+shared_contracts:
+  - docs/specs/FEAT-001-feature-title.md
+signature: "manager-signed-commit-or-platform-approval-reference"
+preflight_required: true
+identity_policy: "git_platform_account + ssh_commit_signing"
+notes: "Only a project manager may create or expand assignments. Assignment records authorization metadata only; no private keys or tokens."

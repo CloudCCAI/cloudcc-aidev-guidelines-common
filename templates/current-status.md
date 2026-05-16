@@ -70,10 +70,19 @@ read_next:
 
 - `docs/specs/FEAT-xxx-*.md` - 当前任务涉及非平凡功能时填写真实路径
 
+## 异步并行索引
+
+- 集成队列：`.claw/integration-queue.md`（启用异步多开发者协作时维护）
+- 团队状态：`.claw/team-status.md`（管理者查看团队状态时由脚本生成）
+- 单任务状态：`.claw/tasks/TASK-xxx.md`（开发者只更新自己分配的任务状态）
+- 任务授权：`.claw/assignments/TASK-xxx.yaml`（由项目管理者维护）
+- 开发者身份：`.claw/developers/DEV-xxx.yaml`（只记录公钥或外部验证身份，不记录私钥或 token）
+
 ## 维护规则
 
 - 保持简短，只记录当前快照。
 - 当前会话的活跃任务 ID 应与 `task-board.md` 保持一致。
 - 不复制完整 issue、ADR 或测试详情。
 - 不在这里写长篇功能设计，功能设计写到 `docs/specs/`。
+- 不在这里写多开发者的个人进度流水；个人任务进度写入 `.claw/tasks/TASK-xxx.md`。
 - 如需历史归档，放到独立历史文件，不放在这里。

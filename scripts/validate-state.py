@@ -17,6 +17,11 @@ EXPECTED_KINDS = {
     "test-report.md": "test-report",
     "devops.md": "devops",
 }
+OPTIONAL_STATE_KINDS = {
+    "integration-queue.md": "integration-queue",
+    "team-status.md": "team-status",
+}
+STATE_KINDS = {**EXPECTED_KINDS, **OPTIONAL_STATE_KINDS}
 SKILL_REPO_URL = "https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common"
 GUIDANCE_MARKER_BEGIN = "<!-- cc-aidev-guidelines-common:begin -->"
 GUIDANCE_MARKER_END = "<!-- cc-aidev-guidelines-common:end -->"
@@ -39,9 +44,38 @@ OWNER_ROLES = {
     "fullstack-agent",
     "qa-agent",
     "release-agent",
+    "project-manager",
+    "integration-agent",
     "human",
     "shared",
     "unassigned",
+}
+TOUCH_POLICIES = {
+    "exclusive",
+    "shared",
+    "read_only",
+}
+INTEGRATION_QUEUE_STATUSES = {
+    "not_started",
+    "collecting",
+    "merging",
+    "verifying",
+    "ready",
+    "blocked",
+    "completed",
+}
+DEVELOPER_STATUSES = {
+    "active",
+    "suspended",
+    "revoked",
+    "expired",
+}
+ASSIGNMENT_STATUSES = {
+    "active",
+    "paused",
+    "revoked",
+    "expired",
+    "completed",
 }
 FEATURE_SPEC_STATUSES = {
     "draft",
@@ -65,6 +99,7 @@ TASK_HEADER_RE = re.compile(r"^###\s+(TASK-[0-9]+)\s+-\s+(.+?)\s*$")
 TASK_FIELD_RE = re.compile(r"^- ([a-z_]+):\s*(.+?)\s*$")
 SECTION_HEADER_RE = re.compile(r"^##\s+(.+?)\s*$")
 TEST_REPORT_STATUS_RE = re.compile(r"- 状态：`([^`]+)`")
+SIMPLE_YAML_FIELD_RE = re.compile(r"^([A-Za-z0-9_-]+):\s*(.*?)\s*$")
 
 
 def clean_value(value: str) -> str:
@@ -80,9 +115,51 @@ def is_placeholder_value(value: str) -> bool:
         return True
     if "YYYY-MM-DD" in cleaned or "HH:MM:SS" in cleaned:
         return True
+    if "..." in cleaned:
+        return True
     if cleaned.startswith("[") and cleaned.endswith("]"):
         return True
     return False
+
+
+def is_empty_reference(value: str) -> bool:
+    cleaned = clean_value(value).lower()
+    return cleaned in {"", "none", "n/a", "na", "not_applicable"}
+
+
+def read_simple_yaml(path: Path) -> tuple[dict[str, object], list[str]]:
+    parsed: dict[str, object] = {}
+    errors: list[str] = []
+    current_key: str | None = None
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+
+        if current_key and stripped.startswith("- "):
+            current_value = parsed.setdefault(current_key, [])
+            if isinstance(current_value, list):
+                current_value.append(clean_value(stripped[2:]))
+            continue
+
+        match = SIMPLE_YAML_FIELD_RE.match(stripped)
+        if not match:
+            current_key = None
+            continue
+        key = match.group(1).strip()
+        value = clean_value(match.group(2))
+        if value == "":
+            parsed[key] = []
+            current_key = key
+        else:
+            parsed[key] = value
+            current_key = None
+
+    if not parsed:
+        errors.append(f"{path}: no top-level YAML fields found")
+
+    return parsed, errors
 
 
 def read_front_matter(path: Path) -> tuple[dict[str, str], str, list[str]]:
@@ -129,7 +206,7 @@ def validate_common_front_matter(path: Path, front_matter: dict[str, str], error
         if is_placeholder_value(front_matter[field]):
             errors.append(f"{path.name}: unresolved placeholder in `{field}`")
 
-    expected_kind = EXPECTED_KINDS[path.name]
+    expected_kind = STATE_KINDS[path.name]
     actual_kind = front_matter.get("kind")
     if actual_kind and actual_kind != expected_kind:
         errors.append(f"{path.name}: expected kind `{expected_kind}`, got `{actual_kind}`")
@@ -284,6 +361,20 @@ def validate_task_board(path: Path, body: str, project_root: Path) -> list[str]:
             else:
                 errors.extend(validate_delivery_doc(resolved_spec_path))
 
+        touch_policy = clean_value(str(fields.get("touch_policy", "")))
+        if touch_policy and touch_policy.lower() not in {"none", "n/a"} and touch_policy not in TOUCH_POLICIES:
+            errors.append(f"{path.name}: task `{task_id}` has invalid touch_policy `{touch_policy}`")
+
+        for field_name in ("assignment_path", "task_status_path", "integration_queue"):
+            reference_path = clean_value(str(fields.get(field_name, "")))
+            if is_empty_reference(reference_path):
+                continue
+            resolved_reference_path = project_root / reference_path
+            if not resolved_reference_path.exists():
+                errors.append(
+                    f"{path.name}: task `{task_id}` references missing {field_name} `{reference_path}`"
+                )
+
     if completed_task_count > TASK_BOARD_COMPLETED_LIMIT:
         errors.append(
             f"{path.name}: `Completed Tasks` has {completed_task_count} task cards; archive the oldest items to `task-archive.md` so at most {TASK_BOARD_COMPLETED_LIMIT} remain"
@@ -331,6 +422,209 @@ def validate_test_report(path: Path, front_matter: dict[str, str], body: str, er
         )
 
 
+def validate_integration_queue(path: Path, front_matter: dict[str, str], errors: list[str]) -> None:
+    status = front_matter.get("status", "")
+    if status and status not in INTEGRATION_QUEUE_STATUSES:
+        errors.append(f"{path.name}: invalid integration queue status `{status}`")
+
+    owner = front_matter.get("integration_owner", "")
+    if owner and is_placeholder_value(owner):
+        errors.append(f"{path.name}: unresolved placeholder in `integration_owner`")
+
+
+def validate_developer_record(path: Path) -> list[str]:
+    fields, errors = read_simple_yaml(path)
+    required_fields = {
+        "developer_id",
+        "display_name",
+        "role",
+        "public_key",
+        "git_platform",
+        "git_username",
+        "ssh_signing_key_fingerprint",
+        "status",
+        "managed_by",
+    }
+
+    for field in sorted(required_fields - fields.keys()):
+        errors.append(f"{path}: missing developer field `{field}`")
+
+    developer_id = str(fields.get("developer_id", ""))
+    if developer_id and not developer_id.startswith(("DEV-", "MANAGER-")):
+        errors.append(f"{path}: developer_id should start with `DEV-` or `MANAGER-`")
+
+    role = str(fields.get("role", ""))
+    if role and role not in OWNER_ROLES:
+        errors.append(f"{path}: invalid role `{role}`")
+
+    status = str(fields.get("status", ""))
+    if status and status not in DEVELOPER_STATUSES:
+        errors.append(f"{path}: invalid developer status `{status}`")
+
+    public_key = str(fields.get("public_key", ""))
+    if public_key and is_placeholder_value(public_key):
+        errors.append(f"{path}: unresolved developer field `public_key`")
+
+    managed_by = str(fields.get("managed_by", ""))
+    if managed_by and not managed_by.startswith("MANAGER-"):
+        errors.append(f"{path}: managed_by should reference `MANAGER-xxx`")
+
+    git_username = str(fields.get("git_username", ""))
+    if git_username and is_placeholder_value(git_username):
+        errors.append(f"{path}: unresolved developer field `git_username`")
+
+    ssh_fingerprint = str(fields.get("ssh_signing_key_fingerprint", ""))
+    if ssh_fingerprint and is_placeholder_value(ssh_fingerprint):
+        errors.append(f"{path}: unresolved developer field `ssh_signing_key_fingerprint`")
+
+    for banned_field in ("private_key", "password", "token", "secret", "bearer_token"):
+        if banned_field in fields:
+            errors.append(f"{path}: must not store `{banned_field}` in repository identity records")
+
+    return errors
+
+
+def validate_developer_identity_policy(developer_records: list[tuple[Path, dict[str, object]]]) -> list[str]:
+    errors: list[str] = []
+    by_username: dict[str, list[tuple[Path, dict[str, object]]]] = {}
+    by_username_and_key: dict[tuple[str, str], list[tuple[Path, dict[str, object]]]] = {}
+
+    for path, fields in developer_records:
+        status = str(fields.get("status", ""))
+        if status != "active":
+            continue
+        username = str(fields.get("git_username", ""))
+        fingerprint = str(fields.get("ssh_signing_key_fingerprint", ""))
+        if not username:
+            continue
+        by_username.setdefault(username, []).append((path, fields))
+        if fingerprint:
+            by_username_and_key.setdefault((username, fingerprint), []).append((path, fields))
+
+    for username, records in by_username.items():
+        if len(records) <= 1:
+            continue
+        fingerprints = [str(fields.get("ssh_signing_key_fingerprint", "")) for _path, fields in records]
+        ids = ", ".join(str(fields.get("developer_id", path.stem)) for path, fields in records)
+        if len(set(fingerprints)) != len(fingerprints) or any(not item for item in fingerprints):
+            errors.append(
+                f"developers: git_username `{username}` is reused by active identities `{ids}` without distinct ssh_signing_key_fingerprint values"
+            )
+            continue
+        missing_exceptions = [
+            str(fields.get("developer_id", path.stem))
+            for path, fields in records
+            if is_empty_reference(str(fields.get("role_sharing_exception", "")))
+        ]
+        if missing_exceptions:
+            errors.append(
+                f"developers: git_username `{username}` is reused but identities `{', '.join(missing_exceptions)}` are missing role_sharing_exception"
+            )
+
+    for (username, fingerprint), records in by_username_and_key.items():
+        if len(records) <= 1:
+            continue
+        has_manager = any(str(fields.get("developer_id", "")).startswith("MANAGER-") for _path, fields in records)
+        has_developer = any(str(fields.get("developer_id", "")).startswith("DEV-") for _path, fields in records)
+        if has_manager and has_developer:
+            ids = ", ".join(str(fields.get("developer_id", path.stem)) for path, fields in records)
+            errors.append(
+                f"developers: git_username `{username}` and ssh_signing_key_fingerprint `{fingerprint}` are shared by manager/developer identities `{ids}`"
+            )
+
+    return errors
+
+
+def validate_assignment_file(path: Path, project_root: Path) -> list[str]:
+    fields, errors = read_simple_yaml(path)
+    required_fields = {
+        "task_id",
+        "assignee",
+        "assigned_by",
+        "status",
+        "spec_path",
+        "task_status_path",
+        "branch",
+        "scope_files",
+        "touch_policy",
+        "signature",
+    }
+
+    for field in sorted(required_fields - fields.keys()):
+        errors.append(f"{path}: missing assignment field `{field}`")
+
+    task_id = str(fields.get("task_id", ""))
+    if task_id and not task_id.startswith("TASK-"):
+        errors.append(f"{path}: task_id should start with `TASK-`")
+
+    assignee = str(fields.get("assignee", ""))
+    if assignee and not assignee.startswith(("DEV-", "MANAGER-")):
+        errors.append(f"{path}: assignee should reference `DEV-xxx` or `MANAGER-xxx`")
+
+    assigned_by = str(fields.get("assigned_by", ""))
+    if assigned_by and not assigned_by.startswith("MANAGER-"):
+        errors.append(f"{path}: assigned_by should reference `MANAGER-xxx`")
+
+    status = str(fields.get("status", ""))
+    if status and status not in ASSIGNMENT_STATUSES:
+        errors.append(f"{path}: invalid assignment status `{status}`")
+
+    touch_policy = str(fields.get("touch_policy", ""))
+    if touch_policy and touch_policy not in TOUCH_POLICIES:
+        errors.append(f"{path}: invalid touch_policy `{touch_policy}`")
+
+    for field_name in ("spec_path", "task_status_path"):
+        reference_path = str(fields.get(field_name, ""))
+        if not reference_path or is_placeholder_value(reference_path):
+            errors.append(f"{path}: unresolved assignment field `{field_name}`")
+            continue
+        resolved_reference_path = project_root / reference_path
+        if not resolved_reference_path.exists():
+            errors.append(f"{path}: references missing {field_name} `{reference_path}`")
+
+    signature = str(fields.get("signature", ""))
+    if signature and is_placeholder_value(signature):
+        errors.append(f"{path}: unresolved assignment field `signature`")
+
+    for banned_field in ("private_key", "password", "token", "secret", "bearer_token"):
+        if banned_field in fields:
+            errors.append(f"{path}: must not store `{banned_field}` in repository assignment records")
+
+    return errors
+
+
+def validate_task_status_file(path: Path) -> list[str]:
+    errors: list[str] = []
+    front_matter, _body, fm_errors = read_front_matter(path)
+    errors.extend(fm_errors)
+
+    if not front_matter:
+        return errors
+
+    required_fields = {"kind", "task_id", "assignee", "status", "updated_at", "updated_by"}
+    for field in sorted(required_fields - front_matter.keys()):
+        errors.append(f"{path}: missing task-status front matter field `{field}`")
+
+    kind = front_matter.get("kind", "")
+    if kind and kind != "task-status":
+        errors.append(f"{path}: expected kind `task-status`, got `{kind}`")
+
+    task_id = front_matter.get("task_id", "")
+    if task_id and not task_id.startswith("TASK-"):
+        errors.append(f"{path}: task_id should start with `TASK-`")
+
+    assignee = front_matter.get("assignee", "")
+    if assignee and not assignee.startswith(("DEV-", "MANAGER-")):
+        errors.append(f"{path}: assignee should reference `DEV-xxx` or `MANAGER-xxx`")
+
+    status = front_matter.get("status", "")
+    if status and status not in TASK_STATUSES:
+        errors.append(f"{path}: invalid task-status status `{status}`")
+
+    validate_timestamp(path, front_matter, errors)
+    return errors
+
+
 def validate_file(path: Path, project_root: Path) -> list[str]:
     errors: list[str] = []
     front_matter, body, fm_errors = read_front_matter(path)
@@ -349,6 +643,8 @@ def validate_file(path: Path, project_root: Path) -> list[str]:
         errors.extend(validate_task_archive(path, body))
     elif path.name == "test-report.md":
         validate_test_report(path, front_matter, body, errors)
+    elif path.name == "integration-queue.md":
+        validate_integration_queue(path, front_matter, errors)
 
     return errors
 
@@ -391,6 +687,30 @@ def main() -> int:
             errors.append(f"missing required file: {path}")
             continue
         errors.extend(validate_file(path, project_root))
+
+    for filename in OPTIONAL_STATE_KINDS:
+        path = state_dir / filename
+        if path.exists():
+            errors.extend(validate_file(path, project_root))
+
+    developers_dir = state_dir / "developers"
+    if developers_dir.exists():
+        developer_records: list[tuple[Path, dict[str, object]]] = []
+        for path in sorted(developers_dir.glob("*.yaml")) + sorted(developers_dir.glob("*.yml")):
+            errors.extend(validate_developer_record(path))
+            fields, _field_errors = read_simple_yaml(path)
+            developer_records.append((path, fields))
+        errors.extend(validate_developer_identity_policy(developer_records))
+
+    assignments_dir = state_dir / "assignments"
+    if assignments_dir.exists():
+        for path in sorted(assignments_dir.glob("*.yaml")) + sorted(assignments_dir.glob("*.yml")):
+            errors.extend(validate_assignment_file(path, project_root))
+
+    tasks_dir = state_dir / "tasks"
+    if tasks_dir.exists():
+        for path in sorted(tasks_dir.glob("*.md")):
+            errors.extend(validate_task_status_file(path))
 
     errors.extend(validate_project_guidance(project_root))
 

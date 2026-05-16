@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 3.4.0
+version: 3.6.0
 ---
 
 # State Model Reference
@@ -19,6 +19,11 @@ This file defines the detailed state model used by `SKILL.md`.
 8. Snapshots and history should be separated.
 9. Verified evidence must be distinguishable from inference.
 10. Project-root `README.md` and `AGENTS.md` must anchor the skill requirement for every agent.
+11. Async parallel delivery should use identity records, manager assignments, per-task status slices, generated team status, and integration queues instead of shared hot-file diaries.
+12. Repository documents must not store manager passwords, bearer tokens, private keys, or reusable secrets.
+13. Manager-gated delivery should bind project identities to Git platform accounts and SSH commit signing fingerprints.
+14. Development must stop when preflight identity, assignment, branch, or file-scope checks fail.
+15. One Git platform account should map to one active identity by default; role sharing requires distinct SSH signing key fingerprints.
 
 ## Project Instruction Anchors
 
@@ -36,7 +41,7 @@ The recommended writer is `scripts/ensure-agent-guidance.sh`.
 
 ### `current-status.md`
 
-Use as the hot snapshot for the current phase, active task, next action, and read hints.
+Use as the hot snapshot for the current phase, active task, next action, read hints, and async parallel index.
 
 Must contain:
 
@@ -45,6 +50,8 @@ Must contain:
 - next action
 - changed files summary
 - read-next hints for other state files
+- task-status index when async parallel delivery is enabled
+- integration queue reference when async parallel delivery is enabled
 
 Must not contain:
 
@@ -52,6 +59,8 @@ Must not contain:
 - full ADR content
 - long test logs
 - long chronological session history
+- per-developer routine progress when `.claw/tasks/TASK-xxx.md` exists
+- complete integration queue details
 
 ### `goals.md`
 
@@ -82,6 +91,9 @@ Each task should record:
 - related issues
 - scope files
 - spec path when required
+- branch and PR URL when work is done through Git branches
+- assignment path and task status path when async parallel delivery is enabled
+- parallel group, touch policy, shared contracts, merge policy, and integration owner when multiple tasks merge together
 - done-when checklist
 - next action
 - handoff note
@@ -110,6 +122,8 @@ Recommended `owner_role` values:
 - `fullstack-agent`
 - `qa-agent`
 - `release-agent`
+- `project-manager`
+- `integration-agent`
 - `human`
 - `shared`
 - `unassigned`
@@ -119,6 +133,209 @@ Retention rule:
 - Keep active work in `Active Tasks`.
 - Keep only the most recent 20 task cards in `Completed Tasks`.
 - Move older completed or canceled task cards to `task-archive.md` instead of deleting them.
+
+### `integration-queue.md`
+
+Use as the optional queue for async parallel integration across multiple branches or developers.
+
+Record:
+
+- queue id or feature id
+- integration branch
+- integration owner
+- merge order by task id or PR
+- required validation gates
+- current integration status
+- rollback or deferral notes
+
+Recommended statuses:
+
+- `not_started`
+- `collecting`
+- `merging`
+- `verifying`
+- `ready`
+- `blocked`
+- `completed`
+
+### `team-status.md`
+
+Use as the optional generated manager view for team members, assigned tasks, contribution status, validation status, and integration status.
+
+It is a derived view, not a source of truth.
+
+Generate it from:
+
+1. `.claw/developers/*.yaml`
+2. `.claw/assignments/*.yaml`
+3. `.claw/tasks/*.md`
+4. `.claw/task-board.md`
+5. `.claw/integration-queue.md`
+6. external Git/PR/CI evidence when that evidence has been imported into task status files or a future platform-specific summarizer
+
+Recommended `contribution_status` values:
+
+- `not_started`
+- `assigned`
+- `claimed`
+- `in_progress`
+- `code_submitted`
+- `review_requested`
+- `merged`
+- `blocked`
+- `canceled`
+
+Recommended `validation_status` values:
+
+- `not_run`
+- `partial`
+- `passed`
+- `failed`
+- `unknown`
+
+Recommended `integration_status` values:
+
+- `not_ready`
+- `waiting_review`
+- `ready_to_merge`
+- `merging`
+- `integrated`
+- `blocked`
+
+If `team-status.md` conflicts with source files, regenerate it or fix the source files first.
+
+### `.claw/developers/DEV-xxx.yaml`
+
+Use as the optional identity record for a developer or project manager.
+
+Record:
+
+- developer id
+- display name
+- role
+- public key or verified Git identity
+- Git platform and username
+- SSH commit signing key fingerprint
+- status
+- managing project manager
+- long-lived allowed scopes
+- optional role-sharing exception note
+- optional expiry or rotation note
+
+Recommended statuses:
+
+- `active`
+- `suspended`
+- `revoked`
+- `expired`
+
+Do not store private keys, passwords, bearer tokens, or reusable secrets.
+
+When manager-gated authorization is enabled, developer records should bind `developer_id` to a Git platform account and a commit signing identity. Prefer SSH commit signing for new teams. GPG signing is compatible for teams that already manage GPG keys. Sigstore/gitsign is an advanced option for CI and supply-chain audit.
+
+Default identity binding:
+
+- one Git platform username maps to one active `developer_id`
+- a Git username may map to multiple active identities only when each identity has a distinct SSH signing key fingerprint and a `role_sharing_exception` note
+- the same Git username plus the same SSH signing key fingerprint must not represent both a manager and a developer under the default policy
+
+### `.claw/assignments/TASK-xxx.yaml`
+
+Use as the optional manager-authorized work contract for one task.
+
+Record:
+
+- task id
+- assignee developer id
+- assigning manager id
+- assignment status
+- branch name
+- PR URL when available
+- spec path
+- task status path
+- scope files
+- touch policy
+- shared contracts
+- assignment timestamp and expiry
+- signature or external verification reference
+
+Recommended `touch_policy` values:
+
+- `exclusive`
+- `shared`
+- `read_only`
+
+Recommended assignment statuses:
+
+- `active`
+- `paused`
+- `revoked`
+- `expired`
+- `completed`
+
+`assigned_by` should reference a `MANAGER-xxx` identity. The assignment is the source of truth for `branch`, `scope_files`, and scope expansion approvals. Developers must not self-assign or expand their own `scope_files`.
+
+### `scripts/check-assignment.py`
+
+Use as the local and CI preflight gate for manager-gated authorization.
+
+Inputs:
+
+- state directory
+- developer id
+- task id
+- optional branch
+- optional Git platform username
+- optional SSH signing key fingerprint
+- changed or intended file paths
+
+Checks:
+
+- developer record exists and is `active`
+- assignment exists and is `active`
+- assignment `assignee` matches the developer id
+- assignment `assigned_by` references `MANAGER-xxx`
+- optional Git username and SSH signing fingerprint match the developer record
+- active duplicate Git usernames follow the role-sharing exception rules
+- optional branch matches the assignment branch
+- every file path is inside assignment `scope_files`
+
+Outputs:
+
+- `allowed` with a zero exit code when all checks pass
+- `blocked_*` findings with a non-zero exit code when identity, assignment, branch, or scope checks fail
+
+### `templates/github-workflows/check-assignment.yml`
+
+Use as the starter GitHub Actions PR gate for manager-gated authorization.
+
+Behavior:
+
+- reads the PR author as the Git platform username
+- resolves `TASK-xxx` from branch name, PR title, or PR body
+- maps PR author to `developer_id` through `.claw/developers/*.yaml`
+- collects changed files from the PR diff
+- calls `scripts/check-assignment.py .claw`
+
+Adopting projects should copy it into `.github/workflows/check-assignment.yml`, enable required status checks in branch protection, and adapt task-id parsing if their branch naming scheme differs.
+
+### `.claw/tasks/TASK-xxx.md`
+
+Use as the optional per-task status slice maintained by the assigned developer.
+
+Record:
+
+- task id
+- assignee developer id
+- branch and PR URL
+- current status
+- completed work
+- changed files summary
+- verification evidence from real commands
+- blockers
+- handoff notes
+
+This file is the right place for routine developer progress in async parallel delivery. `current-status.md` should only link to it or summarize it briefly.
 
 ### `task-archive.md`
 
@@ -311,6 +528,9 @@ Recommended `kind` values:
 - `task-archive`
 - `test-report`
 - `devops`
+- `integration-queue`
+- `team-status`
+- `task-status`
 
 ## Read Strategy
 
@@ -322,8 +542,11 @@ Use this read order:
 4. Read `task-archive.md` only when archived completed-work history matters.
 5. In brownfield projects, open `PROJECT-BASELINE.md` before major legacy implementation when it exists.
 6. Open the feature spec referenced by `spec_path` before non-trivial implementation.
-7. Read only the additional files needed for the task.
-8. Avoid loading cold files or unrelated specs unless the task truly needs them.
+7. In async parallel delivery, read only the referenced `developer`, `assignment`, `task_status_path`, and `integration_queue` files.
+8. In manager-gated delivery, run or mentally perform the `check-assignment.py` preflight before editing files.
+9. When a manager asks for team status, generate or read `team-status.md` through the standard aggregation method.
+10. Read only the additional files needed for the task.
+11. Avoid loading cold files or unrelated specs unless the task truly needs them.
 
 ## Update Strategy
 
@@ -333,9 +556,12 @@ Apply these rules:
 2. Update `task-board.md` whenever task state, owner role, dependency, or handoff context changed.
 3. When completed or canceled task cards exceed 20 items on the board, move the oldest cards into `task-archive.md`.
 4. In brownfield projects, update `PROJECT-BASELINE.md` whenever verified legacy understanding materially changed.
-5. Update at most the triggered warm/cold files and referenced delivery docs.
-6. Prefer appending concise structured entries over rewriting unrelated content.
-7. If a task changes no durable state, update only `current-status.md`.
+5. In async parallel delivery, developers update their assigned `.claw/tasks/TASK-xxx.md` for routine progress, while the project manager or integration owner reconciles `task-board.md`, `current-status.md`, and `integration-queue.md`.
+6. In manager-gated delivery, only the project manager updates developer records and assignment scope.
+7. Regenerate `team-status.md` when the manager needs a current team view or when source contribution state changed.
+8. Update at most the triggered warm/cold files and referenced delivery docs.
+9. Prefer appending concise structured entries over rewriting unrelated content.
+10. If a task changes no durable state, update only `current-status.md`.
 
 ## Conflict Resolution
 
@@ -353,6 +579,11 @@ Priority examples:
 - `PROJECT-BASELINE.md` wins over `current-status.md` for legacy-baseline notes and current architectural unknowns.
 - `docs/specs/FEAT-xxx-*.md` wins over `task-board.md` for feature-specific acceptance criteria and design details.
 - `issue-list.md` wins over task cards for blocker details and root-cause status.
+- `.claw/assignments/TASK-xxx.yaml` wins over `task-board.md` for authorized assignee, manager, branch, write scope, assignment status, and touch policy.
+- `.claw/developers/DEV-xxx.yaml` wins over chat or Git author metadata for developer id, active status, Git platform username, and SSH signing fingerprint.
+- `.claw/tasks/TASK-xxx.md` wins over `current-status.md` for a developer's routine task progress.
+- `.claw/integration-queue.md` wins over task cards for merge order and integration gate state.
+- `developers`, `assignments`, `tasks`, `task-board`, and `integration-queue` all win over `team-status.md`; regenerate `team-status.md` when stale.
 
 ## Suggested `current-status.md` Read Index
 
@@ -387,6 +618,11 @@ Record:
 - task dependencies and handoff notes
 - archived completed-work history
 - project-root skill declaration anchors in `README.md` and `AGENTS.md`
+- developer IDs and public identity records when async parallel delivery is enabled
+- manager-signed task assignments and write scopes
+- per-task progress slices instead of hot-file diaries
+- generated team status summaries for manager review
+- integration branch, merge order, and validation gates
 - legacy baseline facts and active unknowns
 - feature acceptance criteria
 - verified commands
@@ -406,6 +642,10 @@ Avoid:
 - brownfield baseline notes that do not distinguish `verified` from `inferred`
 - unbounded growth in `Completed Tasks` when those tasks should have been archived
 - projects that claim to use this protocol but omit the managed declaration block from `README.md` or `AGENTS.md`
+- private keys, manager passwords, bearer tokens, or reusable secrets in repository files
+- multi-developer progress journals inside `current-status.md`
+- hand-maintained `team-status.md` presented as authoritative truth
+- code changes outside assignment `scope_files` without an updated assignment
 
 ## Maintenance Guidelines
 

@@ -1,7 +1,7 @@
 ---
 kind: task-board
 version: 3
-updated_at: 2026-04-30T01:31:01Z
+updated_at: 2026-05-16T01:59:36Z
 updated_by: codex
 board_status: active
 ---
@@ -20,6 +20,8 @@ board_status: active
 - `fullstack-agent`
 - `qa-agent`
 - `release-agent`
+- `project-manager`
+- `integration-agent`
 - `human`
 - `shared`
 - `unassigned`
@@ -53,6 +55,123 @@ board_status: active
 
 - 下一位接手者先看 `docs/specs/FEAT-001-project-skill-declaration.md`，再根据真实外部项目反馈决定是否调整声明块策略
 
+### TASK-002 - Add identity-based asynchronous parallel delivery protocol
+
+- status: `review`
+- priority: `high`
+- owner_role: `shared`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-002-identity-parallel-delivery.md`
+- depends_on: `none`
+- blocked_by: `none`
+- related_issues: `none`
+- scope_files: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, scripts/init-state.sh, scripts/validate-state.py, templates/current-status.md, templates/task-board.md, templates/docs/feature-spec-template.md, templates/integration-queue.md, templates/parallel/developer.yaml, templates/parallel/assignment.yaml, templates/parallel/task-status.md, .claw/current-status.md, .claw/goals.md, .claw/decisions.md, .claw/task-board.md, .claw/test-report.md, .claw/integration-queue.md, docs/specs/_feature-spec-template.md, docs/specs/FEAT-002-identity-parallel-delivery.md`
+- branch: `n/a`
+- pr_url: `n/a`
+- assignment_path: `none`
+- task_status_path: `none`
+- parallel_group: `protocol-identity-parallel`
+- touch_policy: `shared`
+- shared_contracts: `docs/specs/FEAT-002-identity-parallel-delivery.md`
+- merge_policy: `direct_workspace_update`
+- integration_queue: `.claw/integration-queue.md`
+- integration_owner: `codex`
+
+#### Done When
+
+- 技能协议明确身份、公钥、任务授权、单任务状态和集成队列模型
+- 模板和 README/STATE-MODEL 同步说明异步多开发者协作流程
+- 初始化脚本创建并行协作目录和集成队列模板
+- 校验器能轻量检查可选身份/授权/任务状态文件
+- 当前仓库状态校验通过并记录真实验证结果
+
+#### Next Action
+
+- 用户 review 身份化异步并行交付协议，并决定是否需要补充示例项目
+
+#### Handoff Note
+
+- 本任务已实现协议、模板、初始化脚本、校验器和状态文件更新；后续如需强化安全性，应新增独立签名/验签工具，而不是把 token 或口令写入仓库
+
+### TASK-003 - Add standard team status aggregation
+
+- status: `review`
+- priority: `high`
+- owner_role: `shared`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-003-team-status-aggregation.md`
+- depends_on: `TASK-002`
+- blocked_by: `none`
+- related_issues: `none`
+- scope_files: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, scripts/init-state.sh, scripts/validate-state.py, scripts/summarize-team-status.py, templates/team-status.md, .claw/current-status.md, .claw/task-board.md, .claw/test-report.md, .claw/team-status.md, docs/specs/FEAT-003-team-status-aggregation.md`
+- branch: `n/a`
+- pr_url: `n/a`
+- assignment_path: `none`
+- task_status_path: `none`
+- parallel_group: `protocol-team-status`
+- touch_policy: `shared`
+- shared_contracts: `docs/specs/FEAT-003-team-status-aggregation.md`
+- merge_policy: `direct_workspace_update`
+- integration_queue: `.claw/integration-queue.md`
+- integration_owner: `codex`
+
+#### Done When
+
+- 技能协议明确 `team-status.md` 是派生汇总视图
+- README 说明管理者如何运行标准汇总方法
+- 新增团队状态模板和汇总脚本
+- 初始化脚本和校验器支持 `team-status.md`
+- 当前仓库状态校验和汇总脚本验证通过
+
+#### Next Action
+
+- 用户 review 团队状态汇总协议和脚本输出格式
+
+#### Handoff Note
+
+- 本任务已实现 `team-status.md` 派生视图、汇总脚本、初始化脚本和校验器支持；远端 PR/CI 平台数据应后续作为可选扩展接入
+
+### TASK-004 - Add project-manager-gated team authorization
+
+- status: `review`
+- priority: `high`
+- owner_role: `shared`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-004-project-manager-gated-authorization.md`
+- depends_on: `TASK-002, TASK-003`
+- blocked_by: `none`
+- related_issues: `none`
+- scope_files: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, scripts/check-assignment.py, scripts/init-state.sh, scripts/validate-state.py, templates/github-workflows/check-assignment.yml, templates/parallel/developer.yaml, templates/parallel/assignment.yaml, templates/docs/feature-spec-template.md, docs/specs/_feature-spec-template.md, .claw/current-status.md, .claw/goals.md, .claw/decisions.md, .claw/task-board.md, .claw/test-report.md, docs/specs/FEAT-004-project-manager-gated-authorization.md`
+- branch: `n/a`
+- pr_url: `n/a`
+- assignment_path: `none`
+- task_status_path: `none`
+- parallel_group: `protocol-manager-gated-authorization`
+- touch_policy: `shared`
+- shared_contracts: `docs/specs/FEAT-004-project-manager-gated-authorization.md`
+- merge_policy: `direct_workspace_update`
+- integration_queue: `.claw/integration-queue.md`
+- integration_owner: `codex`
+- authorization_check: `scripts/check-assignment.py`
+
+#### Done When
+
+- 技能协议明确项目经理是团队成员和任务授权的唯一授权入口
+- 默认推荐 Git 平台账号绑定加 SSH commit signing
+- 默认一个 Git 平台账号只绑定一个 active 身份；同账号多身份必须使用不同 SSH signing key 并记录例外
+- 模板记录项目经理、Git 平台账号、SSH 签名指纹、长期范围和单任务授权范围
+- 新增 preflight 授权检查脚本，能阻止身份不符、分支不符和文件越界
+- 新增 GitHub Actions PR gate 示例，展示如何传入 PR author、branch 和 changed files
+- 当前仓库状态校验和脚本验证通过
+
+#### Next Action
+
+- 用户 review 项目经理门控授权协议、模板、`scripts/check-assignment.py` 行为和 GitHub Actions 示例
+
+#### Handoff Note
+
+- 本任务已实现协议、模板、preflight 脚本、GitHub Actions 示例和校验器支持；不要保存任何私钥、token、口令或 bearer secret，Git 级可信度由平台账号、SSH 签名、分支保护和 CI 共同实现
+
 ## Completed Tasks
 
 - 暂无已完成任务。
@@ -62,6 +181,8 @@ board_status: active
 - 这里只记录可执行任务，不记录完整 bug 细节或长篇设计。
 - `owner_role` 是稳定责任角色，不依赖智能体自我身份。
 - `claimed_by` 是可选运行时标签，环境知道就写，不知道可留空。
+- 异步多开发者协作时，填写 `assignment_path`、`task_status_path`、`branch`、`scope_files` 和 `touch_policy`。
+- `scope_files` 是授权写入边界；越界前应先更新任务授权。
 - 非平凡功能任务应填写 `spec_path` 并指向 `docs/specs/` 下真实文件。
 - Brownfield 接入任务可先指向 `docs/specs/PROJECT-BASELINE.md`，后续再拆成具体 feature spec。
 - `Completed Tasks` 最多保留最近 20 条任务卡，超过后将最旧的 `done` 或 `canceled` 任务移动到 `task-archive.md`。
