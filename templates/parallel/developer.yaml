@@ -1,0 +1,16 @@
+developer_id: DEV-alice
+display_name: Alice
+role: frontend-agent
+public_key: "ssh-ed25519 AAAA... alice@example.com"
+git_platform: github
+git_username: alice-dev
+verified_identity: "github:alice-dev"
+ssh_signing_key_fingerprint: "SHA256:abc123"
+status: active
+managed_by: MANAGER-001
+allowed_scopes:
+  - src/example/**
+  - tests/example/**
+role_sharing_exception: "none"
+allowed_until: YYYY-MM-DD
+notes: "Default to one Git account per active identity. Same-account multi-role use requires a distinct SSH signing key fingerprint and a role_sharing_exception note. public_key is used by scripts/dev-login.py for one-time challenge verification. Do not store private keys, passwords, bearer tokens, or reusable secrets here."
