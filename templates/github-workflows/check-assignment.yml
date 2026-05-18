@@ -1,0 +1,92 @@
+name: Check task assignment
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-assignment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve task, developer, branch, and changed files
+        id: context
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          task_id="$(printf '%s\n%s\n%s\n' "$PR_BRANCH" "$PR_TITLE" "${PR_BODY:-}" | grep -Eo 'TASK-[0-9]+' | head -n 1 || true)"
+          if [ -z "$task_id" ]; then
+            echo "Could not resolve TASK-xxx from branch, PR title, or PR body" >&2
+            exit 1
+          fi
+
+          developer_id="$(python3 - <<'PY'
+from pathlib import Path
+import os
+
+author = os.environ["PR_AUTHOR"]
+developers_dir = Path(".claw/developers")
+
+def parse(path):
+    fields = {}
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#") or ":" not in stripped:
+            continue
+        key, value = stripped.split(":", 1)
+        fields[key.strip()] = value.strip().strip('"').strip("'")
+    return fields
+
+for path in sorted(developers_dir.glob("*.y*ml")):
+    fields = parse(path)
+    if fields.get("git_username") == author:
+        print(fields.get("developer_id") or path.stem)
+        raise SystemExit(0)
+
+raise SystemExit(f"No active developer record maps git_username={author!r}")
+PY
+)"
+
+          git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/changed-files.txt
+          if [ ! -s /tmp/changed-files.txt ]; then
+            echo "No changed files detected" >&2
+            exit 1
+          fi
+
+          {
+            echo "task_id=$task_id"
+            echo "developer_id=$developer_id"
+            echo "branch=$PR_BRANCH"
+            echo "changed_files<<EOF"
+            cat /tmp/changed-files.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check manager assignment scope
+        run: |
+          set -euo pipefail
+          # This example validates author, branch, scope mode, write roots, protected paths, and changed-file scope.
+          # If your platform exposes commit signing fingerprints to CI,
+          # also pass --ssh-signing-key-fingerprint to check-assignment.py.
+          mapfile -t changed_files <<< "${{ steps.context.outputs.changed_files }}"
+          python3 scripts/check-assignment.py .claw \
+            --developer "${{ steps.context.outputs.developer_id }}" \
+            --task "${{ steps.context.outputs.task_id }}" \
+            --branch "${{ steps.context.outputs.branch }}" \
+            --git-username "${{ github.event.pull_request.user.login }}" \
+            --files "${changed_files[@]}"
