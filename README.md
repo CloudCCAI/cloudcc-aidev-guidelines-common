@@ -8,7 +8,7 @@
 2. 用 `task-board.md` 管理任务、依赖和交接
 3. 用 `docs/specs/` 强制功能级设计先落盘再开发，并支持老项目渐进接入
 4. 用身份、公钥、任务授权、分片状态和集成队列支持异步多开发者并行交付
-5. 用项目经理门控授权、Git 平台账号绑定、SSH commit signing 和 preflight 检查阻止越权开发
+5. 用项目经理门控授权、SSH challenge-response 登录、Git 平台账号绑定、SSH commit signing 和 preflight 检查阻止越权开发
 
 It now covers five layers:
 
@@ -16,7 +16,7 @@ It now covers five layers:
 2. executable task tracking and handoff in `task-board.md`
 3. spec-driven delivery in `docs/specs/`, including brownfield adoption
 4. identity-based async parallel delivery with assignments, status slices, and integration queues
-5. project-manager-gated authorization with Git account binding, SSH commit signing, and preflight scope checks
+5. project-manager-gated authorization with SSH challenge-response login, Git account binding, SSH commit signing, and preflight scope checks
 
 ## 一句话介绍 | One-Line Pitch
 
@@ -24,7 +24,7 @@ It now covers five layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`3.6.0`
+当前 skill 版本：`3.8.0`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -36,7 +36,8 @@ It now covers five layers:
 | `STATE-MODEL.md` | 详细状态模型 / detailed state model |
 | `templates/` | 核心状态与可选并行协作模板 / core state and optional parallel coordination templates |
 | `scripts/ensure-agent-guidance.sh` | 项目级 README/AGENTS 声明写入器 / managed README/AGENTS declaration writer |
-| `scripts/check-assignment.py` | 开发前身份、任务、分支和文件范围检查 / preflight identity, task, branch, and file-scope check |
+| `scripts/dev-login.py` | 开发前本地 SSH challenge-response 身份登录 / local SSH challenge-response identity login |
+| `scripts/check-assignment.py` | 开发前身份、任务、分支、任务边界和受保护路径检查 / preflight identity, task, branch, task boundary, and protected-path check |
 | `scripts/summarize-team-status.py` | 团队状态汇总器 / derived team status summarizer |
 | `templates/github-workflows/check-assignment.yml` | GitHub Actions 授权检查示例 / GitHub Actions assignment gate example |
 | `templates/team-status.md` | 管理者团队状态汇总模板 / manager team status view template |
@@ -57,7 +58,8 @@ It now covers five layers:
 - 项目根目录必须有 README/AGENTS 双锚点声明技能要求
 - 异步并行开发时，用公钥身份和任务授权记录替代仓库内口令或 bearer token
 - 多人开发默认由项目经理门控授权，绑定 Git 平台账号和 SSH commit signing 指纹
-- 开发前必须通过身份、任务、分支和文件范围 preflight 检查；不通过就停止开发
+- 使用身份或授权记录的项目会自动启用硬身份门禁，本地开发前必须用 SSH challenge-response 验证当前操作者确实持有登记身份对应的私钥
+- 开发前必须通过身份、任务、分支和文件范围 preflight 检查；不通过或无法运行检查就停止开发
 - 多开发者进度写入单任务状态文件，`current-status.md` 只做热索引和主线快照
 - 最终合并走集成队列、集成分支和真实验证记录
 - 摘要、任务、问题、设计各自有唯一事实源
@@ -192,7 +194,7 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 核心原则：
 
 - 不把管理者口令、开发者 bearer token、私钥或可复用密钥写入仓库，即使加密后也不推荐。
-- 仓库只记录公钥、开发者 ID、任务授权、写入范围、状态分片和集成队列。
+- 仓库只记录公钥、开发者 ID、任务授权、任务边界、写入根路径、受保护路径、状态分片和集成队列。
 - 真实身份强校验交给 Git signed commits、代码托管平台 verified identity、CI 或专用验签工具。
 - 开发者只更新自己分配到的 `.claw/tasks/TASK-xxx.md` 和授权范围内的代码。
 - `current-status.md` 只做主线热索引，由项目管理者或集成者在合并时刷新。
@@ -202,7 +204,7 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 1. 项目管理者登记自己的公钥或 Git verified identity。
 2. 管理者在 `.claw/developers/DEV-xxx.yaml` 中登记开发者公钥、角色和状态。
 3. 管理者为每个并行任务创建 task card 和 `.claw/assignments/TASK-xxx.yaml`。
-4. 开发者从主分支创建授权分支，只改 `scope_files` 内的文件。
+4. 开发者从主分支创建授权分支，只处理被分配的任务；普通源码/测试可在 `allowed_write_roots` 内修改，受保护路径必须有精确授权。
 5. 开发者把进度、验证和交接写入 `.claw/tasks/TASK-xxx.md`。
 6. 集成者按 `.claw/integration-queue.md` 的顺序合并分支、解决冲突、运行真实验证。
 7. 集成通过后再更新 `task-board.md`、`current-status.md` 和 `test-report.md`。
@@ -215,11 +217,26 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 
 1. 项目内身份 `developer_id` 绑定 GitHub/GitLab 等平台账号。
 2. 开发者使用专门的 SSH commit signing key。
-3. `.claw/developers/DEV-xxx.yaml` 只记录 Git 平台账号和 SSH signing key fingerprint。
-4. `.claw/assignments/TASK-xxx.yaml` 记录项目经理授权的任务、分支、文件范围和签名验证引用。
+3. `.claw/developers/DEV-xxx.yaml` 只记录公开身份材料，例如 Git 平台账号、SSH public key 和 SSH signing key fingerprint。
+4. `.claw/assignments/TASK-xxx.yaml` 记录项目经理授权的任务、分支、scope mode、写入根路径、受保护路径和签名验证引用。
 5. 分支保护要求 signed commits 和 CI 检查通过。
 
-开发前或 PR CI 推荐运行：
+本地开发前必须先运行登录式身份验证。只要项目存在 `.claw/developers/`、`.claw/assignments/`、`assignment_path` 或 `local_login_required: true`，这个硬身份门禁就自动启用：
+
+```bash
+python3 /path/to/this-skill/scripts/dev-login.py /path/to/your-project/.claw \
+  --ssh-key ~/.ssh/id_ed25519_cc_dev \
+  --developer DEV-alice \
+  --task TASK-001 \
+  --branch feat/TASK-001-feature-title \
+  --files src/example/file.ts tests/example/test.ts
+```
+
+`dev-login.py` 会从本机私钥推导 public key 和 fingerprint，匹配 `.claw/developers/*.yaml`，生成一次性 challenge，用私钥签名，并用登记的 `public_key` 验签。通过后会把 `developer_id`、fingerprint 和私钥路径写入本机忽略文件 `.claw-local/identity.json` 或 `.ai-dev-local/identity.json`，后续可省略 `--ssh-key` 自动复用路径。缓存只保存路径和公开标识，不保存私钥内容；缓存存在不代表已登录，每次开发前仍必须重新验签。
+
+硬身份门禁启用后，AI agent 或开发者在 `dev-login.py` 返回 `allowed` 之前，不得修改源码、测试、运行配置、迁移、生成的应用资产、feature spec 或任务状态文件。聊天里声明 `developer_id`、已知当前用户、Git author/email、历史记忆、缓存 key 路径都不能绕过此门禁。如果缺少私钥路径、任务 ID、分支、待修改文件列表或 assignment，必须先停下补齐验证输入或让 PM 更新授权。
+
+PR CI 或只需要检查任务授权时运行：
 
 ```bash
 python3 /path/to/this-skill/scripts/check-assignment.py /path/to/your-project/.claw \
@@ -231,7 +248,31 @@ python3 /path/to/this-skill/scripts/check-assignment.py /path/to/your-project/.c
   --files src/example/file.ts tests/example/test.ts
 ```
 
-检查通过会输出 `allowed`；如果身份未知、成员未激活、任务未分配给当前开发者、分支不匹配或文件越界，会返回非 0 并输出阻止原因。
+检查通过会输出 `allowed`；如果身份未知、成员未激活、私钥验签失败、任务未分配给当前开发者、分支不匹配、文件不在允许写入根路径内，或触碰受保护路径但未精确授权，会返回非 0 并输出阻止原因。
+
+推荐的任务授权模型：
+
+```yaml
+scope_mode: task_bounded_broad_code
+allowed_write_roots:
+  - src/**
+  - tests/**
+scope_files:
+  - docs/specs/FEAT-036-openapi-dify-parity.md
+  - .claw/tasks/TASK-112.md
+protected_paths:
+  - .claw/assignments/**
+  - .claw/developers/**
+  - scripts/dev-login.py
+  - scripts/check-assignment.py
+  - .github/workflows/**
+  - migrations/**
+task_boundary:
+  - "所有代码修改必须服务于 TASK-112 和 FEAT-036 的验收标准。"
+change_manifest_required: true
+```
+
+`scope_mode: task_bounded_broad_code` 表示门禁控制的是开发者是否有权处理当前任务，而不是让 PM 预判每一个实现文件。开发者可以在允许的源码和测试根路径内修改必要调用链，但不能修改治理文件、身份授权、CI、迁移、门禁脚本等受保护路径，除非这些路径被 PM 精确列入 `scope_files`。窄任务仍可使用 `scope_mode: exact_files`，此时 `scope_files` 是硬边界。
 
 注意：Git author name 和 email 不能作为强身份依据。它们可以作为辅助信息，但真正可信的门禁应结合 Git 平台账号、SSH commit signing、分支保护和 CI。
 
@@ -240,6 +281,8 @@ python3 /path/to/this-skill/scripts/check-assignment.py /path/to/your-project/.c
 - 一个 Git 平台账号默认只能绑定一个 active `developer_id`
 - 如果同一个 Git 账号必须同时承担项目经理和开发者等多个身份，必须为每个身份使用不同 SSH signing key fingerprint，并在身份记录里显式说明
 - 默认不允许同一个 Git 账号 + 同一个 SSH signing key 同时代表 `MANAGER-xxx` 和 `DEV-xxx`
+- 同一个 Git 账号兼任多个角色时，`dev-login.py` 通过不同私钥的 challenge-response 结果自动解析当前使用的是哪个 `developer_id`
+- `scripts/check-assignment.py` 不能替代本地 `dev-login.py`；它用于 CI、PR 和 assignment-only 检查
 
 GitHub Actions 示例：
 
@@ -287,7 +330,7 @@ python3 /path/to/this-skill/scripts/summarize-team-status.py /path/to/your-proje
 - 做实现或交接时再读 `task-board.md`
 - 任务有 `spec_path` 时先读对应 spec
 - 任务有 `assignment_path` 或 `task_status_path` 时，只读取对应授权和单任务状态
-- 异步多人开发时，先识别 `developer_id`，再用 `scripts/check-assignment.py` 或等价逻辑检查 assignment、branch 和 `scope_files`
+- 异步多人开发时，先识别 `developer_id`，再用 `scripts/check-assignment.py` 或等价逻辑检查 assignment、branch、scope mode、写入根路径和受保护路径
 - 如果 preflight 不通过，停止开发并要求项目经理更新授权
 - 管理者询问团队状态时，用标准汇总脚本生成或读取 `.claw/team-status.md`
 - 结束时至少回写 `current-status.md`
@@ -316,7 +359,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 | Warm | `integration-queue.md` | 异步并行集成时读写 | 集成分支、合并顺序、验证门禁 |
 | Warm | `team-status.md` | 管理者查看团队状态时生成/读取 | 团队成员、任务分配、贡献状态、集成状态的派生视图 |
 | Warm | `developers/*.yaml` | 身份/授权相关时读写 | 开发者 ID、Git 平台账号、SSH 签名指纹、角色、状态 |
-| Warm | `assignments/*.yaml` | 分配任务时读写 | 项目经理、任务负责人、分支、写入范围、签名授权 |
+| Warm | `assignments/*.yaml` | 分配任务时读写 | 项目经理、任务负责人、分支、scope mode、写入根路径、受保护路径、签名授权 |
 | Warm | `tasks/*.md` | 单任务推进时读写 | 开发者进度、验证证据、交接说明 |
 | Cold | `task-archive.md` | 仅在看历史任务时读写 | 超出保留窗口的已完成/已取消任务 |
 | Warm | `issue-list.md` | 按需读写 | bug、阻塞、风险 |
@@ -334,7 +377,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 | `current-status.md` | 当前会话、阶段、下一步 |
 | `task-board.md` | 执行队列、`owner_role`、依赖、交接说明 |
 | `.claw/developers/*.yaml` | 开发者身份、Git 平台账号、SSH 签名指纹、角色状态、长期范围 |
-| `.claw/assignments/*.yaml` | 项目经理任务授权、分支、写入范围、管理者签名 |
+| `.claw/assignments/*.yaml` | 项目经理任务授权、分支、任务边界、写入根路径、受保护路径、管理者签名 |
 | `.claw/tasks/*.md` | 单个任务的开发者进度、验证证据、交接说明 |
 | `.claw/integration-queue.md` | 集成分支、合并顺序、集成门禁 |
 | `.claw/team-status.md` | 派生团队状态汇总；不作为事实源 |
@@ -362,7 +405,10 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - `depends_on`
 - `blocked_by`
 - `related_issues`
+- `scope_mode`
+- `allowed_write_roots`
 - `scope_files`
+- `protected_paths`
 - `branch`
 - `pr_url`
 - `assignment_path`
@@ -404,7 +450,9 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - `owner_role` 是稳定责任角色，不依赖智能体自我身份
 - `claimed_by` 是可选运行时标签，环境知道就写，不知道就留空
 - `assignment_path` 和 `task_status_path` 只在异步多开发者协作中必须填写
-- `scope_files` 是写入边界，不应被当成普通说明随意突破
+- `scope_mode: task_bounded_broad_code` 适合普通功能开发，`allowed_write_roots` 放开源码和测试，`protected_paths` 保护治理、CI、迁移和门禁脚本
+- `scope_mode: exact_files` 适合文档修补、配置小改或安全敏感任务，`scope_files` 是硬边界
+- 开发者应在任务状态或 PR 中维护变更清单，说明跨模块修改为什么服务于当前任务
 
 ## `task-board.md` 更新与归档机制
 
@@ -498,18 +546,27 @@ docs/specs/
 - `assigned_by`
 - `status`
 - `branch`
+- `scope_mode`
+- `allowed_write_roots`
 - `scope_files`
+- `protected_paths`
 - `touch_policy`
 - `shared_contracts`
+- `task_boundary`
+- `change_manifest_required`
 - `signature`
 
 约束：
 
 - `assigned_by` 应指向 `MANAGER-xxx`
+- 普通功能开发推荐 `scope_mode: task_bounded_broad_code`，精确文件范围只用于任务文档、任务状态和受保护路径
+- 若使用 `scope_mode: exact_files`，所有目标文件都必须落在 `scope_files` 内
 - 默认签名方案是 SSH commit signing
 - Git author name/email 只可作为辅助信息，不能单独作为强身份依据
 - 默认一个 Git 平台账号只绑定一个 active 身份；同账号多身份必须使用不同 SSH signing key fingerprint
-- 开发前或 PR CI 应运行 `scripts/check-assignment.py`
+- PR CI 或 assignment-only 检查必须运行 `scripts/check-assignment.py`；本地开发必须先运行 `scripts/dev-login.py`
+- 本地开发前必须运行 `scripts/dev-login.py`，用 `public_key` 验证当前用户确实持有对应私钥
+- `.claw-local/identity.json` 和 `.ai-dev-local/identity.json` 是本机缓存，不是事实源，必须加入 `.gitignore`
 
 `.claw/tasks/TASK-xxx.md` 推荐记录：
 
@@ -550,6 +607,9 @@ docs/specs/
 - 异步多开发者协作时，把单人进度放到 `.claw/tasks/TASK-xxx.md`，让 `current-status.md` 保持短小
 - 管理者查看团队状态时，使用 `scripts/summarize-team-status.py` 生成 `.claw/team-status.md`
 - 异步多人开发时，使用项目经理授权、SSH commit signing 和 `scripts/check-assignment.py` 做开发前门禁
+- 普通功能任务放开源码/测试写入根路径，用任务 spec、验收标准和变更清单约束工作边界
+- 本地开发会话开始时，先用 `scripts/dev-login.py` 报告并验证当前身份，再让 AI 或开发者修改代码
+- 如果 `dev-login.py` 未运行、运行失败或缺少 task/branch/files 等必要输入，AI agent 必须停止，不得先修改再补验证
 - 同一 Git 账号兼任多个身份时，用不同 SSH signing key 区分项目经理身份和开发者身份
 - 共享接口、数据结构、配置 key 和迁移顺序先写进 spec，再让下游任务并行
 - 功能实现偏离原设计时，先更新 spec 再继续写代码
@@ -571,8 +631,12 @@ docs/specs/
 - 把管理者口令、开发者 token、私钥或可复用密钥提交到仓库
 - 多个开发者频繁改同一个 `current-status.md` 来记录个人进度
 - 手工维护 `team-status.md` 并把它当成事实源
-- 没有任务授权和 `scope_files` 就让两个分支同时修改高风险共享文件
+- 没有任务授权、任务边界和受保护路径规则就让两个分支同时修改高风险共享文件
+- 用过窄的 `scope_files` 逼开发者把必要调用链修复塞进错误模块
 - 只依赖 Git author name/email 判断开发者身份
+- 只记住私钥路径但不重新做 challenge-response 验证
+- 在 `scripts/dev-login.py` 返回 `allowed` 前修改源码、测试、配置、迁移、feature spec 或任务状态
+- 把聊天声明、历史记忆、缓存路径或 `scripts/check-assignment.py` 当成本地身份登录替代品
 - 让开发者自行扩大自己的授权范围或添加团队成员
 - 同一个 Git 账号和同一把 SSH signing key 同时代表项目经理和开发者
 
@@ -585,7 +649,7 @@ docs/specs/
 
 ---
 
-*版本 3.6.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付和项目经理门控授权的项目状态与交付规范*
+*版本 3.8.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限和项目经理门控授权的项目状态与交付规范*
 
 <!-- cc-aidev-guidelines-common:begin -->
 ## AI Development Protocol

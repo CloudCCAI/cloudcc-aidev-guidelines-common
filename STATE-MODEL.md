@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 3.6.0
+version: 3.8.0
 ---
 
 # State Model Reference
@@ -21,9 +21,10 @@ This file defines the detailed state model used by `SKILL.md`.
 10. Project-root `README.md` and `AGENTS.md` must anchor the skill requirement for every agent.
 11. Async parallel delivery should use identity records, manager assignments, per-task status slices, generated team status, and integration queues instead of shared hot-file diaries.
 12. Repository documents must not store manager passwords, bearer tokens, private keys, or reusable secrets.
-13. Manager-gated delivery should bind project identities to Git platform accounts and SSH commit signing fingerprints.
-14. Development must stop when preflight identity, assignment, branch, or file-scope checks fail.
-15. One Git platform account should map to one active identity by default; role sharing requires distinct SSH signing key fingerprints.
+13. Manager-gated delivery should bind project identities to Git platform accounts, public SSH keys, and SSH commit signing fingerprints.
+14. Local development must verify the current operator through SSH challenge-response login before any code edit when identity or assignment records exist.
+15. Development must stop when login, preflight identity, assignment, branch, task-boundary, protected-path, file-scope checks, or hard identity gate prerequisites fail.
+16. One Git platform account should map to one active identity by default; role sharing requires distinct SSH signing key fingerprints.
 
 ## Project Instruction Anchors
 
@@ -231,13 +232,46 @@ Recommended statuses:
 
 Do not store private keys, passwords, bearer tokens, or reusable secrets.
 
-When manager-gated authorization is enabled, developer records should bind `developer_id` to a Git platform account and a commit signing identity. Prefer SSH commit signing for new teams. GPG signing is compatible for teams that already manage GPG keys. Sigstore/gitsign is an advanced option for CI and supply-chain audit.
+When manager-gated authorization is enabled, developer records should bind `developer_id` to a Git platform account and a commit signing identity. For local developer login, store the public SSH key so `scripts/dev-login.py` can verify private-key possession through a one-time challenge. Prefer SSH commit signing for new teams. GPG signing is compatible for teams that already manage GPG keys. Sigstore/gitsign is an advanced option for CI and supply-chain audit.
 
 Default identity binding:
 
 - one Git platform username maps to one active `developer_id`
 - a Git username may map to multiple active identities only when each identity has a distinct SSH signing key fingerprint and a `role_sharing_exception` note
 - the same Git username plus the same SSH signing key fingerprint must not represent both a manager and a developer under the default policy
+
+### `.claw-local/identity.json` or `.ai-dev-local/identity.json`
+
+Use as an optional machine-local cache for `scripts/dev-login.py`.
+
+Record:
+
+- resolved developer id
+- local private key path
+- Git platform username
+- SSH signing key fingerprint
+- cache update timestamp
+
+This file is not project state and is not a source of truth. It must be ignored by Git, must not be copied between developers, and must never contain private key contents, passwords, bearer tokens, or reusable secrets. Every development session should still re-run challenge-response verification before editing.
+
+### Hard Identity Gate
+
+Use as the mandatory pre-edit gate whenever a project using this skill contains any of:
+
+- `.claw/developers/` or `.ai-dev/developers/`
+- `.claw/assignments/` or `.ai-dev/assignments/`
+- an active task with `assignment_path`
+- an assignment with `local_login_required: true`
+- a task card or feature spec that names `scripts/dev-login.py` as the identity check
+
+When the hard identity gate is active:
+
+- `scripts/dev-login.py` must return `allowed` in the current local session before any project implementation edit.
+- Implementation edits include source code, tests, runtime configuration, migrations, generated application assets, feature specs, task status files, and other files that change project behavior or delivery state.
+- A chat-declared `developer_id`, remembered user identity, Git author/email, visible OS user, prior successful PR, or `.claw-local/identity.json` cache entry is not sufficient.
+- `scripts/check-assignment.py` is not a substitute for local challenge-response login. It is for CI, PR checks, and assignment-only validation after identity inputs are already trusted.
+- If the task id, branch, intended file paths, private key path, developer record, or assignment is missing, the agent must stop before editing and ask for the missing input or project-manager authorization.
+- The only permitted pre-login repository edits are explicit project-manager bootstrap or repair edits to create the identity and assignment records needed to make the gate runnable. These edits must not include application source, tests, runtime config, migrations, or generated assets.
 
 ### `.claw/assignments/TASK-xxx.yaml`
 
@@ -253,7 +287,12 @@ Record:
 - PR URL when available
 - spec path
 - task status path
-- scope files
+- scope mode
+- allowed write roots
+- exact scope files
+- protected paths
+- task boundary
+- change manifest requirement
 - touch policy
 - shared contracts
 - assignment timestamp and expiry
@@ -273,7 +312,40 @@ Recommended assignment statuses:
 - `expired`
 - `completed`
 
-`assigned_by` should reference a `MANAGER-xxx` identity. The assignment is the source of truth for `branch`, `scope_files`, and scope expansion approvals. Developers must not self-assign or expand their own `scope_files`.
+`assigned_by` should reference a `MANAGER-xxx` identity. The assignment is the source of truth for `branch`, `scope_mode`, `allowed_write_roots`, `scope_files`, `protected_paths`, and scope expansion approvals. Developers must not self-assign, expand their own protected-path access, or change their task boundary.
+
+Recommended `scope_mode` values:
+
+- `exact_files`: all changed files must match `scope_files`; use for narrow documentation, configuration, or sensitive tasks.
+- `task_bounded_broad_code`: normal source and test changes may use `allowed_write_roots`; protected paths are blocked unless explicitly listed in `scope_files`; the linked task and feature spec define the work boundary.
+
+### `scripts/dev-login.py`
+
+Use as the mandatory local "who is currently editing" gate before manager-gated development starts.
+
+Inputs:
+
+- state directory
+- local private SSH key path, or a previously saved ignored local cache
+- optional expected developer id
+- optional task id
+- optional branch
+- optional Git platform username
+- changed or intended file paths
+
+Checks:
+
+- derives the public key and SSH fingerprint from the local private key
+- finds the matching active `.claw/developers/*.yaml` identity by public key or fingerprint
+- signs a one-time challenge with the local private key
+- verifies the signature with the registered public key
+- optionally calls `scripts/check-assignment.py` for task, branch, broad write root, protected path, and exact file-scope authorization
+- writes only the local private key path and resolved public identity metadata to `.claw-local/identity.json` or `.ai-dev-local/identity.json`
+
+Outputs:
+
+- `allowed` with the resolved `developer_id` when login and optional assignment checks pass
+- `blocked_*` findings with a non-zero exit code when the key is missing, identity is unknown or inactive, challenge verification fails, or assignment scope fails
 
 ### `scripts/check-assignment.py`
 
@@ -298,7 +370,9 @@ Checks:
 - optional Git username and SSH signing fingerprint match the developer record
 - active duplicate Git usernames follow the role-sharing exception rules
 - optional branch matches the assignment branch
-- every file path is inside assignment `scope_files`
+- for `scope_mode: exact_files`, every file path is inside assignment `scope_files`
+- for `scope_mode: task_bounded_broad_code`, every file path is inside `allowed_write_roots` or exact `scope_files`
+- changed files matching `protected_paths` are blocked unless explicitly authorized by `scope_files`
 
 Outputs:
 
@@ -543,7 +617,7 @@ Use this read order:
 5. In brownfield projects, open `PROJECT-BASELINE.md` before major legacy implementation when it exists.
 6. Open the feature spec referenced by `spec_path` before non-trivial implementation.
 7. In async parallel delivery, read only the referenced `developer`, `assignment`, `task_status_path`, and `integration_queue` files.
-8. In manager-gated delivery, run or mentally perform the `check-assignment.py` preflight before editing files.
+8. In manager-gated delivery, automatically run `scripts/dev-login.py` for local sessions before editing files. Use `scripts/check-assignment.py` for CI and assignment-only checks, not as a local-login substitute.
 9. When a manager asks for team status, generate or read `team-status.md` through the standard aggregation method.
 10. Read only the additional files needed for the task.
 11. Avoid loading cold files or unrelated specs unless the task truly needs them.
@@ -581,6 +655,7 @@ Priority examples:
 - `issue-list.md` wins over task cards for blocker details and root-cause status.
 - `.claw/assignments/TASK-xxx.yaml` wins over `task-board.md` for authorized assignee, manager, branch, write scope, assignment status, and touch policy.
 - `.claw/developers/DEV-xxx.yaml` wins over chat or Git author metadata for developer id, active status, Git platform username, and SSH signing fingerprint.
+- `.claw-local/identity.json` and `.ai-dev-local/identity.json` are local caches only; if they conflict with `.claw/developers/*.yaml`, the developer record wins and login must be rerun.
 - `.claw/tasks/TASK-xxx.md` wins over `current-status.md` for a developer's routine task progress.
 - `.claw/integration-queue.md` wins over task cards for merge order and integration gate state.
 - `developers`, `assignments`, `tasks`, `task-board`, and `integration-queue` all win over `team-status.md`; regenerate `team-status.md` when stale.
@@ -643,9 +718,14 @@ Avoid:
 - unbounded growth in `Completed Tasks` when those tasks should have been archived
 - projects that claim to use this protocol but omit the managed declaration block from `README.md` or `AGENTS.md`
 - private keys, manager passwords, bearer tokens, or reusable secrets in repository files
+- treating `.claw-local/identity.json` or `.ai-dev-local/identity.json` as proof without re-running challenge-response verification
+- editing source, tests, config, migrations, generated assets, feature specs, or task status files before `scripts/dev-login.py` returns `allowed`
+- using chat context, remembered identity, Git author/email, or `scripts/check-assignment.py` as a bypass for local SSH challenge-response login
 - multi-developer progress journals inside `current-status.md`
 - hand-maintained `team-status.md` presented as authoritative truth
-- code changes outside assignment `scope_files` without an updated assignment
+- code changes outside an exact assignment `scope_files` without an updated assignment
+- protected-path changes without exact `scope_files` authorization
+- using narrow `scope_files` so aggressively that developers are pushed to implement fixes in the wrong module instead of the real call chain
 
 ## Maintenance Guidelines
 

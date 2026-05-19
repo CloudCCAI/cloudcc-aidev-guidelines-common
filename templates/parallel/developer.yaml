@@ -13,4 +13,4 @@ allowed_scopes:
   - tests/example/**
 role_sharing_exception: "none"
 allowed_until: YYYY-MM-DD
-notes: "Default to one Git account per active identity. Same-account multi-role use requires a distinct SSH signing key fingerprint and a role_sharing_exception note. Do not store private keys, passwords, bearer tokens, or reusable secrets here."
+notes: "Default to one Git account per active identity. Same-account multi-role use requires a distinct SSH signing key fingerprint and a role_sharing_exception note. public_key is used by scripts/dev-login.py for one-time challenge verification. Do not store private keys, passwords, bearer tokens, or reusable secrets here."

@@ -1,7 +1,7 @@
 ---
 kind: task-board
 version: 3
-updated_at: 2026-05-16T01:59:36Z
+updated_at: 2026-05-17T00:00:00Z
 updated_by: codex
 board_status: active
 ---
@@ -172,6 +172,129 @@ board_status: active
 
 - 本任务已实现协议、模板、preflight 脚本、GitHub Actions 示例和校验器支持；不要保存任何私钥、token、口令或 bearer secret，Git 级可信度由平台账号、SSH 签名、分支保护和 CI 共同实现
 
+### TASK-005 - Add local SSH challenge-response developer login
+
+- status: `review`
+- priority: `high`
+- owner_role: `shared`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-005-local-identity-login.md`
+- depends_on: `TASK-004`
+- blocked_by: `none`
+- related_issues: `none`
+- scope_files: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, scripts/dev-login.py, scripts/init-state.sh, templates/parallel/developer.yaml, templates/parallel/assignment.yaml, templates/docs/feature-spec-template.md, docs/specs/_feature-spec-template.md, .gitignore, .claw/current-status.md, .claw/decisions.md, .claw/task-board.md, .claw/test-report.md, docs/specs/FEAT-005-local-identity-login.md`
+- branch: `n/a`
+- pr_url: `n/a`
+- assignment_path: `none`
+- task_status_path: `none`
+- parallel_group: `protocol-local-identity-login`
+- touch_policy: `shared`
+- shared_contracts: `docs/specs/FEAT-005-local-identity-login.md`
+- merge_policy: `direct_workspace_update`
+- integration_queue: `.claw/integration-queue.md`
+- integration_owner: `codex`
+- authorization_check: `scripts/dev-login.py, scripts/check-assignment.py`
+
+#### Done When
+
+- 本地开发前可用 `scripts/dev-login.py` 从私钥自动解析并报告 `developer_id`
+- 脚本用一次性 challenge 验证当前用户确实持有登记 public key 对应的私钥
+- 脚本可把私钥路径缓存到本机忽略文件，并在后续任务前重新验签
+- 传入 `--task` 时会串联 assignment、branch 和 `scope_files` 检查
+- 文档明确 `.claw-local/identity.json` / `.ai-dev-local/identity.json` 不是事实源，不能提交
+- 当前仓库状态校验和脚本验证通过
+
+#### Next Action
+
+- 用户 review 3.7.0 本地登录式身份验证流程和 `scripts/dev-login.py` 行为
+
+#### Handoff Note
+
+- 本任务已实现登录式身份验证协议和脚本；后续如果要增强组织级强制力，优先接入平台 signed commit 验证、系统 Keychain 或企业 SSO，不要把私钥或 token 写入仓库
+
+### TASK-006 - Harden local identity login as mandatory pre-edit gate
+
+- status: `review`
+- priority: `critical`
+- owner_role: `shared`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-006-hard-identity-gate.md`
+- depends_on: `TASK-005`
+- blocked_by: `none`
+- related_issues: `none`
+- scope_files: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, templates/task-board.md, templates/parallel/assignment.yaml, templates/docs/feature-spec-template.md, docs/specs/_feature-spec-template.md, docs/specs/FEAT-005-local-identity-login.md, docs/specs/FEAT-006-hard-identity-gate.md, .claw/current-status.md, .claw/decisions.md, .claw/task-board.md, .claw/test-report.md, /Volumes/AISpace/AI/KB/wiki/cc-aidev-guidelines-common-usage-guide.md`
+- branch: `n/a`
+- pr_url: `n/a`
+- assignment_path: `none`
+- task_status_path: `none`
+- parallel_group: `protocol-hard-identity-gate`
+- touch_policy: `shared`
+- shared_contracts: `docs/specs/FEAT-006-hard-identity-gate.md`
+- merge_policy: `direct_workspace_update`
+- integration_queue: `.claw/integration-queue.md`
+- integration_owner: `codex`
+- authorization_check: `scripts/dev-login.py hard gate`
+
+#### Done When
+
+- 协议明确身份/授权记录存在时自动启用硬身份门禁
+- `scripts/dev-login.py` 返回 `allowed` 前不得修改源码、测试、配置、迁移、生成资产、feature spec 或任务状态
+- 聊天声明、历史记忆、Git author/email、缓存路径和 `scripts/check-assignment.py` 都不能绕过本地登录
+- 缺少私钥路径、任务、分支、文件范围或 assignment 时 agent 必须停止并要求补齐
+- README、STATE-MODEL、模板和使用说明同步硬阻断规则
+- 当前仓库状态校验通过
+
+#### Next Action
+
+- 用户 review 3.7.1 硬身份门禁规则
+
+#### Handoff Note
+
+- 本任务把 3.7.0 的身份验证能力升级为 3.7.1 的强制编辑前门禁；协议层已无后门，后续如需技术强制可接入 runtime hook 或 IDE/CI 策略。
+
+### TASK-007 - Add task-bounded broad code authorization
+
+- status: `review`
+- priority: `critical`
+- owner_role: `shared`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-007-task-bounded-broad-code-authorization.md`
+- depends_on: `TASK-006`
+- blocked_by: `none`
+- related_issues: `none`
+- scope_mode: `task_bounded_broad_code`
+- allowed_write_roots: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, scripts/**, templates/**, docs/specs/**, .claw/**`
+- scope_files: `docs/specs/FEAT-007-task-bounded-broad-code-authorization.md, .claw/current-status.md, .claw/decisions.md, .claw/task-board.md, .claw/test-report.md`
+- protected_paths: `scripts/dev-login.py, scripts/check-assignment.py, scripts/validate-state.py`
+- branch: `n/a`
+- pr_url: `n/a`
+- assignment_path: `none`
+- task_status_path: `none`
+- parallel_group: `protocol-task-bounded-broad-code`
+- touch_policy: `shared`
+- shared_contracts: `docs/specs/FEAT-007-task-bounded-broad-code-authorization.md`
+- merge_policy: `direct_workspace_update`
+- integration_queue: `.claw/integration-queue.md`
+- integration_owner: `codex`
+- authorization_check: `scripts/dev-login.py hard gate, scripts/check-assignment.py scope mode`
+
+#### Done When
+
+- 协议明确普通功能任务的门禁控制任务处理权限，而不是预判所有代码文件
+- assignment 支持 `scope_mode: task_bounded_broad_code`、`allowed_write_roots` 和 `protected_paths`
+- `scripts/check-assignment.py` 在宽代码模式下允许源码/测试根路径，阻止未精确授权的受保护路径
+- 旧的 `scope_mode: exact_files` 行为保持兼容
+- README、STATE-MODEL、模板、feature spec 和状态文件同步新授权模型
+- 当前仓库状态校验和脚本验证通过
+
+#### Next Action
+
+- 用户 review 3.8.0 任务边界宽代码权限模型
+
+#### Handoff Note
+
+- 本任务把普通功能开发从精确文件授权改为任务边界宽代码授权；如果要进一步增强，应在 PR 模板或 CI 中检查 change manifest，而不是重新收窄所有源码路径。
+
 ## Completed Tasks
 
 - 暂无已完成任务。
@@ -181,8 +304,9 @@ board_status: active
 - 这里只记录可执行任务，不记录完整 bug 细节或长篇设计。
 - `owner_role` 是稳定责任角色，不依赖智能体自我身份。
 - `claimed_by` 是可选运行时标签，环境知道就写，不知道可留空。
-- 异步多开发者协作时，填写 `assignment_path`、`task_status_path`、`branch`、`scope_files` 和 `touch_policy`。
-- `scope_files` 是授权写入边界；越界前应先更新任务授权。
+- 异步多开发者协作时，填写 `assignment_path`、`task_status_path`、`branch`、`scope_mode`、`allowed_write_roots`、`scope_files`、`protected_paths` 和 `touch_policy`。
+- 普通功能开发推荐 `scope_mode: task_bounded_broad_code`，用 `allowed_write_roots` 放开源码和测试路径，用 `protected_paths` 保护治理、CI、迁移、密钥和门禁脚本。
+- 精确文档、任务状态和受保护路径仍放入 `scope_files`；`scope_mode: exact_files` 只用于已知全部写入路径的窄任务。
 - 非平凡功能任务应填写 `spec_path` 并指向 `docs/specs/` 下真实文件。
 - Brownfield 接入任务可先指向 `docs/specs/PROJECT-BASELINE.md`，后续再拆成具体 feature spec。
 - `Completed Tasks` 最多保留最近 20 条任务卡，超过后将最旧的 `done` 或 `canceled` 任务移动到 `task-archive.md`。

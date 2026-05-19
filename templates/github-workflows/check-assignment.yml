@@ -80,7 +80,7 @@ PY
       - name: Check manager assignment scope
         run: |
           set -euo pipefail
-          # This example validates author, branch, and changed-file scope.
+          # This example validates author, branch, scope mode, write roots, protected paths, and changed-file scope.
           # If your platform exposes commit signing fingerprints to CI,
           # also pass --ssh-signing-key-fingerprint to check-assignment.py.
           mapfile -t changed_files <<< "${{ steps.context.outputs.changed_files }}"

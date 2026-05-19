@@ -38,7 +38,10 @@ board_status: active
 - depends_on: `none`
 - blocked_by: `none`
 - related_issues: `none`
+- scope_mode: `exact_files`
+- allowed_write_roots: `none`
 - scope_files: `.claw/current-status.md, .claw/goals.md, .claw/task-board.md`
+- protected_paths: `.claw/assignments/**, .claw/developers/**, scripts/dev-login.py, scripts/check-assignment.py`
 - branch: `n/a`
 - pr_url: `n/a`
 - assignment_path: `none`
@@ -74,9 +77,10 @@ board_status: active
 - 这里只记录可执行任务，不记录完整 bug 细节或长篇设计。
 - `owner_role` 是稳定责任角色，不依赖智能体自我身份。
 - `claimed_by` 是可选运行时标签，环境知道就写，不知道可留空。
-- 异步多开发者协作时，填写 `assignment_path`、`task_status_path`、`branch`、`scope_files` 和 `touch_policy`。
-- `scope_files` 是授权写入边界；越界前应先更新任务授权。
-- 项目经理门控授权时，开发前应运行 `scripts/check-assignment.py` 或执行等价 preflight 检查。
+- 异步多开发者协作时，填写 `assignment_path`、`task_status_path`、`branch`、`scope_mode`、`allowed_write_roots`、`scope_files`、`protected_paths` 和 `touch_policy`。
+- 普通功能开发推荐 `scope_mode: task_bounded_broad_code`，用 `allowed_write_roots` 放开源码和测试路径，用 `protected_paths` 保护治理、CI、迁移、密钥和门禁脚本。
+- 精确文档、任务状态和受保护路径仍放入 `scope_files`；`scope_mode: exact_files` 只用于已知全部写入路径的窄任务。
+- 项目经理门控授权或存在身份/授权记录时，开发前必须先运行 `scripts/dev-login.py`；`scripts/check-assignment.py` 只用于 CI 或 assignment-only 检查，不能替代本地 SSH challenge-response 登录。
 - 非平凡功能任务应填写 `spec_path` 并指向 `docs/specs/` 下真实文件。
 - Brownfield 接入任务可先指向 `docs/specs/PROJECT-BASELINE.md`，后续再拆成具体 feature spec。
 - `Completed Tasks` 最多保留最近 20 条任务卡，超过后将最旧的 `done` 或 `canceled` 任务移动到 `task-archive.md`。

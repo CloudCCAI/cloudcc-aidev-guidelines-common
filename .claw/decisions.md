@@ -1,7 +1,7 @@
 ---
 kind: decisions
 version: 3
-updated_at: 2026-05-16T02:21:56Z
+updated_at: 2026-05-17T00:00:00Z
 updated_by: codex
 ---
 
@@ -17,6 +17,9 @@ updated_by: codex
 | ADR-002 | Use public identity records and signed task assignments for async parallel delivery | accepted | 2026-05-01 | - |
 | ADR-003 | Treat team status as a generated manager view | accepted | 2026-05-01 | - |
 | ADR-004 | Gate multi-developer work through project-manager assignments and SSH-signed Git identity | accepted | 2026-05-16 | - |
+| ADR-005 | Verify local developer identity with SSH challenge-response login | accepted | 2026-05-17 | - |
+| ADR-006 | Make local identity login a hard pre-edit gate | accepted | 2026-05-17 | - |
+| ADR-007 | Use task-bounded broad code authorization for normal feature work | accepted | 2026-05-18 | - |
 
 推荐状态值：`proposed` / `accepted` / `rejected` / `superseded`
 
@@ -79,6 +82,39 @@ updated_by: codex
 - 后续影响：协议、模板、校验器和 README 都要明确项目经理是唯一授权入口；CI 接入时应把 PR author、branch 和 changed files 传给 preflight 脚本。
 - 验证方式：运行 `python3 scripts/check-assignment.py` 的通过和阻断用例、`python3 scripts/validate-state.py .claw`、以及 Python 语法检查。
 - 补充规则：默认一个 Git 平台账号只绑定一个 active 身份；如果同账号需要兼任多个身份，必须使用不同 SSH signing key fingerprint 并记录 `role_sharing_exception`；同账号同 key 不应同时代表项目经理和开发者。
+
+## ADR-005 - Verify local developer identity with SSH challenge-response login
+
+- 状态：`accepted`
+- 日期：`2026-05-17`
+- 背景：用户希望开发会话开始前先像登录一样报告并验证当前操作者身份，而不是只在 PR 或 assignment 检查里验证传入的 `developer_id`。
+- 备选方案：继续要求用户手工声明身份；把私钥或 token 写入项目文件；使用本机私钥签名一次性 challenge，并用仓库登记的 public key 验签。
+- 最终结论：新增 `scripts/dev-login.py`，首次运行时由用户提供本机私钥路径，脚本自动推导 public key 和 fingerprint、匹配 `.claw/developers/*.yaml`、完成 challenge-response 验签，并可串联 `check-assignment.py`。
+- 为什么这个方案胜出：它证明当前操作者持有登记身份对应的私钥，同时不把私钥、token 或密码写入仓库；本机缓存只保存私钥路径和公开身份元数据，每次开发仍重新验签。
+- 后续影响：开发者记录必须保存 `public_key` 才能做登录式验签；采用此模式的项目应把 `.claw-local/` 或 `.ai-dev-local/` 加入 `.gitignore`。
+- 验证方式：生成临时 SSH key 和临时 `.claw` 状态，运行 `scripts/dev-login.py` 的通过、缓存复用、错误 key 和越界文件用例，并运行状态校验和 Python 语法检查。
+
+## ADR-006 - Make local identity login a hard pre-edit gate
+
+- 状态：`accepted`
+- 日期：`2026-05-17`
+- 背景：3.7.0 已提供 `scripts/dev-login.py`，但协议仍有 `should run` 等软约束，真实项目中 agent 可能在已知身份但未完成 challenge-response 验证时直接修改代码。
+- 备选方案：继续依赖 agent 自觉运行登录脚本；只在 PR/CI 阶段阻断；把本地 `dev-login.py` 升级为身份/授权记录存在时自动启用的硬性编辑前门禁。
+- 最终结论：采用硬阻断门禁。只要项目存在 `.claw/developers/`、`.claw/assignments/`、`assignment_path` 或 `local_login_required: true`，agent 在修改源码、测试、运行配置、迁移、生成资产、feature spec 或任务状态前，必须先让 `scripts/dev-login.py` 返回 `allowed`。
+- 为什么这个方案胜出：它把“身份验证能力”变成“开发前必须满足的状态”，避免聊天声明、缓存路径、Git author/email 或记忆上下文被误当成身份验证。
+- 后续影响：协议、README、状态模型、模板和使用说明都必须明确没有后门；`scripts/check-assignment.py` 只用于 CI/assignment-only，不替代本地 SSH challenge-response 登录。
+- 验证方式：运行文档/状态校验、Python 语法检查，并检查协议文本中不再把本地登录描述为可选建议。
+
+## ADR-007 - Use task-bounded broad code authorization for normal feature work
+
+- 状态：`accepted`
+- 日期：`2026-05-18`
+- 背景：精确 `scope_files` 能保护任务边界，但普通功能经常需要修改任务标题之外的关联模块。要求 PM 在任务开始前准确预判所有实现文件会造成频繁阻断，并诱导开发者把修复塞进错误层。
+- 备选方案：继续把 `scope_files` 作为所有代码的硬边界；完全放开所有路径；采用任务边界宽代码权限，同时保护治理、身份、CI、迁移和门禁脚本等敏感路径。
+- 最终结论：普通功能任务默认推荐 `scope_mode: task_bounded_broad_code`。开发者通过身份和任务授权后，可在 `allowed_write_roots` 内修改源码和测试；`protected_paths` 命中时必须由 PM 在 `scope_files` 中精确授权。
+- 为什么这个方案胜出：它把门禁控制点放回“谁能处理哪个任务”，避免用过窄文件清单限制正确实现路径，同时保留对高风险路径的硬保护和审计。
+- 后续影响：assignment 模板、`scripts/check-assignment.py`、README、STATE-MODEL 和 feature spec 模板都要支持 scope mode、宽写入根路径、受保护路径和变更清单。
+- 验证方式：运行 broad scope 通过/阻断用例、旧 exact scope 阻断用例、状态校验和 Python 语法检查。
 
 ## 维护规则
 

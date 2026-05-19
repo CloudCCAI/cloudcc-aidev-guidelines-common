@@ -16,7 +16,8 @@ updated_by: DEV-alice
 - 状态：`ready`
 - 分配人：`MANAGER-001`
 - 授权文件：`.claw/assignments/TASK-001.yaml`
-- 写入范围：见授权文件 `scope_files`
+- 写入范围：见授权文件 `scope_mode`、`allowed_write_roots`、`scope_files` 和 `protected_paths`
+- 变更清单：记录每个跨模块代码变更为什么服务于当前任务
 
 ## 已完成
 

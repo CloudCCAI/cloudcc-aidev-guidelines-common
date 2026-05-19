@@ -1,5 +1,28 @@
 # Changelog
 
+## 3.8.0 - 2026-05-18
+
+- Added task-bounded broad code authorization for manager-gated assignments.
+- Introduced `scope_mode: task_bounded_broad_code`, `allowed_write_roots`, `protected_paths`, `task_boundary`, and `change_manifest_required` guidance.
+- Kept `scope_mode: exact_files` as the backward-compatible default for narrow tasks and existing assignments.
+- Updated `scripts/check-assignment.py` so normal source/test changes can be authorized by broad write roots while protected paths require exact `scope_files` authorization.
+- Updated templates, README, STATE-MODEL, validation rules, and feature specs to treat task authorization as the main gate and file-level control as protection for sensitive areas.
+
+## 3.7.1 - 2026-05-17
+
+- Hardened local identity verification from recommended guidance into a mandatory hard pre-edit gate when identity or assignment records exist.
+- Documented that chat-declared identity, remembered context, Git author/email, cached key paths, and `scripts/check-assignment.py` cannot bypass local `scripts/dev-login.py` challenge-response login.
+- Required agents to stop before editing source, tests, runtime config, migrations, generated app assets, feature specs, or task status files when `dev-login.py` is missing, cannot run, lacks required inputs, or returns `blocked_*`.
+- Clarified that only explicit PM bootstrap or repair edits to identity/assignment records may happen before local login, and those edits must not touch implementation files.
+
+## 3.7.0 - 2026-05-17
+
+- Added `scripts/dev-login.py` for local SSH challenge-response identity verification before development starts.
+- Added optional local identity cache guidance for `.claw-local/identity.json` and `.ai-dev-local/identity.json`; caches store only key paths and public identity metadata.
+- Documented the local login flow: derive public key and fingerprint from a private key, match `.claw/developers/*.yaml`, sign a one-time challenge, verify with the registered public key, then run assignment checks.
+- Updated protocol docs to require public SSH keys when projects want login-style verification of the current local operator.
+- Updated README, state model, templates, state files, and validation evidence for the new local login gate.
+
 ## 3.6.0 - 2026-05-16
 
 - Added project-manager-gated authorization for async multi-developer delivery.

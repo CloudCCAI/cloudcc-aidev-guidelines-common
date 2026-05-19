@@ -135,3 +135,9 @@ updated_by: codex
 ## 交接说明
 
 - 下一位接手者先看本文件，再检查 `SKILL.md` 的授权流程、`templates/parallel/*.yaml` 和 `scripts/check-assignment.py` 是否一致；如果要做更强门禁，优先新增 CI workflow 示例而不是把任何 token 写入仓库。
+
+## 3.8.0 任务边界宽代码权限补充
+
+- `scope_files` 作为所有代码文件硬边界的设计已保留为 `scope_mode: exact_files`，用于窄任务和敏感任务。
+- 普通功能开发推荐使用 `scope_mode: task_bounded_broad_code`，由 `allowed_write_roots` 授权源码和测试根路径，由 `protected_paths` 保护治理、CI、迁移和门禁脚本。
+- 项目经理门控的核心仍是“谁可以处理哪个任务”；代码审查和 change manifest 判断跨模块修改是否服务于当前任务。

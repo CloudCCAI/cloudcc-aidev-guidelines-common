@@ -1,11 +1,11 @@
 ---
 kind: current-status
 version: 3
-updated_at: 2026-05-16T02:21:56Z
+updated_at: 2026-05-18T00:00:00Z
 updated_by: codex
 phase: review
-active_task: "Review project-manager-gated team authorization protocol and installed 3.6.0 skill"
-next_action: "User review FEAT-004, identity binding policy, GitHub Actions example, and local installed skill sync"
+active_task: "TASK-007 - Add task-bounded broad code authorization"
+next_action: "Run final validation, sync installed skill, and commit 3.8.0 task-bounded broad code authorization"
 read_next:
   goals: false
   decisions: true
@@ -21,97 +21,77 @@ read_next:
 
 ## 快照
 
-- 会话目标：把“项目经理唯一授权入口 + Git 平台账号绑定 + SSH commit signing + 开发前范围校验”纳入多人协作协议
-- 当前关注点：`TASK-004` 已进入 review，等待用户确认协议、模板、preflight 脚本和 CI 示例是否符合预期
-- 活跃任务：见 `TASK-004`
+- 会话目标：把 3.7.1 的硬身份门禁升级为 3.8.0 任务边界宽代码权限模型
+- 当前关注点：`TASK-007` 已实现，进入 review，待最终验证和提交
+- 活跃任务：见 `TASK-007`
 - 阻塞状态：无
 
 ## 本次会话进展
 
 ### 已完成
 
-- 新增 `FEAT-004`，定义项目经理门控团队授权模型
-- 仓库协议版本从 `3.5.0` 升级到 `3.6.0`
-- 明确默认推荐 Git 平台账号绑定 + SSH commit signing，不依赖 Git author name/email 作为强身份依据
-- 在 `SKILL.md`、`README.md`、`STATE-MODEL.md` 中加入项目经理唯一授权、preflight 检查和阻断规则
-- 更新开发者和 assignment 模板，增加 Git username、SSH signing fingerprint、`managed_by`、`allowed_scopes`、assignment `status` 和 preflight policy
-- 新增 `scripts/check-assignment.py`，支持本地/CI 校验开发者身份、任务授权、分支和文件范围
-- 扩展 `scripts/validate-state.py`，校验 3.6 授权字段、项目经理授权和 assignment 状态
-- 新增 `ADR-004`，记录采用项目经理门控授权与 SSH signing 默认方案
-- 更新 `scripts/init-state.sh`，在初始化后提示运行 preflight 授权检查
-- 新增 `templates/github-workflows/check-assignment.yml`，提供 GitHub Actions PR gate 示例
-- 明确默认一个 Git 平台账号只绑定一个 active 身份；同账号多身份必须使用不同 SSH signing key fingerprint 并记录 `role_sharing_exception`
-- 扩展 `scripts/check-assignment.py` 和 `scripts/validate-state.py`，阻断同账号同 key 同时代表项目经理和开发者
-- 更新 `team-status.md` 派生视图
-- 已将仓库 `3.6.0` 同步到本机安装路径 `/Users/owenmacbook/.agents/skills/cloudcc-aidev-guidelines-common`
-- 发现仓库存在未跟踪 `.DS_Store`，发布前应清理或补 `.gitignore`
+- 仓库协议版本从 `3.7.1` 升级到 `3.8.0`
+- 新增 `scope_mode: task_bounded_broad_code`，把普通功能开发授权从精确代码文件清单调整为任务边界 + 宽源码/测试写入根路径
+- 保留 `scope_mode: exact_files` 作为旧项目和窄任务的兼容默认行为
+- 新增 `allowed_write_roots`、`protected_paths`、`task_boundary` 和 `change_manifest_required` 模型
+- 更新 `scripts/check-assignment.py`，在宽代码模式下允许普通源码/测试根路径，同时阻止未精确授权的受保护路径
+- 更新 `scripts/validate-state.py`、`SKILL.md`、`README.md`、`STATE-MODEL.md`、`CHANGELOG.md` 和模板
+- 新增 `docs/specs/FEAT-007-task-bounded-broad-code-authorization.md`
+- 新增 `ADR-007`，记录采用任务边界宽代码权限的决策
 
 ### 进行中
 
-- 用户 review 本次 3.6.0 协议升级、CI 示例和本地安装同步结果
+- 最终验证、安装路径同步和 commit
 
 ### 下一步
 
-- 根据用户反馈决定是否新增完整 `examples/async-parallel-project/`
-- 如需接入真实远端贡献证据，可后续扩展脚本读取 GitHub/GitLab PR、commit signer 和 CI 状态
-- 如果要强化身份验证，优先做 CI 门禁或外部验签工具，而不是把 token 写入仓库
+- 已运行最终状态校验、语法检查和 scope mode 授权用例
+- 已同步本机安装路径 `/Users/owenmacbook/.agents/skills/cloudcc-aidev-guidelines-common`
+- 提交 3.8.0 版本
 
 ## 修改文件
 
-- `SKILL.md` - 主协议升级到 `3.6.0`
-- `README.md` - 增加项目经理门控授权和 preflight 说明
-- `STATE-MODEL.md` - 增加 manager-gated authorization 和 check-assignment 语义
-- `CHANGELOG.md` - 增加 `3.6.0` 记录
-- `scripts/init-state.sh` - 初始化后提示运行授权检查
-- `scripts/validate-state.py` - 校验可选并行协作文件、团队状态文件和 3.6 授权字段
-- `scripts/check-assignment.py` - 新增开发前/CI 授权检查脚本
-- `templates/github-workflows/check-assignment.yml` - 新增 GitHub Actions PR gate 示例
-- `templates/task-board.md` - 增加授权检查字段提示
-- `templates/docs/feature-spec-template.md` - 增加项目经理门控授权字段
-- `templates/parallel/developer.yaml` - 增加 Git 平台账号、SSH 签名指纹、管理者和长期范围
-- `templates/parallel/assignment.yaml` - 增加 assignment 状态、preflight policy 和签名引用说明
-- `.claw/goals.md` - 增加门控授权目标和成功标准
-- `.claw/decisions.md` - 新增 `ADR-004`
-- `.claw/task-board.md` - 新增并更新 `TASK-004`
-- `.claw/test-report.md` - 记录真实验证结果
-- `.claw/team-status.md` - 重新生成团队状态派生视图
+- `SKILL.md` - 主协议升级到 `3.8.0`，新增任务边界宽代码权限规则
+- `README.md` - 增加 `scope_mode`、宽代码根路径、受保护路径和 change manifest 说明
+- `STATE-MODEL.md` - 增加 Task-Bounded Broad Code Authorization 状态模型
+- `CHANGELOG.md` - 增加 `3.8.0` 记录
+- `scripts/check-assignment.py` - 新增 `scope_mode`、`allowed_write_roots` 和 `protected_paths` 检查
+- `scripts/validate-state.py` - 新增 assignment scope mode 校验
+- `templates/task-board.md` - 同步 scope mode 维护规则
+- `templates/parallel/assignment.yaml` - 改为宽代码授权示例
+- `templates/parallel/task-status.md` - 增加变更清单提示
+- `templates/docs/feature-spec-template.md` - 同步并行授权计划字段
 - `docs/specs/_feature-spec-template.md` - 同步 feature spec 模板
-- `docs/specs/FEAT-004-project-manager-gated-authorization.md` - 新增本次功能设计
+- `docs/specs/FEAT-007-task-bounded-broad-code-authorization.md` - 新增本次功能设计
+- `.claw/decisions.md` - 新增 `ADR-007`
+- `.claw/task-board.md` - 新增 `TASK-007`
 
 ## 已验证事实
 
 - Build: `not_run`
 - Tests: `python3 scripts/validate-state.py .claw` passed
-- Syntax: `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/validate-state.py scripts/summarize-team-status.py scripts/check-assignment.py` passed
-- Auth preflight allowed case: `python3 scripts/check-assignment.py <temp> --developer DEV-alice --task TASK-001 --branch feat/TASK-001-feature-title --git-username alice-dev --ssh-signing-key-fingerprint SHA256:abc123 --files src/example/file.ts tests/example/test.ts` passed
-- Auth preflight blocked case: same command with `--files src/other/file.ts` returned non-zero and reported `blocked_scope_violation`
-- Duplicate identity blocked case: same Git username and same SSH signing key for `MANAGER-001` and `DEV-alice` returned non-zero and reported `blocked_manager_developer_key_reuse`
-- Duplicate identity role-key exception case: same Git username with distinct SSH signing keys and `role_sharing_exception` passed
-- Workflow example syntax smoke: `python3` parsed `templates/github-workflows/check-assignment.yml` for required CI trigger, PR context variables, and `scripts/check-assignment.py` invocation
-- Team summary: `python3 scripts/summarize-team-status.py .claw --write` passed
-- Installed skill sync: `rsync` to `/Users/owenmacbook/.agents/skills/cloudcc-aidev-guidelines-common` completed and installed `SKILL.md` reports `skill_version: 3.6.0`
+- Syntax: `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/validate-state.py scripts/summarize-team-status.py scripts/check-assignment.py scripts/dev-login.py` passed
+- Scope mode checks: broad code write allowed, protected path blocked, exact_files compatibility blocked out-of-scope path
+- Protocol wording check: `rg` confirmed `3.8.0`, `task_bounded_broad_code`, `allowed_write_roots`, `protected_paths`, and `change_manifest_required`
+- Installed skill sync: `rsync` to `/Users/owenmacbook/.agents/skills/cloudcc-aidev-guidelines-common` completed and installed `SKILL.md` reports `skill_version: 3.8.0`
 - 依赖变更: `none`
 
 ## 待确认
 
-- 是否需要新增完整的异步并行示例项目
-- 是否需要在后续版本接入 GitHub/GitLab PR 和 CI 数据源
-- 是否需要新增完整异步并行示例项目
+- 是否需要后续在 PR 模板或 CI 中强制检查 change manifest 覆盖所有 changed files
 
 ## 相关状态文件
 
-- `goals.md` - 项目目标、范围和成功标准
-- `decisions.md` - `ADR-004` 记录项目经理门控授权与 SSH signing 默认方案
-- `task-board.md` - `TASK-004` 任务状态、范围和交接说明
-- `test-report.md` - 本次真实验证命令
-- `team-status.md` - 管理者团队状态派生视图
+- `decisions.md` - `ADR-007` 记录任务边界宽代码权限决策
+- `task-board.md` - `TASK-007` 任务状态、范围和交接说明
+- `test-report.md` - 本次真实验证命令待更新
 
 ## 相关设计文档
 
-- `docs/specs/FEAT-004-project-manager-gated-authorization.md` - 本次项目经理门控授权协议设计
-- `docs/specs/FEAT-002-identity-parallel-delivery.md` - 身份化异步并行交付协议设计
-- `docs/specs/FEAT-003-team-status-aggregation.md` - 团队状态汇总协议设计
-- `docs/specs/PROJECT-BASELINE.md` - 仓库基线与接管说明
+- `docs/specs/FEAT-007-task-bounded-broad-code-authorization.md` - 本次任务边界宽代码权限协议设计
+- `docs/specs/FEAT-006-hard-identity-gate.md` - 硬身份门禁协议设计
+- `docs/specs/FEAT-005-local-identity-login.md` - 本地登录式身份验证协议设计
+- `docs/specs/FEAT-004-project-manager-gated-authorization.md` - 项目经理门控授权协议设计
 
 ## 维护规则
 

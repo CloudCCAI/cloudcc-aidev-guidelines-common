@@ -13,6 +13,9 @@ EMPTY_VALUES = {"", "none", "n/a", "na", "not_applicable"}
 ACTIVE_STATUSES = {"active"}
 MANAGER_PREFIX = "MANAGER-"
 DEVELOPER_PREFIXES = ("DEV-", MANAGER_PREFIX)
+SCOPE_MODE_EXACT = "exact_files"
+SCOPE_MODE_BROAD = "task_bounded_broad_code"
+SCOPE_MODES = {SCOPE_MODE_EXACT, SCOPE_MODE_BROAD}
 
 
 def clean_value(value: object) -> str:
@@ -92,6 +95,18 @@ def path_matches(path: str, pattern: str) -> bool:
 
 def path_allowed(path: str, patterns: list[str]) -> bool:
     return any(path_matches(path, pattern) for pattern in patterns)
+
+
+def scope_mode(assignment: dict[str, object]) -> str:
+    value = clean_value(assignment.get("scope_mode", SCOPE_MODE_EXACT))
+    return value or SCOPE_MODE_EXACT
+
+
+def assignment_write_patterns(assignment: dict[str, object]) -> list[str]:
+    mode = scope_mode(assignment)
+    if mode == SCOPE_MODE_BROAD:
+        return value_list(assignment, "allowed_write_roots") + value_list(assignment, "scope_files")
+    return value_list(assignment, "scope_files")
 
 
 def find_developer_record(state_dir: Path, developer_id: str) -> Path | None:
@@ -272,13 +287,24 @@ def check_authorization(args: argparse.Namespace) -> tuple[bool, list[str], dict
         if not is_empty(expected_branch) and expected_branch != args.branch:
             findings.append(f"blocked_branch_mismatch: expected `{expected_branch}`, got `{args.branch}`")
 
+    mode = scope_mode(assignment)
+    details["scope_mode"] = mode
+    if mode not in SCOPE_MODES:
+        findings.append(f"blocked_scope_mode_invalid: assignment `{args.task}` has invalid scope_mode `{mode}`")
+
     assignment_scopes = value_list(assignment, "scope_files")
-    if not assignment_scopes:
+    allowed_write_roots = value_list(assignment, "allowed_write_roots")
+    protected_paths = value_list(assignment, "protected_paths")
+    write_patterns = assignment_write_patterns(assignment)
+
+    if mode == SCOPE_MODE_EXACT and not assignment_scopes:
         findings.append(f"blocked_scope_missing: assignment `{args.task}` has no scope_files")
+    if mode == SCOPE_MODE_BROAD and not write_patterns:
+        findings.append(f"blocked_allowed_write_roots_missing: assignment `{args.task}` has no allowed_write_roots or scope_files")
 
     developer_scopes = value_list(developer, "allowed_scopes")
     if developer_scopes:
-        for scope in assignment_scopes:
+        for scope in write_patterns:
             if not path_allowed(scope.rstrip("/").replace("/**", "/placeholder"), developer_scopes):
                 findings.append(
                     f"blocked_assignment_scope_violation: assignment scope `{scope}` is outside developer allowed_scopes"
@@ -287,8 +313,18 @@ def check_authorization(args: argparse.Namespace) -> tuple[bool, list[str], dict
         findings.append(f"blocked_developer_scope_missing: developer `{args.developer}` has no allowed_scopes")
 
     for changed_file in args.files:
-        if not path_allowed(changed_file, assignment_scopes):
-            findings.append(f"blocked_scope_violation: `{changed_file}` is outside assignment scope_files")
+        if mode == SCOPE_MODE_BROAD and path_allowed(changed_file, protected_paths):
+            if not path_allowed(changed_file, assignment_scopes):
+                findings.append(
+                    f"blocked_protected_path: `{changed_file}` matches protected_paths and is not explicitly listed in scope_files"
+                )
+                continue
+
+        if not path_allowed(changed_file, write_patterns):
+            if mode == SCOPE_MODE_BROAD:
+                findings.append(f"blocked_write_root_violation: `{changed_file}` is outside allowed_write_roots")
+            else:
+                findings.append(f"blocked_scope_violation: `{changed_file}` is outside assignment scope_files")
 
     return not findings, findings, details
 
@@ -307,7 +343,12 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="SSH commit signing key fingerprint to match developer record",
     )
-    parser.add_argument("--files", nargs="*", default=[], help="Changed or intended file paths")
+    parser.add_argument(
+        "--files",
+        nargs="*",
+        default=[],
+        help="Changed or intended file paths checked against scope_mode, allowed_write_roots, scope_files, and protected_paths",
+    )
     parser.add_argument(
         "--require-developer-scopes",
         action="store_true",

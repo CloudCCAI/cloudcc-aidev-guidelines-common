@@ -8,13 +8,32 @@ spec_path: docs/specs/FEAT-001-feature-title.md
 task_status_path: .claw/tasks/TASK-001.md
 branch: feat/TASK-001-feature-title
 pr_url: n/a
+scope_mode: task_bounded_broad_code
+allowed_write_roots:
+  - src/**
+  - tests/**
 scope_files:
-  - src/example/**
-  - tests/example/**
+  - docs/specs/FEAT-001-feature-title.md
+  - .claw/tasks/TASK-001.md
+protected_paths:
+  - .claw/assignments/**
+  - .claw/developers/**
+  - scripts/dev-login.py
+  - scripts/check-assignment.py
+  - .github/workflows/**
+  - infra/**
+  - infrastructure/**
+  - migrations/**
 touch_policy: exclusive
 shared_contracts:
   - docs/specs/FEAT-001-feature-title.md
+task_boundary:
+  - "Work must serve TASK-001 and the linked feature spec acceptance criteria."
+  - "Out-of-scope product capabilities require a manager-updated assignment or a new task."
+change_manifest_required: true
 signature: "manager-signed-commit-or-platform-approval-reference"
 preflight_required: true
-identity_policy: "git_platform_account + ssh_commit_signing"
-notes: "Only a project manager may create or expand assignments. Assignment records authorization metadata only; no private keys or tokens."
+local_login_required: true
+identity_policy: "ssh_challenge_response + git_platform_account + ssh_commit_signing"
+notes: "Only a project manager may create or expand assignments. Prefer task-bounded broad code roots for implementation files, exact scope_files for task docs and protected paths. Assignment records authorization metadata only; no private keys or tokens."
+hard_gate_notes: "When local_login_required is true, scripts/dev-login.py must return allowed before any local implementation edit. Chat-declared identity, cached key path, and check-assignment.py are not substitutes for local login."

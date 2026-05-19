@@ -57,13 +57,15 @@ updated_by: ai
 - 团队状态汇总：`.claw/team-status.md` / `n/a`
 - 项目经理门控授权：`yes` / `no`
 - 默认身份绑定：Git 平台账号 + SSH commit signing
+- 本地身份登录：`scripts/dev-login.py` hard gate / `n/a`
 - 开发前检查：`scripts/check-assignment.py` / `n/a`
 - 不允许提交管理者口令、开发者 token、私钥或可复用密钥
 
 ## 并行与集成计划
 
 - 可并行任务组
-- 每个任务的 `scope_files` 和 `touch_policy`
+- 每个任务的 `scope_mode`、`allowed_write_roots`、`scope_files`、`protected_paths` 和 `touch_policy`
+- 普通功能开发优先使用任务边界宽代码权限，避免把必要调用链修改硬塞进错误模块
 - 共享接口、数据结构、配置 key 或迁移顺序
 - 集成分支和合并顺序
 - 集成负责人和验证门禁

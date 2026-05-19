@@ -55,6 +55,10 @@ TOUCH_POLICIES = {
     "shared",
     "read_only",
 }
+SCOPE_MODES = {
+    "exact_files",
+    "task_bounded_broad_code",
+}
 INTEGRATION_QUEUE_STATUSES = {
     "not_started",
     "collecting",
@@ -545,7 +549,6 @@ def validate_assignment_file(path: Path, project_root: Path) -> list[str]:
         "spec_path",
         "task_status_path",
         "branch",
-        "scope_files",
         "touch_policy",
         "signature",
     }
@@ -572,6 +575,17 @@ def validate_assignment_file(path: Path, project_root: Path) -> list[str]:
     touch_policy = str(fields.get("touch_policy", ""))
     if touch_policy and touch_policy not in TOUCH_POLICIES:
         errors.append(f"{path}: invalid touch_policy `{touch_policy}`")
+
+    scope_mode = str(fields.get("scope_mode", "exact_files"))
+    if scope_mode and scope_mode not in SCOPE_MODES:
+        errors.append(f"{path}: invalid scope_mode `{scope_mode}`")
+
+    scope_files = fields.get("scope_files", [])
+    allowed_write_roots = fields.get("allowed_write_roots", [])
+    if scope_mode == "exact_files" and not scope_files:
+        errors.append(f"{path}: exact_files assignments must declare `scope_files`")
+    if scope_mode == "task_bounded_broad_code" and not (scope_files or allowed_write_roots):
+        errors.append(f"{path}: task_bounded_broad_code assignments must declare `allowed_write_roots` or `scope_files`")
 
     for field_name in ("spec_path", "task_status_path"):
         reference_path = str(fields.get(field_name, ""))
