@@ -7,6 +7,7 @@ expires_at: YYYY-MM-DDTHH:MM:SSZ
 spec_path: docs/specs/FEAT-001-feature-title.md
 task_status_path: .claw/tasks/TASK-001.md
 branch: feat/TASK-001-feature-title
+change_request_url: n/a
 pr_url: n/a
 scope_mode: task_bounded_broad_code
 allowed_write_roots:

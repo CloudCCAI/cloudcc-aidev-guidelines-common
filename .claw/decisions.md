@@ -1,7 +1,7 @@
 ---
 kind: decisions
 version: 3
-updated_at: 2026-05-17T00:00:00Z
+updated_at: 2026-05-19T00:00:00Z
 updated_by: codex
 ---
 
@@ -20,6 +20,7 @@ updated_by: codex
 | ADR-005 | Verify local developer identity with SSH challenge-response login | accepted | 2026-05-17 | - |
 | ADR-006 | Make local identity login a hard pre-edit gate | accepted | 2026-05-17 | - |
 | ADR-007 | Use task-bounded broad code authorization for normal feature work | accepted | 2026-05-18 | - |
+| ADR-008 | Use Codeup change requests as the default review platform flow | accepted | 2026-05-19 | - |
 
 推荐状态值：`proposed` / `accepted` / `rejected` / `superseded`
 
@@ -115,6 +116,17 @@ updated_by: codex
 - 为什么这个方案胜出：它把门禁控制点放回“谁能处理哪个任务”，避免用过窄文件清单限制正确实现路径，同时保留对高风险路径的硬保护和审计。
 - 后续影响：assignment 模板、`scripts/check-assignment.py`、README、STATE-MODEL 和 feature spec 模板都要支持 scope mode、宽写入根路径、受保护路径和变更清单。
 - 验证方式：运行 broad scope 通过/阻断用例、旧 exact scope 阻断用例、状态校验和 Python 语法检查。
+
+## ADR-008 - Use Codeup change requests as the default review platform flow
+
+- 状态：`accepted`
+- 日期：`2026-05-19`
+- 背景：用户的开发环境基于阿里云云效 Codeup，创建合并请求使用 Codeup OpenAPI，不能把 GitHub pull request 和 GitHub Actions 作为默认规范。
+- 备选方案：继续以 GitHub PR 为默认流程；只写文档不提供脚本；将评审请求抽象为平台无关概念，并提供 Codeup 默认脚本和模板。
+- 最终结论：以 Codeup change request 作为默认提交评审流程。每个开发者本地保存 `YUNXIAO_TOKEN`，创建前脚本先检查 token；缺失时提示官方个人访问令牌文档。GitHub Actions 示例保留为可选平台说明。
+- 为什么这个方案胜出：它符合真实托管平台和密钥模型，同时仍保留跨平台扩展空间；token 保存在本地忽略目录，不进入仓库事实源。
+- 后续影响：README、SKILL、STATE-MODEL、模板和初始化提示都要说明 Codeup 为默认方案；自动化创建合并请求时使用 `scripts/create-codeup-change-request.py`。
+- 验证方式：运行 Codeup 脚本缺 token 用例、Python 语法检查和 `.claw` 状态校验。
 
 ## 维护规则
 

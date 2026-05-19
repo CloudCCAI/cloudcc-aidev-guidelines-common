@@ -2,21 +2,23 @@
 
 **Bilingual project-state and delivery protocol for AI coding agents**
 
-这个 skill 现在覆盖五件事：
+这个 skill 现在覆盖六件事：
 
 1. 把项目状态外存到 `.claw/` 或 `.ai-dev/`
 2. 用 `task-board.md` 管理任务、依赖和交接
 3. 用 `docs/specs/` 强制功能级设计先落盘再开发，并支持老项目渐进接入
 4. 用身份、公钥、任务授权、分片状态和集成队列支持异步多开发者并行交付
 5. 用项目经理门控授权、SSH challenge-response 登录、Git 平台账号绑定、SSH commit signing 和 preflight 检查阻止越权开发
+6. 以 Codeup 合并请求为默认提交评审方式，同时保留 GitHub 作为可选平台示例
 
-It now covers five layers:
+It now covers six layers:
 
 1. durable project state in `.claw/` or `.ai-dev/`
 2. executable task tracking and handoff in `task-board.md`
 3. spec-driven delivery in `docs/specs/`, including brownfield adoption
 4. identity-based async parallel delivery with assignments, status slices, and integration queues
 5. project-manager-gated authorization with SSH challenge-response login, Git account binding, SSH commit signing, and preflight scope checks
+6. Codeup-first change request submission while preserving GitHub as an optional platform example
 
 ## 一句话介绍 | One-Line Pitch
 
@@ -24,7 +26,7 @@ It now covers five layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`3.8.0`
+当前 skill 版本：`3.9.0`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -38,7 +40,10 @@ It now covers five layers:
 | `scripts/ensure-agent-guidance.sh` | 项目级 README/AGENTS 声明写入器 / managed README/AGENTS declaration writer |
 | `scripts/dev-login.py` | 开发前本地 SSH challenge-response 身份登录 / local SSH challenge-response identity login |
 | `scripts/check-assignment.py` | 开发前身份、任务、分支、任务边界和受保护路径检查 / preflight identity, task, branch, task boundary, and protected-path check |
+| `scripts/store-yunxiao-token.py` | 本地保存云效个人访问令牌 / local Yunxiao token storage helper |
+| `scripts/create-codeup-change-request.py` | 通过 Codeup OpenAPI 创建合并请求 / Codeup change request creator |
 | `scripts/summarize-team-status.py` | 团队状态汇总器 / derived team status summarizer |
+| `templates/platforms/codeup/` | 默认 Codeup 合并请求流程 / default Codeup change request flow |
 | `templates/github-workflows/check-assignment.yml` | GitHub Actions 授权检查示例 / GitHub Actions assignment gate example |
 | `templates/team-status.md` | 管理者团队状态汇总模板 / manager team status view template |
 | `templates/integration-queue.md` | 异步并行集成队列模板 / async parallel integration queue template |
@@ -209,7 +214,49 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 6. 集成者按 `.claw/integration-queue.md` 的顺序合并分支、解决冲突、运行真实验证。
 7. 集成通过后再更新 `task-board.md`、`current-status.md` 和 `test-report.md`。
 
-### 7. 项目经理门控授权 | Project-Manager-Gated Authorization
+### 7. Codeup 合并请求 | Codeup Change Requests
+
+本 skill 默认以阿里云云效 Codeup 作为代码评审平台。GitHub 说明仍保留为可选平台示例，但采用项目如果使用 Codeup，应优先按本节执行。
+
+Codeup OpenAPI 创建合并请求使用云效个人访问令牌，请求头为 `x-yunxiao-token`。每个开发者在本地保存自己的 `YUNXIAO_TOKEN`，不要写入仓库、`.claw/`、`docs/`、任务状态文件或日志。
+
+本地保存令牌：
+
+```bash
+python3 /path/to/this-skill/scripts/store-yunxiao-token.py
+```
+
+如果创建合并请求时缺少 `YUNXIAO_TOKEN`，脚本会停止并提示用户先创建个人访问令牌：
+
+```text
+https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-token
+```
+
+创建 Codeup 合并请求：
+
+```bash
+python3 /path/to/this-skill/scripts/create-codeup-change-request.py \
+  --domain https://openapi-rdc.aliyuncs.com \
+  --repository-id 2813489 \
+  --source-branch feat/TASK-001-feature-title \
+  --target-branch master \
+  --title "[TASK-001] Feature title" \
+  --description-file .claw/tasks/TASK-001.md \
+  --reviewer-user-ids "62c795xxxb468af8"
+```
+
+推荐约定：
+
+- 分支名包含 `TASK-xxx`
+- 合并请求标题包含 `[TASK-xxx]`
+- 描述包含变更范围、验证结果、风险和回滚说明
+- 创建后把返回的 `detailUrl` 写入 `.claw/tasks/TASK-xxx.md` 的 `change_request_url`
+- 保护分支要求 Codeup 评审、CodeOwner（如启用）和云效 Flow 检查通过
+- 云效 Flow 或 Webhook 适配层应调用 `scripts/check-assignment.py`，检查开发者身份、任务授权、分支和 changed files
+
+更完整的 Codeup 平台模板见 `templates/platforms/codeup/`。
+
+### 8. 项目经理门控授权 | Project-Manager-Gated Authorization
 
 多人异步协作默认推荐启用这一层：每个项目指定一个或多个 `MANAGER-xxx`，只有项目经理能添加团队成员、暂停成员、分配任务、扩大范围或批准越界修改。
 
@@ -236,7 +283,7 @@ python3 /path/to/this-skill/scripts/dev-login.py /path/to/your-project/.claw \
 
 硬身份门禁启用后，AI agent 或开发者在 `dev-login.py` 返回 `allowed` 之前，不得修改源码、测试、运行配置、迁移、生成的应用资产、feature spec 或任务状态文件。聊天里声明 `developer_id`、已知当前用户、Git author/email、历史记忆、缓存 key 路径都不能绕过此门禁。如果缺少私钥路径、任务 ID、分支、待修改文件列表或 assignment，必须先停下补齐验证输入或让 PM 更新授权。
 
-PR CI 或只需要检查任务授权时运行：
+合并请求 CI、PR CI 或只需要检查任务授权时运行：
 
 ```bash
 python3 /path/to/this-skill/scripts/check-assignment.py /path/to/your-project/.claw \
@@ -284,16 +331,16 @@ change_manifest_required: true
 - 同一个 Git 账号兼任多个角色时，`dev-login.py` 通过不同私钥的 challenge-response 结果自动解析当前使用的是哪个 `developer_id`
 - `scripts/check-assignment.py` 不能替代本地 `dev-login.py`；它用于 CI、PR 和 assignment-only 检查
 
-GitHub Actions 示例：
+GitHub Actions 示例作为可选平台说明保留：
 
 ```bash
 mkdir -p .github/workflows
 cp /path/to/this-skill/templates/github-workflows/check-assignment.yml .github/workflows/check-assignment.yml
 ```
 
-这个 workflow 会从 PR 分支名、标题或正文解析 `TASK-xxx`，用 PR author 匹配 `.claw/developers/*.yaml` 里的 `git_username`，收集 changed files，然后调用 `scripts/check-assignment.py`。项目启用后应在分支保护里要求这个 check 通过。
+这个 workflow 会从 PR 分支名、标题或正文解析 `TASK-xxx`，用 PR author 匹配 `.claw/developers/*.yaml` 里的 `git_username`，收集 changed files，然后调用 `scripts/check-assignment.py`。项目启用 GitHub 时应在分支保护里要求这个 check 通过。
 
-### 8. 管理者团队状态汇总 | Manager Team Status
+### 9. 管理者团队状态汇总 | Manager Team Status
 
 当管理者需要查看团队成员列表、任务分配、贡献状态和集成状态时，使用标准汇总方法生成派生视图。
 
@@ -312,7 +359,7 @@ python3 /path/to/this-skill/scripts/summarize-team-status.py /path/to/your-proje
 标准汇总顺序：
 
 1. 读取 `.claw/developers/*.yaml` 获取团队成员、角色、公钥身份和身份状态。
-2. 读取 `.claw/assignments/*.yaml` 获取授权任务、负责人、分支、PR、写入范围和共享契约。
+2. 读取 `.claw/assignments/*.yaml` 获取授权任务、负责人、分支、合并请求或 PR、写入范围和共享契约。
 3. 读取 `.claw/tasks/*.md` 获取单任务进度、验证状态、阻塞点和交接说明。
 4. 读取 `.claw/task-board.md` 补充任务标题、优先级、owner role 和主看板状态。
 5. 读取 `.claw/integration-queue.md` 补充合并顺序、集成负责人和 integration status。
@@ -649,7 +696,7 @@ docs/specs/
 
 ---
 
-*版本 3.8.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限和项目经理门控授权的项目状态与交付规范*
+*版本 3.9.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权和 Codeup 合并请求提交的项目状态与交付规范*
 
 <!-- cc-aidev-guidelines-common:begin -->
 ## AI Development Protocol

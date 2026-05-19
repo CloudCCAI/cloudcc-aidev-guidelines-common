@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.9.0 - 2026-05-19
+
+- Made Aliyun Yunxiao Codeup the default platform flow for review request submission.
+- Added `scripts/store-yunxiao-token.py` to store each developer's local `YUNXIAO_TOKEN` outside Git-tracked files.
+- Added `scripts/create-codeup-change-request.py` to create Codeup change requests through Yunxiao OpenAPI and stop with token setup guidance when `YUNXIAO_TOKEN` is missing.
+- Added `templates/platforms/codeup/` with Codeup change request conventions and a description template.
+- Preserved the existing GitHub Actions assignment gate as an optional platform example.
+
 ## 3.8.0 - 2026-05-18
 
 - Added task-bounded broad code authorization for manager-gated assignments.

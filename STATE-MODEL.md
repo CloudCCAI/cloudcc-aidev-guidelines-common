@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 3.8.0
+version: 3.9.0
 ---
 
 # State Model Reference
@@ -92,7 +92,7 @@ Each task should record:
 - related issues
 - scope files
 - spec path when required
-- branch and PR URL when work is done through Git branches
+- branch and change request URL or PR URL when work is done through Git branches
 - assignment path and task status path when async parallel delivery is enabled
 - parallel group, touch policy, shared contracts, merge policy, and integration owner when multiple tasks merge together
 - done-when checklist
@@ -172,7 +172,7 @@ Generate it from:
 3. `.claw/tasks/*.md`
 4. `.claw/task-board.md`
 5. `.claw/integration-queue.md`
-6. external Git/PR/CI evidence when that evidence has been imported into task status files or a future platform-specific summarizer
+6. external Git/review/CI evidence when that evidence has been imported into task status files or a future platform-specific summarizer
 
 Recommended `contribution_status` values:
 
@@ -284,7 +284,7 @@ Record:
 - assigning manager id
 - assignment status
 - branch name
-- PR URL when available
+- change request URL or PR URL when available
 - spec path
 - task status path
 - scope mode
@@ -379,9 +379,38 @@ Outputs:
 - `allowed` with a zero exit code when all checks pass
 - `blocked_*` findings with a non-zero exit code when identity, assignment, branch, or scope checks fail
 
+### `scripts/store-yunxiao-token.py`
+
+Use as the local helper for storing a developer's Yunxiao personal access token outside Git-tracked files.
+
+Behavior:
+
+- prompts for `YUNXIAO_TOKEN` without echoing it
+- writes `.claw-local/codeup.env` by default
+- sets file permissions to owner read/write only
+- never writes tokens to `.claw/`, `docs/`, source files, task status files, or logs
+
+### `scripts/create-codeup-change-request.py`
+
+Use as the default platform helper for creating Codeup change requests.
+
+Behavior:
+
+- loads `YUNXIAO_TOKEN` from the environment or `.claw-local/codeup.env`
+- stops before the API call when `YUNXIAO_TOKEN` is missing
+- prints the official Yunxiao personal access token documentation link when the token is missing
+- calls Codeup `CreateChangeRequest` through Yunxiao OpenAPI
+- accepts domain, repository, source branch, target branch, title, description, reviewers, and work item ids as CLI flags or local env values
+
+### `templates/platforms/codeup/`
+
+Use as the default platform template for teams on Aliyun Yunxiao Codeup.
+
+Adopting projects should configure protected branches and Yunxiao Flow checks so Codeup review requests cannot merge until review, automated checks, and assignment scope checks pass.
+
 ### `templates/github-workflows/check-assignment.yml`
 
-Use as the starter GitHub Actions PR gate for manager-gated authorization.
+Use as the optional GitHub Actions PR gate for manager-gated authorization.
 
 Behavior:
 
@@ -391,7 +420,7 @@ Behavior:
 - collects changed files from the PR diff
 - calls `scripts/check-assignment.py .claw`
 
-Adopting projects should copy it into `.github/workflows/check-assignment.yml`, enable required status checks in branch protection, and adapt task-id parsing if their branch naming scheme differs.
+GitHub-based projects should copy it into `.github/workflows/check-assignment.yml`, enable required status checks in branch protection, and adapt task-id parsing if their branch naming scheme differs.
 
 ### `.claw/tasks/TASK-xxx.md`
 
@@ -401,7 +430,7 @@ Record:
 
 - task id
 - assignee developer id
-- branch and PR URL
+- branch and change request URL or PR URL
 - current status
 - completed work
 - changed files summary

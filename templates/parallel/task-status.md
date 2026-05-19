@@ -4,6 +4,7 @@ task_id: TASK-001
 assignee: DEV-alice
 status: ready
 branch: feat/TASK-001-feature-title
+change_request_url: n/a
 pr_url: n/a
 updated_at: YYYY-MM-DDTHH:MM:SSZ
 updated_by: DEV-alice

@@ -43,6 +43,7 @@ board_status: active
 - scope_files: `.claw/current-status.md, .claw/goals.md, .claw/task-board.md`
 - protected_paths: `.claw/assignments/**, .claw/developers/**, scripts/dev-login.py, scripts/check-assignment.py`
 - branch: `n/a`
+- change_request_url: `n/a`
 - pr_url: `n/a`
 - assignment_path: `none`
 - task_status_path: `none`

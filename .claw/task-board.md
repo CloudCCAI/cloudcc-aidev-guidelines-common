@@ -1,7 +1,7 @@
 ---
 kind: task-board
 version: 3
-updated_at: 2026-05-17T00:00:00Z
+updated_at: 2026-05-19T00:00:00Z
 updated_by: codex
 board_status: active
 ---
@@ -294,6 +294,50 @@ board_status: active
 #### Handoff Note
 
 - 本任务把普通功能开发从精确文件授权改为任务边界宽代码授权；如果要进一步增强，应在 PR 模板或 CI 中检查 change manifest，而不是重新收窄所有源码路径。
+
+### TASK-008 - Add Codeup change request submission flow
+
+- status: `review`
+- priority: `high`
+- owner_role: `shared`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-008-codeup-change-request-submission.md`
+- depends_on: `TASK-007`
+- blocked_by: `none`
+- related_issues: `none`
+- scope_mode: `task_bounded_broad_code`
+- allowed_write_roots: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, scripts/**, templates/**, docs/specs/**, .claw/**, .gitignore`
+- scope_files: `docs/specs/FEAT-008-codeup-change-request-submission.md, .claw/current-status.md, .claw/decisions.md, .claw/task-board.md, .claw/test-report.md`
+- protected_paths: `scripts/dev-login.py, scripts/check-assignment.py, scripts/validate-state.py`
+- branch: `n/a`
+- change_request_url: `n/a`
+- pr_url: `n/a`
+- assignment_path: `none`
+- task_status_path: `none`
+- parallel_group: `protocol-codeup-change-request`
+- touch_policy: `shared`
+- shared_contracts: `docs/specs/FEAT-008-codeup-change-request-submission.md`
+- merge_policy: `direct_workspace_update`
+- integration_queue: `.claw/integration-queue.md`
+- integration_owner: `codex`
+- authorization_check: `scripts/dev-login.py hard gate, scripts/check-assignment.py scope mode`
+
+#### Done When
+
+- Codeup is documented as the default review request platform flow
+- Each developer can store a local `YUNXIAO_TOKEN` outside Git-tracked files
+- Creating a Codeup change request checks for `YUNXIAO_TOKEN` before any OpenAPI call
+- Missing token output links to the official Yunxiao personal access token documentation
+- GitHub Actions guidance remains as an optional platform example
+- Current repository validation and Python syntax checks pass
+
+#### Next Action
+
+- User review the Codeup script options and decide whether to wire repository-specific defaults into local `.claw-local/codeup.env`
+
+#### Handoff Note
+
+- Token material must stay local. Use `.claw-local/codeup.env` or process environment only; do not write tokens into `.claw/`, docs, specs, task status files, or logs.
 
 ## Completed Tasks
 
