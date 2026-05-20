@@ -21,6 +21,7 @@ updated_by: codex
 | ADR-006 | Make local identity login a hard pre-edit gate | accepted | 2026-05-17 | - |
 | ADR-007 | Use task-bounded broad code authorization for normal feature work | accepted | 2026-05-18 | - |
 | ADR-008 | Use Codeup change requests as the default review platform flow | accepted | 2026-05-19 | - |
+| ADR-009 | Use source-branch-wins conflict resolution for test-environment pushes | accepted | 2026-05-20 | - |
 
 推荐状态值：`proposed` / `accepted` / `rejected` / `superseded`
 
@@ -127,6 +128,17 @@ updated_by: codex
 - 为什么这个方案胜出：它符合真实托管平台和密钥模型，同时仍保留跨平台扩展空间；token 保存在本地忽略目录，不进入仓库事实源。
 - 后续影响：README、SKILL、STATE-MODEL、模板和初始化提示都要说明 Codeup 为默认方案；自动化创建合并请求时使用 `scripts/create-codeup-change-request.py`。
 - 验证方式：运行 Codeup 脚本缺 token 用例、Python 语法检查和 `.claw` 状态校验。
+
+## ADR-009 - Use source-branch-wins conflict resolution for test-environment pushes
+
+- 状态：`accepted`
+- 日期：`2026-05-20`
+- 背景：用户希望当他说“推送到测试环境”时，agent 自动把开发分支合并到 `dev`，如果有冲突则自动处理，并把 `dev` 推送到线上测试分支。
+- 备选方案：遇到冲突就停止并要求人工处理；使用 `dev` 分支内容优先；使用开发分支内容优先；尝试语义级自动合并。
+- 最终结论：测试环境推送采用开发分支优先策略。脚本先执行 `git merge -X theirs <source>`；如仍存在 unmerged paths，则逐个采用源开发分支版本并提交 merge，然后推送 `dev`。
+- 为什么这个方案胜出：自动冲突处理必须有可预测规则。测试环境的目标是快速验证开发分支效果，使用源分支优先比静默保留 `dev` 更符合用户意图；同时文档明确该策略不适合生产发布默认流程。
+- 后续影响：新增 `scripts/push-test-environment.py`，并在 README、SKILL、STATE-MODEL 和初始化提示中声明“推送到测试环境”的默认行为。
+- 验证方式：运行脚本帮助和 dry-run、临时 Git 仓库冲突合并用例、Python 语法检查和 `.claw` 状态校验。
 
 ## 维护规则
 

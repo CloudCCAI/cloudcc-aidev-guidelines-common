@@ -1,9 +1,9 @@
 ---
 kind: test-report
 version: 3
-updated_at: 2026-05-19T00:00:00Z
+updated_at: 2026-05-20T00:00:00Z
 updated_by: codex
-last_run_at: 2026-05-19T00:00:00Z
+last_run_at: 2026-05-20T00:00:00Z
 last_run_status: passed
 ---
 
@@ -16,8 +16,8 @@ last_run_status: passed
 ## 最新运行摘要
 
 - 状态：`passed`
-- 范围：`GitHub sync, Codeup token guard, Codeup dry-run payload, local token storage, Python syntax, state validation, diff whitespace`
-- 命令：`git fetch github`; `git merge --allow-unrelated-histories -X theirs --no-edit github/main`; `env -u YUNXIAO_TOKEN python3 scripts/create-codeup-change-request.py --dry-run ...`; `YUNXIAO_TOKEN=dummy-token python3 scripts/create-codeup-change-request.py --dry-run ...`; `printf 'dummy-token\n' | python3 scripts/store-yunxiao-token.py --stdin --env-file /private/tmp/cc-aidev-codeup-test.env`; `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/create-codeup-change-request.py scripts/store-yunxiao-token.py scripts/check-assignment.py scripts/validate-state.py scripts/summarize-team-status.py scripts/dev-login.py`; `python3 scripts/validate-state.py .claw`; `git diff --check`
+- 范围：`test environment push help, dry-run, content conflict merge, modify/delete conflict merge, Python syntax, state validation, diff whitespace`
+- 命令：`python3 scripts/push-test-environment.py --help`; `python3 scripts/push-test-environment.py --dry-run --source-branch feature/example --target-branch dev --remote origin`; temporary Git repo content-conflict push test; temporary Git repo modify/delete conflict push test; `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/push-test-environment.py scripts/create-codeup-change-request.py scripts/store-yunxiao-token.py scripts/check-assignment.py scripts/validate-state.py scripts/summarize-team-status.py scripts/dev-login.py`; `python3 scripts/validate-state.py .claw`; `git diff --check`
 - 环境：`local workspace`
 
 ## 结果汇总
@@ -32,6 +32,11 @@ last_run_status: passed
 ## 失败项
 
 - 暂无失败项。
+- 备注：`python3 scripts/push-test-environment.py --help` 通过。
+- 备注：dry-run 输出 fetch、checkout `dev`、pull、merge、push 和切回原分支的计划，不要求真实 `dev` 分支存在，也不修改工作区。
+- 备注：临时 Git 仓库内容冲突用例中，`feat/test` 合并到 `dev` 后，`origin/dev:app.txt` 为开发分支内容 `feature`，脚本切回 `feat/test`。
+- 备注：临时 Git 仓库 modify/delete 冲突用例中，开发分支删除 `app.txt`，`dev` 修改 `app.txt`，脚本自动采用开发分支删除结果，推送后 `origin/dev:app.txt` 不存在，脚本切回 `feat/delete`。
+- 备注：`PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/push-test-environment.py scripts/create-codeup-change-request.py scripts/store-yunxiao-token.py scripts/check-assignment.py scripts/validate-state.py scripts/summarize-team-status.py scripts/dev-login.py` 通过。
 - 备注：`github/main` 与本地 `main` 没有共同 merge-base，合并时使用 `--allow-unrelated-histories`，共同文件以 GitHub `3.8.0` 为基线，再重新套回本地 Codeup 方案。
 - 备注：缺少 `YUNXIAO_TOKEN` 时，Codeup 创建脚本返回非 0，未发起 OpenAPI 请求，并输出云效个人访问令牌文档链接。
 - 备注：dry-run 输出 endpoint 和 payload，没有输出 token。
@@ -53,6 +58,7 @@ last_run_status: passed
 | 2026-05-17 | n/a | n/a | n/a |
 | 2026-05-18 | n/a | n/a | n/a |
 | 2026-05-19 | n/a | n/a | n/a |
+| 2026-05-20 | n/a | n/a | n/a |
 
 ## 常用测试命令
 
@@ -65,6 +71,7 @@ last_run_status: passed
 - `python3 - <<'PY' ... templates/github-workflows/check-assignment.yml ... PY`
 - `python3 scripts/create-codeup-change-request.py --dry-run --domain https://example.com --repository-id 123 --source-branch feat/TASK-xxx`
 - `python3 scripts/store-yunxiao-token.py`
+- `python3 scripts/push-test-environment.py --source-branch feat/TASK-xxx --target-branch dev --remote origin`
 - 不要在这里保留通用占位命令或猜测性的命令。
 
 ## 维护规则

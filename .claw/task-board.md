@@ -339,6 +339,50 @@ board_status: active
 
 - Token material must stay local. Use `.claw-local/codeup.env` or process environment only; do not write tokens into `.claw/`, docs, specs, task status files, or logs.
 
+### TASK-009 - Add test environment branch push flow
+
+- status: `review`
+- priority: `high`
+- owner_role: `shared`
+- claimed_by: `codex`
+- spec_path: `docs/specs/FEAT-009-test-environment-push.md`
+- depends_on: `TASK-008`
+- blocked_by: `none`
+- related_issues: `none`
+- scope_mode: `task_bounded_broad_code`
+- allowed_write_roots: `SKILL.md, README.md, STATE-MODEL.md, CHANGELOG.md, scripts/**, docs/specs/**, .claw/**`
+- scope_files: `scripts/push-test-environment.py, docs/specs/FEAT-009-test-environment-push.md, .claw/current-status.md, .claw/decisions.md, .claw/task-board.md, .claw/test-report.md`
+- protected_paths: `scripts/dev-login.py, scripts/check-assignment.py, scripts/validate-state.py`
+- branch: `n/a`
+- change_request_url: `n/a`
+- pr_url: `n/a`
+- assignment_path: `none`
+- task_status_path: `none`
+- parallel_group: `protocol-test-environment-push`
+- touch_policy: `shared`
+- shared_contracts: `docs/specs/FEAT-009-test-environment-push.md`
+- merge_policy: `direct_workspace_update`
+- integration_queue: `.claw/integration-queue.md`
+- integration_owner: `codex`
+- authorization_check: `scripts/dev-login.py hard gate, scripts/check-assignment.py scope mode`
+
+#### Done When
+
+- Skill protocol documents the "push to test environment" trigger
+- A helper script merges the development branch into `dev`
+- Conflict handling is automatic and documented as source-branch-wins
+- The helper pushes `dev` to the configured remote
+- README, STATE-MODEL, feature spec, ADR, changelog, and state files describe the behavior
+- Current repository validation and Python syntax checks pass
+
+#### Next Action
+
+- User review the source-branch-wins conflict policy and decide whether future production deployment needs a stricter separate flow
+
+#### Handoff Note
+
+- This flow is intentionally scoped to test-environment deployment. Do not reuse source-branch-wins conflict resolution as a default production release rule without a separate task and approval.
+
 ## Completed Tasks
 
 - 暂无已完成任务。

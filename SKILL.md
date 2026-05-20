@@ -1,7 +1,7 @@
 ---
 name: cc-aidev-guidelines-common
-description: Externalizes project state into `.claw/` or `.ai-dev/` files, adds a task board and spec-driven delivery docs, supports greenfield and brownfield adoption, and adds mandatory project-manager-gated async parallel delivery through developer records, SSH challenge-response login, SSH-signed identity bindings, task assignments, hard pre-edit authorization checks, per-task status slices, and integration queues. Use for AI-assisted software delivery, persistent project memory, task handoff, ADR tracking, issue tracking, test logging, multi-developer coordination, authorization gates, or agent coding standards.
-skill_version: 3.9.0
+description: Externalizes project state into `.claw` or `.ai-dev` files, adds a task board and spec-driven delivery docs, supports greenfield and brownfield adoption, and adds mandatory project-manager-gated async parallel delivery through developer records, SSH challenge-response login, SSH-signed identity bindings, task assignments, hard pre-edit authorization checks, per-task status slices, integration queues, Codeup review requests, and test-environment branch pushes. Use for AI-assisted software delivery, persistent project memory, task handoff, ADR tracking, issue tracking, test logging, multi-developer coordination, authorization gates, or agent coding standards.
+skill_version: 4.0.0
 ---
 
 # AI Agent Project State Protocol
@@ -10,11 +10,11 @@ Use this skill to turn project state into durable files that an AI agent can rea
 
 ## Skill Version
 
-Canonical skill version: `3.9.0`
+Canonical skill version: `4.0.0`
 
 Use the `skill_version` field in this file's front matter as the source of truth for the installed skill version. If `README.md`, `CHANGELOG.md`, or other references drift, this field wins.
 
-This skill has six goals:
+This skill has seven goals:
 
 1. Build a stable project state storage layer.
 2. Enforce explicit AI development rules.
@@ -22,6 +22,7 @@ This skill has six goals:
 4. Support asynchronous multi-developer delivery through explicit identity, assignment, status-slice, and integration records.
 5. Gate multi-developer work through a project manager, mandatory SSH challenge-response login, SSH-signed identity bindings, and hard pre-edit scope checks.
 6. Support Codeup-first change request submission while preserving GitHub as an optional platform example.
+7. Support test-environment pushes by merging a development branch into `dev`, resolving conflicts with a declared source-branch-wins policy, and pushing `dev`.
 
 ## Directory Layout
 
@@ -64,6 +65,7 @@ Utility scripts are available under `scripts/`:
 - `scripts/check-assignment.py` checks developer identity, manager assignment, branch, task-bounded write roots, protected paths, and exact file scope before development or in CI
 - `scripts/store-yunxiao-token.py` stores a developer's local `YUNXIAO_TOKEN` outside Git-tracked files
 - `scripts/create-codeup-change-request.py` creates a Codeup change request with Yunxiao OpenAPI
+- `scripts/push-test-environment.py` merges a development branch into `dev`, resolves test-deploy conflicts from the source branch, and pushes `dev`
 - `scripts/summarize-team-status.py` generates the derived manager team-status view
 - `scripts/validate-state.py` validates required files, front matter, task cards, referenced feature specs, and optional async-parallel coordination files
 - `templates/platforms/codeup/` documents the default Codeup change request flow
@@ -169,6 +171,7 @@ In `Project-Manager-Gated Authorization Mode`:
 - If the preflight result is not allowed, the agent must stop development and ask the project manager to update the assignment or team record.
 - CI or platform automation should call `scripts/check-assignment.py` with the review author identity, branch, and changed files. Branch protection should require the check to pass before merge.
 - For Codeup, each developer stores a local `YUNXIAO_TOKEN` outside the repository. Before creating a change request, `scripts/create-codeup-change-request.py` checks for `YUNXIAO_TOKEN`; if missing, it stops and links to the Yunxiao personal access token documentation. Use `scripts/store-yunxiao-token.py` to write the token to `.claw-local/codeup.env`.
+- When the user asks to "push to the test environment" or "推送到测试环境", use `scripts/push-test-environment.py` by default. It treats the current branch as the development branch, merges it into `dev`, uses a source-branch-wins policy for conflicts, pushes `dev` to the remote, and restores the original branch after success.
 - For GitHub Actions, copy `templates/github-workflows/check-assignment.yml` into `.github/workflows/check-assignment.yml` in the adopting project and adapt it as needed.
 
 Recommended identity and authorization flow:
@@ -447,6 +450,7 @@ Use these conventions in all state files:
 - `scripts/check-assignment.py`: manager-gated preflight authorization check for local development and CI, supporting both exact file scopes and task-bounded broad code roots with protected paths
 - `scripts/store-yunxiao-token.py`: local Yunxiao token storage helper
 - `scripts/create-codeup-change-request.py`: Codeup change request creation helper
+- `scripts/push-test-environment.py`: test-environment branch push helper
 - `templates/github-workflows/check-assignment.yml`: example GitHub Actions PR gate for assignment scope
 - `templates/docs/feature-spec-template.md`: one-feature requirement, design, implementation, and handoff template
 - `templates/docs/project-baseline-template.md`: legacy-project baseline, inferred architecture, and adoption handoff template

@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.0 - 2026-05-20
+
+- Added `scripts/push-test-environment.py` to merge a development branch into `dev`, resolve conflicts with a source-branch-wins policy, and push `dev` for test-environment deployment.
+- Documented the "push to test environment" trigger in the skill protocol, README, and state model.
+- Added `FEAT-009` and `ADR-009` for the test-environment branch push policy.
+
 ## 3.9.0 - 2026-05-19
 
 - Made Aliyun Yunxiao Codeup the default platform flow for review request submission.

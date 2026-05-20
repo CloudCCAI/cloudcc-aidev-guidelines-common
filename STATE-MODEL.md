@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 3.9.0
+version: 4.0.0
 ---
 
 # State Model Reference
@@ -25,6 +25,7 @@ This file defines the detailed state model used by `SKILL.md`.
 14. Local development must verify the current operator through SSH challenge-response login before any code edit when identity or assignment records exist.
 15. Development must stop when login, preflight identity, assignment, branch, task-boundary, protected-path, file-scope checks, or hard identity gate prerequisites fail.
 16. One Git platform account should map to one active identity by default; role sharing requires distinct SSH signing key fingerprints.
+17. Test-environment pushes should merge the development branch into `dev`, use a declared source-branch-wins conflict policy, and push `dev` to the remote.
 
 ## Project Instruction Anchors
 
@@ -401,6 +402,19 @@ Behavior:
 - prints the official Yunxiao personal access token documentation link when the token is missing
 - calls Codeup `CreateChangeRequest` through Yunxiao OpenAPI
 - accepts domain, repository, source branch, target branch, title, description, reviewers, and work item ids as CLI flags or local env values
+
+### `scripts/push-test-environment.py`
+
+Use as the default helper when a user asks to push to the test environment.
+
+Behavior:
+
+- requires a clean Git working tree before switching branches
+- treats the current branch as the source development branch unless `--source-branch` is provided
+- treats `dev` as the target test-environment branch unless `--target-branch` is provided
+- fetches the remote, checks out `dev`, fast-forwards it from the remote, merges the source branch, and pushes `dev`
+- auto-resolves merge conflicts by taking the source development branch version
+- restores the original branch after success unless `--no-restore` is provided
 
 ### `templates/platforms/codeup/`
 

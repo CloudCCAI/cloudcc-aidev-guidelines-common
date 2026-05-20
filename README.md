@@ -2,7 +2,7 @@
 
 **Bilingual project-state and delivery protocol for AI coding agents**
 
-这个 skill 现在覆盖六件事：
+这个 skill 现在覆盖七件事：
 
 1. 把项目状态外存到 `.claw/` 或 `.ai-dev/`
 2. 用 `task-board.md` 管理任务、依赖和交接
@@ -10,8 +10,9 @@
 4. 用身份、公钥、任务授权、分片状态和集成队列支持异步多开发者并行交付
 5. 用项目经理门控授权、SSH challenge-response 登录、Git 平台账号绑定、SSH commit signing 和 preflight 检查阻止越权开发
 6. 以 Codeup 合并请求为默认提交评审方式，同时保留 GitHub 作为可选平台示例
+7. 当用户要求推送到测试环境时，将开发分支合并到 `dev`，按开发分支优先策略自动处理冲突，并推送 `dev`
 
-It now covers six layers:
+It now covers seven layers:
 
 1. durable project state in `.claw/` or `.ai-dev/`
 2. executable task tracking and handoff in `task-board.md`
@@ -19,6 +20,7 @@ It now covers six layers:
 4. identity-based async parallel delivery with assignments, status slices, and integration queues
 5. project-manager-gated authorization with SSH challenge-response login, Git account binding, SSH commit signing, and preflight scope checks
 6. Codeup-first change request submission while preserving GitHub as an optional platform example
+7. test-environment pushes by merging a development branch into `dev`, auto-resolving conflicts from the source branch, and pushing `dev`
 
 ## 一句话介绍 | One-Line Pitch
 
@@ -26,7 +28,7 @@ It now covers six layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`3.9.0`
+当前 skill 版本：`4.0.0`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -42,6 +44,7 @@ It now covers six layers:
 | `scripts/check-assignment.py` | 开发前身份、任务、分支、任务边界和受保护路径检查 / preflight identity, task, branch, task boundary, and protected-path check |
 | `scripts/store-yunxiao-token.py` | 本地保存云效个人访问令牌 / local Yunxiao token storage helper |
 | `scripts/create-codeup-change-request.py` | 通过 Codeup OpenAPI 创建合并请求 / Codeup change request creator |
+| `scripts/push-test-environment.py` | 合并开发分支到 dev 并推送测试环境 / test-environment branch push helper |
 | `scripts/summarize-team-status.py` | 团队状态汇总器 / derived team status summarizer |
 | `templates/platforms/codeup/` | 默认 Codeup 合并请求流程 / default Codeup change request flow |
 | `templates/github-workflows/check-assignment.yml` | GitHub Actions 授权检查示例 / GitHub Actions assignment gate example |
@@ -256,7 +259,37 @@ python3 /path/to/this-skill/scripts/create-codeup-change-request.py \
 
 更完整的 Codeup 平台模板见 `templates/platforms/codeup/`。
 
-### 8. 项目经理门控授权 | Project-Manager-Gated Authorization
+### 8. 测试环境推送 | Test Environment Push
+
+当用户说“推送到测试环境”时，默认含义是把当前开发分支合并到 `dev`，然后把 `dev` 推送到远端，由测试环境流水线或部署系统接管。
+
+推荐使用脚本：
+
+```bash
+python3 /path/to/this-skill/scripts/push-test-environment.py
+```
+
+常用显式参数：
+
+```bash
+python3 /path/to/this-skill/scripts/push-test-environment.py \
+  --source-branch feat/TASK-001-feature-title \
+  --target-branch dev \
+  --remote origin
+```
+
+脚本约定：
+
+- 开始前要求 Git 工作区干净
+- 默认源分支是当前分支，目标分支是 `dev`，远端是 `origin`
+- 先 fetch，再切到 `dev`，用 `git pull --ff-only origin dev` 同步远端
+- 合并开发分支到 `dev`
+- 冲突处理策略固定为“开发分支优先”，先用 `git merge -X theirs`，如仍有 unmerged paths，则逐个采用源分支版本并提交 merge
+- 成功推送后默认切回原开发分支
+
+这个策略只适合测试环境快速验证。生产发布不应默认用自动偏向源分支的冲突处理策略。
+
+### 9. 项目经理门控授权 | Project-Manager-Gated Authorization
 
 多人异步协作默认推荐启用这一层：每个项目指定一个或多个 `MANAGER-xxx`，只有项目经理能添加团队成员、暂停成员、分配任务、扩大范围或批准越界修改。
 
@@ -696,7 +729,7 @@ docs/specs/
 
 ---
 
-*版本 3.9.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权和 Codeup 合并请求提交的项目状态与交付规范*
+*版本 4.0.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交和测试环境推送的项目状态与交付规范*
 
 <!-- cc-aidev-guidelines-common:begin -->
 ## AI Development Protocol
