@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.1.0 - 2026-05-21
+
+- Added progressive state disclosure rules: `current-status.md` is a hot index, `task-board.md` is a compact task directory, and each active task links to `.claw/tasks/TASK-xxx.md`.
+- Updated templates so new projects start with compact hot files and per-task status slices.
+- Added validation guardrails for hot-file size, forbidden session-history sections, task-card size, and required active `task_status_path` references.
+- Migrated this repository's active tasks into individual `.claw/tasks/TASK-xxx.md` files.
+
 ## 4.0.0 - 2026-05-20
 
 - Added `scripts/push-test-environment.py` to merge a development branch into `dev`, resolve conflicts with a source-branch-wins policy, and push `dev` for test-environment deployment.

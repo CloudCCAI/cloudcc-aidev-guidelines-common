@@ -1,7 +1,7 @@
 ---
 name: cc-aidev-guidelines-common
-description: Externalizes project state into `.claw` or `.ai-dev` files, adds a task board and spec-driven delivery docs, supports greenfield and brownfield adoption, and adds mandatory project-manager-gated async parallel delivery through developer records, SSH challenge-response login, SSH-signed identity bindings, task assignments, hard pre-edit authorization checks, per-task status slices, integration queues, Codeup review requests, and test-environment branch pushes. Use for AI-assisted software delivery, persistent project memory, task handoff, ADR tracking, issue tracking, test logging, multi-developer coordination, authorization gates, or agent coding standards.
-skill_version: 4.0.0
+description: Externalizes compact project state into `.claw` or `.ai-dev` files, keeps hot files as indexes, tracks each task in its own small status file, and supports spec-driven delivery, greenfield and brownfield adoption, project-manager-gated async parallel delivery, Codeup review requests, and test-environment branch pushes. Use for AI-assisted software delivery, persistent project memory, progressive disclosure, task handoff, ADR tracking, issue tracking, test logging, multi-developer coordination, authorization gates, or agent coding standards.
+skill_version: 4.1.0
 ---
 
 # AI Agent Project State Protocol
@@ -10,11 +10,11 @@ Use this skill to turn project state into durable files that an AI agent can rea
 
 ## Skill Version
 
-Canonical skill version: `4.0.0`
+Canonical skill version: `4.1.0`
 
 Use the `skill_version` field in this file's front matter as the source of truth for the installed skill version. If `README.md`, `CHANGELOG.md`, or other references drift, this field wins.
 
-This skill has seven goals:
+This skill has eight goals:
 
 1. Build a stable project state storage layer.
 2. Enforce explicit AI development rules.
@@ -23,6 +23,7 @@ This skill has seven goals:
 5. Gate multi-developer work through a project manager, mandatory SSH challenge-response login, SSH-signed identity bindings, and hard pre-edit scope checks.
 6. Support Codeup-first change request submission while preserving GitHub as an optional platform example.
 7. Support test-environment pushes by merging a development branch into `dev`, resolving conflicts with a declared source-branch-wins policy, and pushing `dev`.
+8. Keep state loading compact through progressive disclosure: hot files are indexes, and each task owns a separate small status file.
 
 ## Directory Layout
 
@@ -44,7 +45,7 @@ Store the state under `.claw/` by default. `.ai-dev/` is an acceptable alias if 
 │   └── DEV-xxx.yaml
 ├── assignments/                  # optional manager-signed task assignments
 │   └── TASK-xxx.yaml
-└── tasks/                        # optional per-task status slices
+└── tasks/                        # per-task current status slices
     └── TASK-xxx.md
 
 docs/
@@ -67,7 +68,7 @@ Utility scripts are available under `scripts/`:
 - `scripts/create-codeup-change-request.py` creates a Codeup change request with Yunxiao OpenAPI
 - `scripts/push-test-environment.py` merges a development branch into `dev`, resolves test-deploy conflicts from the source branch, and pushes `dev`
 - `scripts/summarize-team-status.py` generates the derived manager team-status view
-- `scripts/validate-state.py` validates required files, front matter, task cards, referenced feature specs, and optional async-parallel coordination files
+- `scripts/validate-state.py` validates required files, compact hot-file budgets, task cards, per-task status files, referenced feature specs, and optional async-parallel coordination files
 - `templates/platforms/codeup/` documents the default Codeup change request flow
 - `templates/github-workflows/check-assignment.yml` provides a GitHub Actions example for enforcing assignment scope on pull requests
 
@@ -102,13 +103,13 @@ Treat the eight state files as a layered memory system, not as eight equally-hot
 
 | Layer | File | Default read | Default update | Purpose |
 |------|------|------|------|------|
-| Hot | `current-status.md` | Every session | Every session | Entry point, current snapshot, next action |
-| Warm | `task-board.md` | Every implementation or handoff session | Triggered | Execution queue, dependencies, owner roles, handoff notes |
+| Hot | `current-status.md` | Every session | Every session | Compact entry index, current snapshot, next action |
+| Warm | `task-board.md` | Every implementation or handoff session | Triggered | Compact task index, dependencies, owner roles, status-file pointers |
 | Warm | `integration-queue.md` | Async parallel integration only | Triggered | Integration branches, merge order, merge gates |
 | Warm | `team-status.md` | Manager review only | Generated | Derived team member, assignment, contribution, and integration summary |
 | Warm | `developers/*.yaml` | Identity or assignment work only | Triggered | Developer identity, Git platform account, SSH signing fingerprint, role status |
 | Warm | `assignments/*.yaml` | Assigned-task work only | Triggered | Project-manager-authorized task ownership and write scope |
-| Warm | `tasks/*.md` | Assigned-task work only | Triggered | Per-task developer status, evidence, handoff notes |
+| Warm | `tasks/*.md` | Active task work | Triggered | Per-task current state, progress, changed files, evidence, handoff notes |
 | Cold | `task-archive.md` | Historical review or audit only | Triggered | Archived completed and canceled work beyond the active board window |
 | Warm | `issue-list.md` | As needed | Triggered | Open problems, blockers, follow-up work |
 | Warm | `test-report.md` | As needed | Triggered | Verified test outcomes from real runs |
@@ -144,8 +145,9 @@ In `Asynchronous Parallel Delivery Mode`:
 - Local identity cache files such as `.claw-local/identity.json` or `.ai-dev-local/identity.json` may remember a private key path and resolved `developer_id` on one machine, but they must be ignored by Git and must never contain private key material.
 - Default to Git platform account binding plus SSH commit signing for strong identity enforcement. GPG signing is compatible when a team already uses it. Sigstore/gitsign is an advanced option for CI, artifact signing, and supply-chain audit.
 - Use `.claw/assignments/TASK-xxx.yaml` to record who is authorized to work on a task, which branch they should use, which broad code roots and protected paths apply, which exact task documents they may edit, and which shared contracts they must preserve.
-- Use `.claw/tasks/TASK-xxx.md` for the assignee's progress, evidence, and handoff notes.
+- Use `.claw/tasks/TASK-xxx.md` for every tracked task's current state, progress, evidence, changed-file summary, and handoff notes.
 - Keep `current-status.md` as a hot index and mainline snapshot. Do not require every developer branch to update it for routine progress.
+- Keep `task-board.md` as a compact task directory. It should point to task status files rather than embedding full task history or long checklists.
 - Use `.claw/integration-queue.md` to record integration branches, merge order, validation gates, and the integration owner.
 - Use `.claw/team-status.md` only as a generated manager summary. Do not treat it as a source of truth.
 - A project manager or integration owner should reconcile per-task status files into `task-board.md` and `current-status.md` during integration.
@@ -213,7 +215,7 @@ Create or update a feature spec before major implementation when the work is any
 - a non-trivial refactor
 - work likely to be handed off between agents or sessions
 
-Small and isolated fixes may use only a concise task card if no durable design context is needed.
+Small and isolated fixes may use only a concise task card plus `.claw/tasks/TASK-xxx.md` if no durable feature spec is needed.
 
 Create or update `PROJECT-BASELINE.md` when the work is any of:
 
@@ -229,10 +231,10 @@ Do not maintain the same fact independently in multiple files.
 | Fact | Source of truth | Other files may do |
 |------|------|------|
 | Current task, phase, next action | `current-status.md` | Reference it briefly |
-| Execution task queue, owner roles, dependencies, handoff notes | `task-board.md` | Reference task IDs only |
+| Execution task queue, owner roles, dependencies, status-file pointers | `task-board.md` | Reference task IDs only |
 | Developer identity, Git platform account, SSH signing key fingerprint, role status, long-lived scope | `.claw/developers/DEV-xxx.yaml` | Reference developer IDs only |
 | Task authorization, manager, branch, scope mode, write roots, protected paths, signed assignment, preflight status | `.claw/assignments/TASK-xxx.yaml` | Reference assignment path only |
-| Individual task progress, evidence, handoff | `.claw/tasks/TASK-xxx.md` | Summarize status only |
+| Individual task current state, progress, changed files, evidence, handoff | `.claw/tasks/TASK-xxx.md` | Summarize status only |
 | Integration branch, merge order, merge gates | `.claw/integration-queue.md` | Reference queue ID or task IDs only |
 | Team member and contribution summary | `.claw/team-status.md` | Derived from source files only; regenerate when stale |
 | Archived completed and canceled tasks older than the active board window | `task-archive.md` | Reference archived task IDs only |
@@ -252,12 +254,12 @@ If files conflict, repair the summary file and preserve the source-of-truth file
 
 - Resolve the canonical state directory.
 - Read `current-status.md` first.
-- Read `task-board.md` for any implementation, handoff, or prioritization work.
+- Read `task-board.md` for any implementation, handoff, or prioritization work, then read only the active task's `.claw/tasks/TASK-xxx.md` file.
 - Read `task-archive.md` only when completed-task history or archived handoff context matters.
-- Read additional files only when triggered by the task, by `current-status.md`, or by the active task card.
+- Read additional files only when triggered by the task, by `current-status.md`, by `task-board.md`, or by the active task status file.
 - In brownfield projects, open `docs/specs/PROJECT-BASELINE.md` before major legacy changes when it exists.
 - Open the referenced feature spec or baseline doc before major code changes when the task has `spec_path`.
-- In asynchronous parallel delivery, read the referenced developer record, assignment file, per-task status file, and integration queue only when the task card or current work references them.
+- In asynchronous parallel delivery, read the referenced developer record, assignment file, task status file, and integration queue only when the task index or current work references them.
 - Before editing when the hard identity gate is enabled, run `scripts/dev-login.py` for local challenge-response identity verification and assignment scope. Do this automatically; do not wait for the user to ask for identity verification. Use `scripts/check-assignment.py` only for CI or assignment-only checks, not as a replacement for local `dev-login.py`.
 - If the hard identity gate is enabled and identity verification has not succeeded in the current session, stop before file edits. Ask for the SSH key path, task id, branch, or assignment update needed to run `scripts/dev-login.py`.
 - When a manager asks for team status, generate or read `.claw/team-status.md` using the standard aggregation flow before making management decisions.
@@ -271,17 +273,18 @@ If files conflict, repair the summary file and preserve the source-of-truth file
 - Keep task status, `owner_role`, and `next_action` aligned with real progress.
 - If implementation diverges from the spec, update the spec before or with the code change.
 - In brownfield adoption, prefer forward-filling the baseline over rewriting legacy history from memory.
-- In asynchronous parallel delivery, developers update their assigned `.claw/tasks/TASK-xxx.md` file for routine progress. The manager or integration owner updates `task-board.md`, `current-status.md`, and `integration-queue.md` when coordination state changes.
+- Update `.claw/tasks/TASK-xxx.md` for routine task progress, changed files, verification evidence, blockers, and handoff notes. The task board should only change when index fields change.
+- In asynchronous parallel delivery, developers update only their assigned task status file for routine progress. The manager or integration owner updates `task-board.md`, `current-status.md`, and `integration-queue.md` when coordination state changes.
 - `team-status.md` should be regenerated from source files after assignments, per-task status, integration queue, or task board changed.
 - Before editing files in parallel work, compare the requested changes with the assignment scope model and `touch_policy`. If the identity is unknown, the assignment is inactive, the assignee does not match, the branch does not match, the change falls outside broad write roots, or the change touches protected paths without exact authorization, stop and ask the project manager or user to update the assignment.
 - If the hard identity gate is enabled, perform the identity gate before this comparison and before any file modification. Scope comparison without a successful local login is not sufficient.
 
 ### 3. Session end
 
-- Always refresh `current-status.md`.
+- Always refresh `current-status.md` by rewriting it as the latest compact snapshot, not by appending a session log.
 - Update any triggered file with only the facts established in the session.
-- Update the active task card whenever status, scope, owner role, or handoff notes changed.
-- Update the assigned per-task status file when developer-owned progress, evidence, or handoff context changed.
+- Update the active task card only when compact index fields changed: status, priority, owner role, dependency, blocker, branch, review URL, spec path, assignment path, task status path, or next action.
+- Update the active `.claw/tasks/TASK-xxx.md` file when progress, evidence, changed files, blocker detail, or handoff context changed.
 - Regenerate `team-status.md` when the user asks for team status or when manager-facing contribution state changed.
 - When `Completed Tasks` in `task-board.md` grows past 20 task cards, move the oldest completed or canceled task cards into `task-archive.md`.
 - Update the feature spec's implementation progress and handoff notes when delivery facts changed.
@@ -300,7 +303,7 @@ Read these files only when the condition is true:
 - `team-status.md`: the manager asks for team status, contribution status, assigned work, or integration readiness.
 - `.claw/developers/DEV-xxx.yaml`: a developer identity, role, public key, or active status must be verified.
 - `.claw/assignments/TASK-xxx.yaml`: a task is assigned to a specific developer, branch, or write scope.
-- `.claw/tasks/TASK-xxx.md`: a developer reports progress, evidence, or handoff for one assigned task.
+- `.claw/tasks/TASK-xxx.md`: a task is active, a developer reports progress, changed files, evidence, blockers, or handoff for one task.
 - `task-archive.md`: historical completed work must be reviewed, a resumed task depends on archived context, or the board overflowed its completion window.
 - `test-report.md`: tests were run, failures need context, coverage matters, or quality gates are part of the task.
 - `devops.md`: build, startup, env vars, deployment, operations, or incident handling are involved.
@@ -317,12 +320,12 @@ Update files only when the condition is true:
 - `goals.md`: scope, milestones, success metrics, or constraints changed.
 - `decisions.md`: a non-trivial technical decision was made, replaced, or rejected.
 - `issue-list.md`: a new issue was discovered, issue state changed, or a blocker was resolved.
-- `task-board.md`: a task was created, reprioritized, claimed, blocked, reviewed, completed, canceled, or handed off.
+- `task-board.md`: a task was created, reprioritized, claimed, blocked, reviewed, completed, canceled, or its compact index fields changed.
 - `integration-queue.md`: an integration branch, merge order, merge gate, or integration owner changed.
 - `team-status.md`: generated only by the standard aggregation method after source files changed or the manager requested a current view.
 - `.claw/developers/DEV-xxx.yaml`: a developer was added, suspended, rotated, or had identity metadata changed.
 - `.claw/assignments/TASK-xxx.yaml`: a manager assigned, revoked, extended, or changed the authorized task scope.
-- `.claw/tasks/TASK-xxx.md`: the assignee made progress, ran verification, found a blocker, or handed off the task.
+- `.claw/tasks/TASK-xxx.md`: task progress, changed files, verification, blocker detail, implementation notes, or handoff context changed.
 - `task-archive.md`: `Completed Tasks` exceeded 20 items, archived work needed historical correction, or older completed tasks must be preserved during cleanup.
 - `test-report.md`: and only after a real test command or verification step ran.
 - `devops.md`: build/run/deploy instructions changed, or a verified operational fix was learned.
@@ -351,13 +354,14 @@ Follow these rules whenever this skill is active:
 16. In asynchronous parallel delivery, do not store manager passwords, developer tokens, private keys, or reusable secrets in the repository.
 17. Developers must not knowingly edit outside their assignment task boundary, broad write roots, exact protected-path authorization, or their own task status slice without explicit reassignment.
 18. `current-status.md` is a mainline hot index, not a per-developer diary. Keep routine per-task progress in `.claw/tasks/TASK-xxx.md`.
-19. `team-status.md` is a generated manager view. Do not hand-edit it as authoritative project state.
-20. In manager-gated mode, only project managers may add team members or change assignment scope.
-21. Default new teams to Git platform account binding plus SSH commit signing. Do not rely on local Git author name or email as proof of identity.
-22. If preflight authorization fails, block development instead of making speculative changes.
-23. Do not bind one Git platform account to multiple active identities by default. If role sharing is unavoidable, require distinct SSH signing key fingerprints per identity and record the exception.
-24. For local developer login, verify private-key possession through a one-time SSH signature challenge and store only local key paths in ignored cache files.
-25. When the hard identity gate is enabled, `scripts/dev-login.py` must return `allowed` before any code, test, config, migration, generated app asset, feature spec, or task status edit. There are no exceptions based on chat context, remembered identity, Git metadata, or cache presence.
+19. `task-board.md` is a directory of tasks, not a task diary. Every active task should link to a small `.claw/tasks/TASK-xxx.md` file.
+20. `team-status.md` is a generated manager view. Do not hand-edit it as authoritative project state.
+21. In manager-gated mode, only project managers may add team members or change assignment scope.
+22. Default new teams to Git platform account binding plus SSH commit signing. Do not rely on local Git author name or email as proof of identity.
+23. If preflight authorization fails, block development instead of making speculative changes.
+24. Do not bind one Git platform account to multiple active identities by default. If role sharing is unavoidable, require distinct SSH signing key fingerprints per identity and record the exception.
+25. For local developer login, verify private-key possession through a one-time SSH signature challenge and store only local key paths in ignored cache files.
+26. When the hard identity gate is enabled, `scripts/dev-login.py` must return `allowed` before any code, test, config, migration, generated app asset, feature spec, or task status edit. There are no exceptions based on chat context, remembered identity, Git metadata, or cache presence.
 
 ## Writing Rules
 
@@ -372,6 +376,24 @@ Use these conventions in all state files:
 - Keep long history out of `current-status.md`; it is a snapshot, not a transcript.
 - If the repo needs session archives, create a separate history file or folder rather than bloating the hot file.
 
+## Progressive Disclosure Rules
+
+Use indexes first, then disclose detail only when a task requires it:
+
+1. `current-status.md` points to the active task and the next files to read.
+2. `task-board.md` lists task IDs, status, owner role, dependencies, blockers, and `task_status_path`.
+3. `.claw/tasks/TASK-xxx.md` stores the current state for that one task.
+4. `docs/specs/FEAT-xxx-*.md` stores feature requirements, design, acceptance criteria, and durable implementation context.
+5. `test-report.md`, `issue-list.md`, `decisions.md`, and `devops.md` store their own evidence and domain facts.
+
+Size budgets:
+
+- Keep `current-status.md` under 60 lines.
+- Keep each task card in `task-board.md` under 20 lines.
+- Keep `task-board.md` as an index; do not embed long `Done When`, verification logs, changed-file lists, or handoff narratives there.
+- Keep each `.claw/tasks/TASK-xxx.md` focused on one task. Split historical detail into specs, archives, or test reports when it stops being immediately useful for the current task.
+- Use `task-archive.md` for completed or canceled task cards that age out of the active board window.
+
 ## Required Verification Rules
 
 - Test outcomes go to `test-report.md` only after a real command ran.
@@ -382,6 +404,8 @@ Use these conventions in all state files:
 - Tasks with `spec_path` must reference a real spec or baseline document under `docs/specs/`.
 - `PROJECT-BASELINE.md` must separate verified facts from inferred legacy understanding.
 - `task-board.md` should keep at most 20 task cards in `Completed Tasks`; archive older completed or canceled cards into `task-archive.md`.
+- Active task cards should reference a real `.claw/tasks/TASK-xxx.md` file through `task_status_path`.
+- `current-status.md` must not contain session-log sections such as `本次会话进展`, `修改文件`, or `已验证事实`.
 - Project-root `README.md` and `AGENTS.md` must contain the managed `cc-aidev-guidelines-common` declaration block, including the GitHub install source.
 - Assignment files must not contain private keys, manager passwords, bearer tokens, or reusable secrets.
 - When an assignment uses `scope_mode: exact_files`, code changes must stay inside `scope_files` unless a manager updates the assignment.
@@ -409,9 +433,10 @@ Use these conventions in all state files:
 7. Create optional derived manager view `.claw/team-status.md`.
 8. Initialize `current-status.md` first.
 9. Fill `goals.md` with current scope and success criteria.
-10. Create the first task card in `task-board.md`.
-11. Create the first feature spec before major implementation when required.
-12. Keep the remaining files sparse until their triggers fire.
+10. Create the first compact task card in `task-board.md`.
+11. Create `.claw/tasks/TASK-001.md` for the task's current state.
+12. Create the first feature spec before major implementation when required.
+13. Keep the remaining files sparse until their triggers fire.
 
 ### Brownfield Adoption
 
@@ -425,17 +450,18 @@ Use these conventions in all state files:
 8. Initialize `current-status.md` first.
 9. Create `docs/specs/PROJECT-BASELINE.md` from the baseline template.
 10. Record only the current verified state, inferred architecture, active unknowns, and live delivery constraints.
-11. Create the first adoption task in `task-board.md`, which may reference `PROJECT-BASELINE.md`.
-12. Add feature specs only for the legacy areas that are actively being changed.
-13. Keep the remaining history sparse until those areas are touched.
+11. Create the first compact adoption task in `task-board.md`, which may reference `PROJECT-BASELINE.md`.
+12. Create `.claw/tasks/TASK-001.md` for the adoption task's current state.
+13. Add feature specs only for the legacy areas that are actively being changed.
+14. Keep the remaining history sparse until those areas are touched.
 
 ## File Roles
 
-- `templates/current-status.md`: hot state snapshot and read index
+- `templates/current-status.md`: compact hot state snapshot and read index
 - `templates/goals.md`: long-lived project intent
 - `templates/decisions.md`: ADR log with status transitions
 - `templates/issue-list.md`: active and resolved issues
-- `templates/task-board.md`: delivery queue, owner roles, and handoff state
+- `templates/task-board.md`: compact delivery queue, owner roles, dependencies, and task status pointers
 - `templates/task-archive.md`: archived completed or canceled task cards beyond the board retention window
 - `templates/test-report.md`: latest verified test evidence
 - `templates/devops.md`: operational runbook
@@ -443,7 +469,7 @@ Use these conventions in all state files:
 - `templates/integration-queue.md`: optional async parallel integration queue
 - `templates/parallel/developer.yaml`: optional developer identity record template
 - `templates/parallel/assignment.yaml`: optional manager-signed task assignment template
-- `templates/parallel/task-status.md`: optional per-task developer status template
+- `templates/parallel/task-status.md`: per-task current status template
 - `templates/platforms/codeup/`: default Codeup change request flow and description template
 - `scripts/ensure-agent-guidance.sh`: managed project-root `README.md` and `AGENTS.md` skill declaration
 - `scripts/dev-login.py`: local SSH challenge-response developer login and optional assignment gate
@@ -462,7 +488,7 @@ For a complete sample state set, read [examples/README.md](examples/README.md).
 
 - Reading all state files at the start of every task
 - Writing the same fact into multiple files as if each were authoritative
-- Treating `task-board.md` like a bug log or a design document
+- Treating `task-board.md` like a bug log, design document, or task diary
 - Deleting completed tasks from `task-board.md` without archiving them when the board exceeds its retention window
 - Updating `test-report.md` without running tests
 - Recording guesses as if they were verified findings
@@ -470,6 +496,7 @@ For a complete sample state set, read [examples/README.md](examples/README.md).
 - Requiring a legacy repo to backfill every historical decision before the skill can be used
 - Mixing baseline notes into `current-status.md` instead of `PROJECT-BASELINE.md`
 - Turning `current-status.md` into a long chronological diary
+- Leaving task progress in `task-board.md` instead of `.claw/tasks/TASK-xxx.md`
 - Hand-editing `team-status.md` instead of regenerating it from source files
 - Using `owner` as an unstable agent nickname instead of a durable `owner_role`
 - Letting AI-generated summaries overwrite explicit user decisions

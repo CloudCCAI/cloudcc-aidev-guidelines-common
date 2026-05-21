@@ -140,6 +140,17 @@ updated_by: codex
 - 后续影响：新增 `scripts/push-test-environment.py`，并在 README、SKILL、STATE-MODEL 和初始化提示中声明“推送到测试环境”的默认行为。
 - 验证方式：运行脚本帮助和 dry-run、临时 Git 仓库冲突合并用例、Python 语法检查和 `.claw` 状态校验。
 
+## ADR-010 - Keep state progressive with per-task status files
+
+- 状态：`accepted`
+- 日期：`2026-05-21`
+- 背景：用户指出项目增大后技能状态文件会越来越大，热文件不能积累历史内容，并明确要求按索引模式做渐进式追踪与披露，每个任务单独记录当前状态。
+- 备选方案：继续在 `current-status.md` 和 `task-board.md` 中保留会话进展与任务详情；只增加归档规则；将热文件和看板都改成索引，并把任务状态拆到 `.claw/tasks/TASK-xxx.md`。
+- 最终结论：采用渐进式状态披露。`current-status.md` 只做热索引，`task-board.md` 只做紧凑任务目录，每个活跃任务必须通过 `task_status_path` 指向独立小文件。
+- 为什么这个方案胜出：它把启动时必读内容控制在最小集合，同时仍保留任务进度、验证和交接信息；大型项目可以按需继续展开 spec、issue、decision 和 test-report。
+- 后续影响：模板、README、STATE-MODEL、SKILL、校验器和当前仓库状态文件都要迁移到索引模式。
+- 验证方式：运行 `python3 scripts/validate-state.py .claw` 和 `python3 -m py_compile scripts/validate-state.py`。
+
 ## 维护规则
 
 - 只记录非平凡技术决策。

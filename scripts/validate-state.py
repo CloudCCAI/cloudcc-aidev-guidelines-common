@@ -98,6 +98,19 @@ PROJECT_BASELINE_STATUSES = {
     "archived",
 }
 TASK_BOARD_COMPLETED_LIMIT = 20
+CURRENT_STATUS_LINE_LIMIT = 60
+TASK_CARD_LINE_LIMIT = 20
+TASK_STATUS_LINE_LIMIT = 120
+FORBIDDEN_CURRENT_STATUS_HEADINGS = {
+    "本次会话进展",
+    "修改文件",
+    "已验证事实",
+    "相关状态文件",
+    "相关设计文档",
+    "Session History",
+    "Changed Files",
+    "Verified Facts",
+}
 TIMESTAMP_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$")
 TASK_HEADER_RE = re.compile(r"^###\s+(TASK-[0-9]+)\s+-\s+(.+?)\s*$")
 TASK_FIELD_RE = re.compile(r"^- ([a-z_]+):\s*(.+?)\s*$")
@@ -218,7 +231,23 @@ def validate_common_front_matter(path: Path, front_matter: dict[str, str], error
     validate_timestamp(path, front_matter, errors)
 
 
-def validate_current_status(path: Path, front_matter: dict[str, str], errors: list[str]) -> None:
+def validate_current_status(path: Path, front_matter: dict[str, str], body: str, errors: list[str]) -> None:
+    total_lines = len(path.read_text(encoding="utf-8").splitlines())
+    if total_lines > CURRENT_STATUS_LINE_LIMIT:
+        errors.append(
+            f"{path.name}: has {total_lines} lines; keep the hot index under {CURRENT_STATUS_LINE_LIMIT} lines"
+        )
+
+    for raw_line in body.splitlines():
+        stripped = raw_line.strip()
+        if not stripped.startswith("## "):
+            continue
+        heading = stripped[3:].strip()
+        if heading in FORBIDDEN_CURRENT_STATUS_HEADINGS:
+            errors.append(
+                f"{path.name}: forbidden hot-file history section `{heading}`; move details to task status, specs, or test-report"
+            )
+
     for field in CURRENT_STATUS_REQUIRED_FIELDS:
         value = front_matter.get(field)
         if value is None:
@@ -235,22 +264,30 @@ def parse_task_cards(body: str) -> list[dict[str, object]]:
     tasks: list[dict[str, object]] = []
     current: dict[str, object] | None = None
     current_section = ""
+    lines = body.splitlines()
 
-    for raw_line in body.splitlines():
+    for line_number, raw_line in enumerate(lines, start=1):
         line = raw_line.rstrip()
         section_match = SECTION_HEADER_RE.match(line)
         if section_match:
+            if current is not None:
+                current["line_count"] = line_number - int(current["start_line"])
+                tasks.append(current)
+                current = None
             current_section = section_match.group(1).strip()
 
         header_match = TASK_HEADER_RE.match(line)
         if header_match:
             if current is not None:
+                current["line_count"] = line_number - int(current["start_line"])
                 tasks.append(current)
             current = {
                 "id": header_match.group(1),
                 "title": header_match.group(2).strip(),
                 "section": current_section,
                 "fields": {},
+                "start_line": line_number,
+                "line_count": 1,
             }
             continue
 
@@ -264,6 +301,7 @@ def parse_task_cards(body: str) -> list[dict[str, object]]:
             fields[field_match.group(1)] = clean_value(field_match.group(2))
 
     if current is not None:
+        current["line_count"] = len(lines) - int(current["start_line"]) + 1
         tasks.append(current)
 
     return tasks
@@ -318,8 +356,14 @@ def validate_task_board(path: Path, body: str, project_root: Path) -> list[str]:
         task_id = str(task["id"])
         title = str(task["title"]).strip()
         section = str(task.get("section", "")).strip()
+        line_count = int(task.get("line_count", 0))
         fields = task["fields"]
         assert isinstance(fields, dict)
+
+        if line_count > TASK_CARD_LINE_LIMIT:
+            errors.append(
+                f"{path.name}: task `{task_id}` has {line_count} lines; keep task-board cards under {TASK_CARD_LINE_LIMIT} lines and move details to `.claw/tasks/{task_id}.md`"
+            )
 
         if task_id in seen_ids:
             errors.append(f"{path.name}: duplicate task id `{task_id}`")
@@ -343,6 +387,17 @@ def validate_task_board(path: Path, body: str, project_root: Path) -> list[str]:
 
         if section == "Active Tasks" and status in {"done", "canceled"}:
             errors.append(f"{path.name}: task `{task_id}` is in `Active Tasks` but has terminal status `{status}`")
+
+        task_status_path = clean_value(str(fields.get("task_status_path", "")))
+        if section == "Active Tasks":
+            if is_empty_reference(task_status_path):
+                errors.append(f"{path.name}: active task `{task_id}` must declare `task_status_path`")
+            else:
+                resolved_task_status_path = project_root / task_status_path
+                if not resolved_task_status_path.exists():
+                    errors.append(
+                        f"{path.name}: task `{task_id}` references missing task_status_path `{task_status_path}`"
+                    )
 
         owner_role = clean_value(str(fields.get("owner_role", "")))
         if owner_role and owner_role not in OWNER_ROLES:
@@ -369,7 +424,7 @@ def validate_task_board(path: Path, body: str, project_root: Path) -> list[str]:
         if touch_policy and touch_policy.lower() not in {"none", "n/a"} and touch_policy not in TOUCH_POLICIES:
             errors.append(f"{path.name}: task `{task_id}` has invalid touch_policy `{touch_policy}`")
 
-        for field_name in ("assignment_path", "task_status_path", "integration_queue"):
+        for field_name in ("assignment_path", "integration_queue"):
             reference_path = clean_value(str(fields.get(field_name, "")))
             if is_empty_reference(reference_path):
                 continue
@@ -609,13 +664,19 @@ def validate_assignment_file(path: Path, project_root: Path) -> list[str]:
 
 def validate_task_status_file(path: Path) -> list[str]:
     errors: list[str] = []
+    total_lines = len(path.read_text(encoding="utf-8").splitlines())
+    if total_lines > TASK_STATUS_LINE_LIMIT:
+        errors.append(
+            f"{path}: has {total_lines} lines; keep per-task status files under {TASK_STATUS_LINE_LIMIT} lines and move long-lived design details to docs/specs/"
+        )
+
     front_matter, _body, fm_errors = read_front_matter(path)
     errors.extend(fm_errors)
 
     if not front_matter:
         return errors
 
-    required_fields = {"kind", "task_id", "assignee", "status", "updated_at", "updated_by"}
+    required_fields = {"kind", "task_id", "assignee", "owner_role", "status", "updated_at", "updated_by"}
     for field in sorted(required_fields - front_matter.keys()):
         errors.append(f"{path}: missing task-status front matter field `{field}`")
 
@@ -626,10 +687,16 @@ def validate_task_status_file(path: Path) -> list[str]:
     task_id = front_matter.get("task_id", "")
     if task_id and not task_id.startswith("TASK-"):
         errors.append(f"{path}: task_id should start with `TASK-`")
+    if task_id and path.stem != task_id:
+        errors.append(f"{path}: filename should match task_id `{task_id}`")
 
     assignee = front_matter.get("assignee", "")
-    if assignee and not assignee.startswith(("DEV-", "MANAGER-")):
-        errors.append(f"{path}: assignee should reference `DEV-xxx` or `MANAGER-xxx`")
+    if assignee and assignee not in {"unassigned", "shared", "n/a", "none"} and not assignee.startswith(("DEV-", "MANAGER-")):
+        errors.append(f"{path}: assignee should reference `DEV-xxx`, `MANAGER-xxx`, or `unassigned`")
+
+    owner_role = front_matter.get("owner_role", "")
+    if owner_role and owner_role not in OWNER_ROLES:
+        errors.append(f"{path}: invalid owner_role `{owner_role}`")
 
     status = front_matter.get("status", "")
     if status and status not in TASK_STATUSES:
@@ -650,7 +717,7 @@ def validate_file(path: Path, project_root: Path) -> list[str]:
     validate_common_front_matter(path, front_matter, errors)
 
     if path.name == "current-status.md":
-        validate_current_status(path, front_matter, errors)
+        validate_current_status(path, front_matter, body, errors)
     elif path.name == "task-board.md":
         errors.extend(validate_task_board(path, body, project_root))
     elif path.name == "task-archive.md":

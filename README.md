@@ -2,7 +2,7 @@
 
 **Bilingual project-state and delivery protocol for AI coding agents**
 
-这个 skill 现在覆盖七件事：
+这个 skill 现在覆盖八件事：
 
 1. 把项目状态外存到 `.claw/` 或 `.ai-dev/`
 2. 用 `task-board.md` 管理任务、依赖和交接
@@ -11,8 +11,9 @@
 5. 用项目经理门控授权、SSH challenge-response 登录、Git 平台账号绑定、SSH commit signing 和 preflight 检查阻止越权开发
 6. 以 Codeup 合并请求为默认提交评审方式，同时保留 GitHub 作为可选平台示例
 7. 当用户要求推送到测试环境时，将开发分支合并到 `dev`，按开发分支优先策略自动处理冲突，并推送 `dev`
+8. 用索引模式和单任务状态小文件实现渐进式追踪与披露，避免热文件累积历史
 
-It now covers seven layers:
+It now covers eight layers:
 
 1. durable project state in `.claw/` or `.ai-dev/`
 2. executable task tracking and handoff in `task-board.md`
@@ -21,6 +22,7 @@ It now covers seven layers:
 5. project-manager-gated authorization with SSH challenge-response login, Git account binding, SSH commit signing, and preflight scope checks
 6. Codeup-first change request submission while preserving GitHub as an optional platform example
 7. test-environment pushes by merging a development branch into `dev`, auto-resolving conflicts from the source branch, and pushing `dev`
+8. progressive state disclosure with compact indexes and one small task status file per task
 
 ## 一句话介绍 | One-Line Pitch
 
@@ -28,7 +30,7 @@ It now covers seven layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`4.0.0`
+当前 skill 版本：`4.1.0`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -68,7 +70,8 @@ It now covers seven layers:
 - 多人开发默认由项目经理门控授权，绑定 Git 平台账号和 SSH commit signing 指纹
 - 使用身份或授权记录的项目会自动启用硬身份门禁，本地开发前必须用 SSH challenge-response 验证当前操作者确实持有登记身份对应的私钥
 - 开发前必须通过身份、任务、分支和文件范围 preflight 检查；不通过或无法运行检查就停止开发
-- 多开发者进度写入单任务状态文件，`current-status.md` 只做热索引和主线快照
+- 所有任务进度写入 `.claw/tasks/TASK-xxx.md` 小文件，`current-status.md` 只做热索引和主线快照
+- `task-board.md` 只做任务索引，通过 `task_status_path` 渐进披露单任务详情
 - 最终合并走集成队列、集成分支和真实验证记录
 - 摘要、任务、问题、设计各自有唯一事实源
 - 已验证事实与推断结论分离
@@ -160,7 +163,7 @@ bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
 4. 填写 `.claw/goals.md`
 5. 在 `.claw/task-board.md` 中创建首批任务
 6. 对非平凡功能创建 `docs/specs/FEAT-xxx-feature-name.md`
-7. 开发过程中持续同步 `task-board.md`、feature spec、`current-status.md`
+7. 开发过程中持续同步 `current-status.md`、`task-board.md` 索引、`.claw/tasks/TASK-xxx.md` 和必要的 feature spec
 8. 会话结束时更新必要状态文件并运行校验
 
 适用于：
@@ -454,11 +457,11 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 
 | 文件 | 唯一事实源 |
 |------|------------|
-| `current-status.md` | 当前会话、阶段、下一步 |
-| `task-board.md` | 执行队列、`owner_role`、依赖、交接说明 |
+| `current-status.md` | 当前阶段、活跃任务、下一步和读取索引 |
+| `task-board.md` | 执行队列索引、`owner_role`、依赖、阻塞和任务状态文件路径 |
 | `.claw/developers/*.yaml` | 开发者身份、Git 平台账号、SSH 签名指纹、角色状态、长期范围 |
 | `.claw/assignments/*.yaml` | 项目经理任务授权、分支、任务边界、写入根路径、受保护路径、管理者签名 |
-| `.claw/tasks/*.md` | 单个任务的开发者进度、验证证据、交接说明 |
+| `.claw/tasks/*.md` | 单个任务的当前状态、进度、变更文件、验证证据、交接说明 |
 | `.claw/integration-queue.md` | 集成分支、合并顺序、集成门禁 |
 | `.claw/team-status.md` | 派生团队状态汇总；不作为事实源 |
 | `task-archive.md` | 超出保留窗口的已完成/已取消任务历史 |
@@ -474,7 +477,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 
 ## `task-board.md` 设计建议
 
-推荐字段：
+推荐字段只保留索引用途：
 
 - `TASK-xxx`
 - `status`
@@ -485,22 +488,11 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - `depends_on`
 - `blocked_by`
 - `related_issues`
-- `scope_mode`
-- `allowed_write_roots`
-- `scope_files`
-- `protected_paths`
 - `branch`
 - `pr_url`
 - `assignment_path`
 - `task_status_path`
-- `parallel_group`
-- `touch_policy`
-- `shared_contracts`
-- `merge_policy`
-- `integration_queue`
-- `integration_owner`
 - `next_action`
-- `handoff_note`
 
 推荐状态：
 
@@ -529,14 +521,15 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 
 - `owner_role` 是稳定责任角色，不依赖智能体自我身份
 - `claimed_by` 是可选运行时标签，环境知道就写，不知道就留空
-- `assignment_path` 和 `task_status_path` 只在异步多开发者协作中必须填写
-- `scope_mode: task_bounded_broad_code` 适合普通功能开发，`allowed_write_roots` 放开源码和测试，`protected_paths` 保护治理、CI、迁移和门禁脚本
-- `scope_mode: exact_files` 适合文档修补、配置小改或安全敏感任务，`scope_files` 是硬边界
-- 开发者应在任务状态或 PR 中维护变更清单，说明跨模块修改为什么服务于当前任务
+- 所有活跃任务都应填写 `task_status_path`，指向 `.claw/tasks/TASK-xxx.md`
+- `assignment_path` 只在项目经理授权或异步多开发者协作中填写
+- `scope_mode`、`allowed_write_roots`、`scope_files`、`protected_paths` 等授权细节放在 `.claw/assignments/TASK-xxx.yaml`
+- Done When、变更清单、验证记录和交接说明放在 `.claw/tasks/TASK-xxx.md` 或 feature spec，不放在看板任务卡里
+- 单个任务卡建议控制在 20 行以内
 
 ## `task-board.md` 更新与归档机制
 
-`task-board.md` 需要始终保持“当前最新状态”，但不会在任务完成后直接删除任务卡。
+`task-board.md` 需要始终保持“当前最新索引”。任务的详细状态不写在看板里，而是写入对应的 `.claw/tasks/TASK-xxx.md`。
 
 推荐机制：
 
@@ -544,13 +537,25 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - 已完成或已取消任务先进入 `Completed Tasks`
 - `Completed Tasks` 最多保留最近 20 条任务卡
 - 超过 20 条后，把最旧的 completed/canceled 任务卡移动到 `.claw/task-archive.md`
+- `review` 状态只保留仍需要用户或集成者处理的任务；已经合并或发布的 review 任务应转为 `done` 并进入归档窗口
 
 这意味着：
 
 - 完成任务不会自动清空
 - 任务历史不会丢失
-- `task-board.md` 会维持较短、适合日常协作的窗口
+- `task-board.md` 会维持较短、适合日常协作的索引窗口
 - 更老的完成记录统一进入 `task-archive.md`
+
+## 渐进式追踪与披露
+
+推荐读取路径：
+
+1. 先读 `.claw/current-status.md`，只了解当前阶段、活跃任务和下一步。
+2. 再读 `.claw/task-board.md`，只获得任务索引、状态、依赖和 `task_status_path`。
+3. 只打开当前任务对应的 `.claw/tasks/TASK-xxx.md`。
+4. 只有当任务状态文件或看板指向 spec、issue、decision、test-report 时，才继续读取对应文件。
+
+这样可以让项目变大后仍保持小上下文启动：热文件负责指路，小文件负责当前任务，历史和证据留在冷文件或专项文件中。
 
 ## `docs/specs/` 规则 | Spec-Driven Delivery
 
@@ -729,7 +734,7 @@ docs/specs/
 
 ---
 
-*版本 4.0.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交和测试环境推送的项目状态与交付规范*
+*版本 4.1.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交、测试环境推送和渐进式状态披露的项目状态与交付规范*
 
 <!-- cc-aidev-guidelines-common:begin -->
 ## AI Development Protocol

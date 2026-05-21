@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 4.0.0
+version: 4.1.0
 ---
 
 # State Model Reference
@@ -26,6 +26,7 @@ This file defines the detailed state model used by `SKILL.md`.
 15. Development must stop when login, preflight identity, assignment, branch, task-boundary, protected-path, file-scope checks, or hard identity gate prerequisites fail.
 16. One Git platform account should map to one active identity by default; role sharing requires distinct SSH signing key fingerprints.
 17. Test-environment pushes should merge the development branch into `dev`, use a declared source-branch-wins conflict policy, and push `dev` to the remote.
+18. State should be disclosed progressively: `current-status.md` points to `task-board.md`, `task-board.md` points to per-task status files, and detailed design/evidence stays in its own source-of-truth file.
 
 ## Project Instruction Anchors
 
@@ -43,17 +44,17 @@ The recommended writer is `scripts/ensure-agent-guidance.sh`.
 
 ### `current-status.md`
 
-Use as the hot snapshot for the current phase, active task, next action, read hints, and async parallel index.
+Use as the hot snapshot for the current phase, active task, next action, read hints, and async parallel index. This file is an index, not a session report.
 
 Must contain:
 
 - current phase
 - active task
 - next action
-- changed files summary
 - read-next hints for other state files
 - task-status index when async parallel delivery is enabled
 - integration queue reference when async parallel delivery is enabled
+- latest verification summary as a single reference when useful
 
 Must not contain:
 
@@ -61,8 +62,14 @@ Must not contain:
 - full ADR content
 - long test logs
 - long chronological session history
+- changed-file lists
+- session progress logs
 - per-developer routine progress when `.claw/tasks/TASK-xxx.md` exists
 - complete integration queue details
+
+Size budget:
+
+- Keep under 60 lines.
 
 ### `goals.md`
 
@@ -80,7 +87,7 @@ Update only when product intent changes.
 
 ### `task-board.md`
 
-Use as the queue for executable work items and handoff state.
+Use as the compact queue for executable work items. It should point to per-task status files instead of embedding task detail.
 
 Each task should record:
 
@@ -95,10 +102,16 @@ Each task should record:
 - spec path when required
 - branch and change request URL or PR URL when work is done through Git branches
 - assignment path and task status path when async parallel delivery is enabled
-- parallel group, touch policy, shared contracts, merge policy, and integration owner when multiple tasks merge together
-- done-when checklist
+- parallel group, touch policy, shared contracts, merge policy, and integration owner when multiple tasks merge together and the fields are needed for coordination
 - next action
-- handoff note
+
+Each active task must link to `.claw/tasks/TASK-xxx.md` through `task_status_path`.
+
+Do not put long done-when checklists, changed-file lists, verification logs, or handoff narratives in the task card. Put those in `.claw/tasks/TASK-xxx.md`, `docs/specs/`, or `test-report.md`.
+
+Size budget:
+
+- Keep each task card under 20 lines.
 
 Recommended statuses:
 
@@ -438,12 +451,13 @@ GitHub-based projects should copy it into `.github/workflows/check-assignment.ym
 
 ### `.claw/tasks/TASK-xxx.md`
 
-Use as the optional per-task status slice maintained by the assigned developer.
+Use as the per-task status slice for one task. Every active task should have one small file here, even when the project is not using async parallel delivery.
 
 Record:
 
 - task id
-- assignee developer id
+- assignee developer id or `unassigned`
+- owner role
 - branch and change request URL or PR URL
 - current status
 - completed work
@@ -452,7 +466,7 @@ Record:
 - blockers
 - handoff notes
 
-This file is the right place for routine developer progress in async parallel delivery. `current-status.md` should only link to it or summarize it briefly.
+This file is the right place for routine progress, changed files, verification evidence, blocker detail, and handoff notes for one task. `current-status.md` should only link to it or summarize it briefly. `task-board.md` should link to it through `task_status_path`.
 
 ### `task-archive.md`
 
@@ -656,29 +670,31 @@ Use this read order:
 1. Read `current-status.md`.
 2. Inspect its `read_next` or equivalent hints.
 3. Read `task-board.md` for implementation, prioritization, or handoff work.
-4. Read `task-archive.md` only when archived completed-work history matters.
-5. In brownfield projects, open `PROJECT-BASELINE.md` before major legacy implementation when it exists.
-6. Open the feature spec referenced by `spec_path` before non-trivial implementation.
-7. In async parallel delivery, read only the referenced `developer`, `assignment`, `task_status_path`, and `integration_queue` files.
-8. In manager-gated delivery, automatically run `scripts/dev-login.py` for local sessions before editing files. Use `scripts/check-assignment.py` for CI and assignment-only checks, not as a local-login substitute.
-9. When a manager asks for team status, generate or read `team-status.md` through the standard aggregation method.
-10. Read only the additional files needed for the task.
-11. Avoid loading cold files or unrelated specs unless the task truly needs them.
+4. Read the active task's `.claw/tasks/TASK-xxx.md`.
+5. Read `task-archive.md` only when archived completed-work history matters.
+6. In brownfield projects, open `PROJECT-BASELINE.md` before major legacy implementation when it exists.
+7. Open the feature spec referenced by `spec_path` before non-trivial implementation.
+8. In async parallel delivery, read only the referenced `developer`, `assignment`, and `integration_queue` files.
+9. In manager-gated delivery, automatically run `scripts/dev-login.py` for local sessions before editing files. Use `scripts/check-assignment.py` for CI and assignment-only checks, not as a local-login substitute.
+10. When a manager asks for team status, generate or read `team-status.md` through the standard aggregation method.
+11. Read only the additional files needed for the task.
+12. Avoid loading cold files or unrelated specs unless the task truly needs them.
 
 ## Update Strategy
 
 Apply these rules:
 
-1. Update `current-status.md` at the end of every meaningful session.
-2. Update `task-board.md` whenever task state, owner role, dependency, or handoff context changed.
-3. When completed or canceled task cards exceed 20 items on the board, move the oldest cards into `task-archive.md`.
-4. In brownfield projects, update `PROJECT-BASELINE.md` whenever verified legacy understanding materially changed.
-5. In async parallel delivery, developers update their assigned `.claw/tasks/TASK-xxx.md` for routine progress, while the project manager or integration owner reconciles `task-board.md`, `current-status.md`, and `integration-queue.md`.
-6. In manager-gated delivery, only the project manager updates developer records and assignment scope.
-7. Regenerate `team-status.md` when the manager needs a current team view or when source contribution state changed.
-8. Update at most the triggered warm/cold files and referenced delivery docs.
-9. Prefer appending concise structured entries over rewriting unrelated content.
-10. If a task changes no durable state, update only `current-status.md`.
+1. Update `current-status.md` at the end of every meaningful session by rewriting a compact snapshot.
+2. Update `task-board.md` whenever compact index fields changed.
+3. Update `.claw/tasks/TASK-xxx.md` whenever progress, changed files, verification, blocker detail, or handoff context changed.
+4. When completed or canceled task cards exceed 20 items on the board, move the oldest cards into `task-archive.md`.
+5. In brownfield projects, update `PROJECT-BASELINE.md` whenever verified legacy understanding materially changed.
+6. In async parallel delivery, developers update their assigned `.claw/tasks/TASK-xxx.md` for routine progress, while the project manager or integration owner reconciles `task-board.md`, `current-status.md`, and `integration-queue.md`.
+7. In manager-gated delivery, only the project manager updates developer records and assignment scope.
+8. Regenerate `team-status.md` when the manager needs a current team view or when source contribution state changed.
+9. Update at most the triggered warm/cold files and referenced delivery docs.
+10. Prefer appending concise structured entries over rewriting unrelated content.
+11. If a task changes no durable state, update only `current-status.md` and the active task status file if its next action changed.
 
 ## Conflict Resolution
 
@@ -691,7 +707,7 @@ If files disagree:
 
 Priority examples:
 
-- `task-board.md` wins over `current-status.md` for task status, dependencies, and owner role.
+- `task-board.md` wins over `current-status.md` for task status, dependencies, owner role, and task status path.
 - `task-archive.md` wins over `task-board.md` for older completed or canceled tasks that have already been archived.
 - `PROJECT-BASELINE.md` wins over `current-status.md` for legacy-baseline notes and current architectural unknowns.
 - `docs/specs/FEAT-xxx-*.md` wins over `task-board.md` for feature-specific acceptance criteria and design details.
@@ -699,7 +715,7 @@ Priority examples:
 - `.claw/assignments/TASK-xxx.yaml` wins over `task-board.md` for authorized assignee, manager, branch, write scope, assignment status, and touch policy.
 - `.claw/developers/DEV-xxx.yaml` wins over chat or Git author metadata for developer id, active status, Git platform username, and SSH signing fingerprint.
 - `.claw-local/identity.json` and `.ai-dev-local/identity.json` are local caches only; if they conflict with `.claw/developers/*.yaml`, the developer record wins and login must be rerun.
-- `.claw/tasks/TASK-xxx.md` wins over `current-status.md` for a developer's routine task progress.
+- `.claw/tasks/TASK-xxx.md` wins over `current-status.md` and `task-board.md` for task progress, changed files, evidence, blocker detail, and handoff notes.
 - `.claw/integration-queue.md` wins over task cards for merge order and integration gate state.
 - `developers`, `assignments`, `tasks`, `task-board`, and `integration-queue` all win over `team-status.md`; regenerate `team-status.md` when stale.
 

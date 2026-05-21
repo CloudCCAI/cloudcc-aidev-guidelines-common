@@ -1,43 +1,39 @@
 ---
 kind: task-status
 task_id: TASK-001
-assignee: DEV-alice
+assignee: unassigned
+owner_role: shared
 status: ready
-branch: feat/TASK-001-feature-title
+branch: n/a
 change_request_url: n/a
 pr_url: n/a
 updated_at: YYYY-MM-DDTHH:MM:SSZ
-updated_by: DEV-alice
+updated_by: ai
 ---
 
-# TASK-001 - Task status
+# TASK-001 - Task Status
 
-## 当前状态
+## Current State
 
-- 状态：`ready`
-- 分配人：`MANAGER-001`
-- 授权文件：`.claw/assignments/TASK-001.yaml`
-- 写入范围：见授权文件 `scope_mode`、`allowed_write_roots`、`scope_files` 和 `protected_paths`
-- 变更清单：记录每个跨模块代码变更为什么服务于当前任务
+- Status: `ready`
+- Next action: define the first delivery slice
+- Blocked: none
+- Spec: none
+- Assignment: none
 
-## 已完成
+## Progress
 
-- 暂无。
+- No durable progress recorded yet.
 
-## 修改范围
+## Changed Files
 
-- 暂无。
+- None.
 
-## 验证记录
+## Verification
 
-- 状态：`not_run`
-- 命令：`not_run`
-- 结果：`not_run`
+- Status: `not_run`
+- Evidence: none
 
-## 阻塞点
+## Handoff
 
-- 暂无。
-
-## 交接说明
-
-- 只记录本任务可复用的交接信息，不记录临时思考过程。
+- Keep this file focused on the reusable state for this task only.
