@@ -1,11 +1,11 @@
 ---
 kind: current-status
 version: 4
-updated_at: 2026-05-22T00:00:00Z
+updated_at: 2026-05-22T01:00:00Z
 updated_by: codex
 phase: review
 active_task: "TASK-008"
-next_action: "Commit and push Codeup CreateChangeRequest fix release 4.1.1 to origin and github"
+next_action: "Commit and push Codeup local default configurator release 4.1.2"
 read_next:
   goals: false
   decisions: true
@@ -22,10 +22,10 @@ read_next:
 
 ## Snapshot
 
-- Goal: correct Codeup `CreateChangeRequest` parameter mapping and local defaults.
+- Goal: make Codeup local change request defaults configurable for every adopting project.
 - Focus: `TASK-008`
 - Blocked: none
-- Latest verification: local Codeup config dry-run passed with repository/project id `6551067`; state validation, Python syntax, and diff whitespace checks passed.
+- Latest verification: `configure-codeup-change-request.py` dry-run passed for current repo id `6551067` and explicit repo id fallback; Python syntax passed.
 
 ## Read Next
 

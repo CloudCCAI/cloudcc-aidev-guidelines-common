@@ -7,7 +7,7 @@ status: review
 branch: n/a
 change_request_url: n/a
 pr_url: n/a
-updated_at: 2026-05-22T00:00:00Z
+updated_at: 2026-05-22T01:00:00Z
 updated_by: codex
 ---
 
@@ -16,7 +16,7 @@ updated_by: codex
 ## Current State
 
 - Status: `review`
-- Next action: commit and push release `4.1.1` to Codeup `origin` and GitHub `github`
+- Next action: commit and push release `4.1.2` to Codeup `origin` and GitHub `github`
 - Blocked: none
 - Spec: `docs/specs/FEAT-008-codeup-change-request-submission.md`
 - Assignment: none
@@ -27,10 +27,13 @@ updated_by: codex
 - `CreateChangeRequest` now treats `repositoryId` as the path parameter and always sends numeric `sourceProjectId` and `targetProjectId` in the JSON body.
 - Current repository local ignored defaults were resolved from Codeup `ListRepositories` and written to `.claw-local/codeup.env` with repository/project id `6551067`.
 - Release version is `4.1.1` because Codeup `origin/main` already contained `4.1.0`.
+- Added `scripts/configure-codeup-change-request.py` so other Codeup-hosted projects can generate their own local `CODEUP_REPOSITORY_ID`, `CODEUP_SOURCE_PROJECT_ID`, `CODEUP_TARGET_PROJECT_ID`, `CODEUP_TARGET_BRANCH`, and `CODEUP_CREATE_FROM` defaults instead of reusing this repository's `6551067`.
+- Release version is now `4.1.2`.
 
 ## Changed Files
 
 - `scripts/create-codeup-change-request.py`
+- `scripts/configure-codeup-change-request.py`
 - `SKILL.md`, `README.md`, `STATE-MODEL.md`, `CHANGELOG.md`
 - `templates/platforms/codeup/README.md`
 - `docs/specs/FEAT-008-codeup-change-request-submission.md`
@@ -39,7 +42,7 @@ updated_by: codex
 ## Verification
 
 - Status: `passed`
-- Evidence: Codeup repository lookup for `6551067`; local config dry-run; Python syntax; state validation; diff whitespace
+- Evidence: Codeup repository lookup for `6551067`; local config dry-run; explicit repository id dry-run; Python syntax; state validation; diff whitespace
 
 ## Handoff
 

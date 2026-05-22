@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.2 - 2026-05-22
+
+- Added `scripts/configure-codeup-change-request.py` so each Codeup-hosted project can resolve its own repository id and write local `CODEUP_REPOSITORY_ID`, `CODEUP_SOURCE_PROJECT_ID`, `CODEUP_TARGET_PROJECT_ID`, `CODEUP_TARGET_BRANCH`, and `CODEUP_CREATE_FROM` defaults.
+- Updated Codeup setup documentation to run token storage first, then local project-default configuration.
+
 ## 4.1.1 - 2026-05-22
 
 - Corrected `scripts/create-codeup-change-request.py` to align Codeup `CreateChangeRequest` payloads with the Yunxiao OpenAPI contract: `repositoryId` stays in the path, while numeric `sourceProjectId` and `targetProjectId` are sent in the body.

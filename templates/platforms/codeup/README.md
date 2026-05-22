@@ -12,6 +12,7 @@ Recommended local setup:
 
 ```bash
 python3 scripts/store-yunxiao-token.py
+python3 scripts/configure-codeup-change-request.py
 ```
 
 If `YUNXIAO_TOKEN` is missing, the Codeup create script stops before making an API request and prints the official token document:
@@ -20,7 +21,7 @@ https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-to
 
 ## Create A Change Request
 
-Set platform configuration through CLI flags, shell environment variables, or `.claw-local/codeup.env`:
+`configure-codeup-change-request.py` writes platform configuration to `.claw-local/codeup.env`. You may also set values manually through CLI flags or shell environment variables:
 
 ```bash
 export YUNXIAO_DOMAIN="https://openapi-rdc.aliyuncs.com"

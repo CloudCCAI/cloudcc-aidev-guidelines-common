@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 4.1.1
+version: 4.1.2
 ---
 
 # State Model Reference
@@ -403,6 +403,19 @@ Behavior:
 - writes `.claw-local/codeup.env` by default
 - sets file permissions to owner read/write only
 - never writes tokens to `.claw/`, `docs/`, source files, task status files, or logs
+
+### `scripts/configure-codeup-change-request.py`
+
+Use as the local helper for writing project-specific Codeup change request defaults after `YUNXIAO_TOKEN` is available.
+
+Behavior:
+
+- reads the current Codeup Git remote, local env file, and environment variables
+- resolves the numeric Codeup repository id through the Yunxiao Codeup repository list API when `CODEUP_REPOSITORY_ID` is not already set
+- writes `.claw-local/codeup.env` by default
+- stores `CODEUP_REPOSITORY_ID`, `CODEUP_SOURCE_PROJECT_ID`, `CODEUP_TARGET_PROJECT_ID`, `CODEUP_TARGET_BRANCH`, and `CODEUP_CREATE_FROM`
+- preserves `YUNXIAO_TOKEN` without printing it
+- sets file permissions to owner read/write only
 
 ### `scripts/create-codeup-change-request.py`
 

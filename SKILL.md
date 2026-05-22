@@ -1,7 +1,7 @@
 ---
 name: cc-aidev-guidelines-common
 description: Externalizes compact project state into `.claw` or `.ai-dev` files, keeps hot files as indexes, tracks each task in its own small status file, and supports spec-driven delivery, greenfield and brownfield adoption, project-manager-gated async parallel delivery, Codeup review requests, and test-environment branch pushes. Use for AI-assisted software delivery, persistent project memory, progressive disclosure, task handoff, ADR tracking, issue tracking, test logging, multi-developer coordination, authorization gates, or agent coding standards.
-skill_version: 4.1.1
+skill_version: 4.1.2
 ---
 
 # AI Agent Project State Protocol
@@ -10,7 +10,7 @@ Use this skill to turn project state into durable files that an AI agent can rea
 
 ## Skill Version
 
-Canonical skill version: `4.1.1`
+Canonical skill version: `4.1.2`
 
 Use the `skill_version` field in this file's front matter as the source of truth for the installed skill version. If `README.md`, `CHANGELOG.md`, or other references drift, this field wins.
 
@@ -65,6 +65,7 @@ Utility scripts are available under `scripts/`:
 - `scripts/dev-login.py` verifies the local developer by SSH key possession before development starts
 - `scripts/check-assignment.py` checks developer identity, manager assignment, branch, task-bounded write roots, protected paths, and exact file scope before development or in CI
 - `scripts/store-yunxiao-token.py` stores a developer's local `YUNXIAO_TOKEN` outside Git-tracked files
+- `scripts/configure-codeup-change-request.py` resolves the current Codeup repository id and writes local change request defaults
 - `scripts/create-codeup-change-request.py` creates a Codeup change request with Yunxiao OpenAPI
 - `scripts/push-test-environment.py` merges a development branch into `dev`, resolves test-deploy conflicts from the source branch, and pushes `dev`
 - `scripts/summarize-team-status.py` generates the derived manager team-status view
@@ -172,7 +173,7 @@ In `Project-Manager-Gated Authorization Mode`:
 - Developers and AI agents must run or logically perform the preflight authorization check before editing: identity active, assignment active, assignee matches, branch matches when known, and target files are permitted by the assignment scope mode.
 - If the preflight result is not allowed, the agent must stop development and ask the project manager to update the assignment or team record.
 - CI or platform automation should call `scripts/check-assignment.py` with the review author identity, branch, and changed files. Branch protection should require the check to pass before merge.
-- For Codeup, each developer stores a local `YUNXIAO_TOKEN` outside the repository. Before creating a change request, `scripts/create-codeup-change-request.py` checks for `YUNXIAO_TOKEN`; if missing, it stops and links to the Yunxiao personal access token documentation. Use `scripts/store-yunxiao-token.py` to write the token to `.claw-local/codeup.env`. The create script treats `repositoryId` as the path parameter and sends numeric `sourceProjectId` and `targetProjectId` in the JSON body; when `repositoryId` is a full path, configure `CODEUP_SOURCE_PROJECT_ID` and `CODEUP_TARGET_PROJECT_ID` explicitly.
+- For Codeup, each developer stores a local `YUNXIAO_TOKEN` outside the repository. Before creating a change request, `scripts/create-codeup-change-request.py` checks for `YUNXIAO_TOKEN`; if missing, it stops and links to the Yunxiao personal access token documentation. Use `scripts/store-yunxiao-token.py` to write the token to `.claw-local/codeup.env`, then use `scripts/configure-codeup-change-request.py` in each Codeup-hosted project to resolve and store that project's `CODEUP_REPOSITORY_ID`, `CODEUP_SOURCE_PROJECT_ID`, `CODEUP_TARGET_PROJECT_ID`, `CODEUP_TARGET_BRANCH`, and `CODEUP_CREATE_FROM` defaults. The create script treats `repositoryId` as the path parameter and sends numeric `sourceProjectId` and `targetProjectId` in the JSON body.
 - When the user asks to "push to the test environment" or "推送到测试环境", use `scripts/push-test-environment.py` by default. It treats the current branch as the development branch, merges it into `dev`, uses a source-branch-wins policy for conflicts, pushes `dev` to the remote, and restores the original branch after success.
 - For GitHub Actions, copy `templates/github-workflows/check-assignment.yml` into `.github/workflows/check-assignment.yml` in the adopting project and adapt it as needed.
 
@@ -475,6 +476,7 @@ Size budgets:
 - `scripts/dev-login.py`: local SSH challenge-response developer login and optional assignment gate
 - `scripts/check-assignment.py`: manager-gated preflight authorization check for local development and CI, supporting both exact file scopes and task-bounded broad code roots with protected paths
 - `scripts/store-yunxiao-token.py`: local Yunxiao token storage helper
+- `scripts/configure-codeup-change-request.py`: local Codeup change request default configurator
 - `scripts/create-codeup-change-request.py`: Codeup change request creation helper
 - `scripts/push-test-environment.py`: test-environment branch push helper
 - `templates/github-workflows/check-assignment.yml`: example GitHub Actions PR gate for assignment scope

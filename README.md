@@ -30,7 +30,7 @@ It now covers eight layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`4.1.1`
+当前 skill 版本：`4.1.2`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -45,6 +45,7 @@ It now covers eight layers:
 | `scripts/dev-login.py` | 开发前本地 SSH challenge-response 身份登录 / local SSH challenge-response identity login |
 | `scripts/check-assignment.py` | 开发前身份、任务、分支、任务边界和受保护路径检查 / preflight identity, task, branch, task boundary, and protected-path check |
 | `scripts/store-yunxiao-token.py` | 本地保存云效个人访问令牌 / local Yunxiao token storage helper |
+| `scripts/configure-codeup-change-request.py` | 解析并写入本项目 Codeup 合并请求默认参数 / local Codeup change request defaults configurator |
 | `scripts/create-codeup-change-request.py` | 通过 Codeup OpenAPI 创建合并请求 / Codeup change request creator |
 | `scripts/push-test-environment.py` | 合并开发分支到 dev 并推送测试环境 / test-environment branch push helper |
 | `scripts/summarize-team-status.py` | 团队状态汇总器 / derived team status summarizer |
@@ -230,6 +231,22 @@ Codeup OpenAPI 创建合并请求使用云效个人访问令牌，请求头为 `
 
 ```bash
 python3 /path/to/this-skill/scripts/store-yunxiao-token.py
+```
+
+为当前 Codeup 项目生成本地合并请求默认参数：
+
+```bash
+python3 /path/to/this-skill/scripts/configure-codeup-change-request.py
+```
+
+该脚本会基于当前 Git remote 和本地 `YUNXIAO_TOKEN` 查询 Codeup 仓库 ID，并把以下项目专属参数写入 `.claw-local/codeup.env`：
+
+```bash
+export CODEUP_REPOSITORY_ID="当前项目的数字仓库 ID"
+export CODEUP_SOURCE_PROJECT_ID="当前项目的数字仓库 ID"
+export CODEUP_TARGET_PROJECT_ID="当前项目的数字仓库 ID"
+export CODEUP_TARGET_BRANCH="main 或远端默认分支"
+export CODEUP_CREATE_FROM="COMMAND_LINE"
 ```
 
 如果创建合并请求时缺少 `YUNXIAO_TOKEN`，脚本会停止并提示用户先创建个人访问令牌：
@@ -743,7 +760,7 @@ docs/specs/
 
 ---
 
-*版本 4.1.1 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交、测试环境推送和渐进式状态披露的项目状态与交付规范*
+*版本 4.1.2 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交、测试环境推送和渐进式状态披露的项目状态与交付规范*
 
 <!-- cc-aidev-guidelines-common:begin -->
 ## AI Development Protocol
