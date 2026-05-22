@@ -1,11 +1,11 @@
 ---
 kind: current-status
 version: 4
-updated_at: 2026-05-21T07:05:27Z
+updated_at: 2026-05-22T00:00:00Z
 updated_by: codex
 phase: review
-active_task: "TASK-010"
-next_action: "User review progressive state indexing and per-task status file model"
+active_task: "TASK-008"
+next_action: "Commit and push Codeup CreateChangeRequest fix release 4.1.1 to origin and github"
 read_next:
   goals: false
   decisions: true
@@ -22,17 +22,17 @@ read_next:
 
 ## Snapshot
 
-- Goal: optimize the skill so state loads progressively and hot files stay compact.
-- Focus: `TASK-010`
+- Goal: correct Codeup `CreateChangeRequest` parameter mapping and local defaults.
+- Focus: `TASK-008`
 - Blocked: none
-- Latest verification: `python3 scripts/validate-state.py .claw` passed; `py_compile scripts/validate-state.py` passed.
+- Latest verification: local Codeup config dry-run passed with repository/project id `6551067`; state validation, Python syntax, and diff whitespace checks passed.
 
 ## Read Next
 
 - `.claw/task-board.md` - compact task index
-- `.claw/tasks/TASK-010.md` - current task state
-- `docs/specs/FEAT-010-progressive-state-indexing.md` - design for this protocol change
-- `.claw/test-report.md` - latest validation evidence after checks run
+- `.claw/tasks/TASK-008.md` - current task state and handoff
+- `docs/specs/FEAT-008-codeup-change-request-submission.md` - Codeup create request design
+- `.claw/test-report.md` - latest validation evidence
 
 ## Maintenance Rules
 

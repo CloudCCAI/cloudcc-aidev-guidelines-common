@@ -1,9 +1,9 @@
 ---
 kind: test-report
 version: 4
-updated_at: 2026-05-21T07:05:27Z
+updated_at: 2026-05-22T00:00:00Z
 updated_by: codex
-last_run_at: 2026-05-21T07:05:27Z
+last_run_at: 2026-05-22T00:00:00Z
 last_run_status: passed
 ---
 
@@ -14,18 +14,19 @@ last_run_status: passed
 ## Latest Run Summary
 
 - 状态：`passed`
-- 范围：`progressive state indexing validation, Python syntax, diff whitespace`
-- 命令：`python3 scripts/validate-state.py .claw`; `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/validate-state.py`; `git diff --check`
-- 环境：`local workspace`
+- Scope: `Codeup CreateChangeRequest payload dry-run, local Codeup config, full-path repository guard, Python syntax, state validation, diff whitespace`
+- Commands: Codeup `ListRepositories` lookup for `cloudcc-aidev-guidelines-common`; `python3 scripts/create-codeup-change-request.py --dry-run --source-branch codex/test --title '[TASK-008] dry-run local config'`; `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/create-codeup-change-request.py scripts/store-yunxiao-token.py scripts/check-assignment.py scripts/validate-state.py scripts/summarize-team-status.py scripts/dev-login.py scripts/push-test-environment.py`; `python3 scripts/validate-state.py .claw`; `git diff --check`
+- Environment: `local workspace`
 
 ## Result Summary
 
 | Type | Total | Passed | Failed | Skipped | Coverage |
 |------|-------|--------|--------|---------|----------|
-| State validation | 1 | 1 | 0 | 0 | n/a |
+| Codeup dry-run | 4 | 4 | 0 | 0 | n/a |
 | Python syntax | 1 | 1 | 0 | 0 | n/a |
+| State validation | 1 | 1 | 0 | 0 | n/a |
 | Diff whitespace | 1 | 1 | 0 | 0 | n/a |
-| Total | 3 | 3 | 0 | 0 | n/a |
+| Total | 7 | 7 | 0 | 0 | n/a |
 
 ## Failures
 
@@ -33,9 +34,11 @@ last_run_status: passed
 
 ## Notes
 
-- `current-status.md` is now 42 lines.
-- `task-board.md` is now 143 lines and uses per-task status pointers.
-- Each migrated `.claw/tasks/TASK-xxx.md` file is 39-40 lines.
+- Numeric `repositoryId` dry-run included numeric `sourceProjectId` and `targetProjectId` in the payload.
+- URL-encoded full-path `repositoryId` without project ids failed with explicit missing project-id guidance.
+- URL-encoded full-path `repositoryId` with explicit project ids produced the expected endpoint and payload.
+- Codeup `ListRepositories` resolved current repository `cloudcc-aidev-guidelines-common` to repository id `6551067`.
+- Local `.claw-local/codeup.env` dry-run used `/repositories/6551067/changeRequests` and body ids `6551067`.
 
 ## Common Commands
 

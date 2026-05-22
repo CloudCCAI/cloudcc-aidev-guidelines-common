@@ -28,9 +28,15 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--env-file", default=str(DEFAULT_ENV_FILE), help="Local env file to read.")
     parser.add_argument("--domain", help="Yunxiao OpenAPI domain, for example https://openapi-rdc.aliyuncs.com.")
     parser.add_argument("--organization-id", help="Yunxiao organization id for center-version API endpoints.")
-    parser.add_argument("--repository-id", help="Codeup repository id or URL-encoded full path.")
-    parser.add_argument("--source-project-id", help="Source project id when Codeup requires it.")
-    parser.add_argument("--target-project-id", help="Target project id when Codeup requires it.")
+    parser.add_argument("--repository-id", help="Codeup repository id or URL-encoded full path for the API path.")
+    parser.add_argument(
+        "--source-project-id",
+        help="Source Codeup project id for the request body. Defaults to repository id when it is numeric.",
+    )
+    parser.add_argument(
+        "--target-project-id",
+        help="Target Codeup project id for the request body. Defaults to repository id when it is numeric.",
+    )
     parser.add_argument("--source-branch", help="Source branch. Defaults to the current Git branch.")
     parser.add_argument("--target-branch", help="Target branch. Defaults to CODEUP_TARGET_BRANCH or master.")
     parser.add_argument("--title", help="Change request title. Defaults to a title derived from TASK-xxx and branch.")
@@ -39,6 +45,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reviewer-user-ids", help="Comma-separated Yunxiao reviewer user ids.")
     parser.add_argument("--work-item-ids", help="Comma-separated Yunxiao work item ids.")
     parser.add_argument("--task", help="Task id such as TASK-123. Defaults to extracting from branch/title/description.")
+    parser.add_argument(
+        "--create-from",
+        choices=("WEB", "COMMAND_LINE"),
+        help="Create source sent to Codeup. Defaults to COMMAND_LINE.",
+    )
     parser.add_argument("--trigger-ai-review", action="store_true", help="Ask Codeup to trigger AI review if enabled.")
     parser.add_argument("--dry-run", action="store_true", help="Print the request without sending it.")
     return parser.parse_args()
@@ -96,6 +107,15 @@ def parse_csv(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def parse_bool(value: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    raise SystemExit(f"Expected boolean value, got: {value}")
+
+
 def extract_task_id(*values: str) -> str:
     for value in values:
         match = TASK_ID_RE.search(value or "")
@@ -137,6 +157,34 @@ def build_endpoint(domain: str, organization_id: str, repository_id: str) -> str
     return f"{domain}/oapi/v1/codeup/repositories/{encoded_repo}/changeRequests"
 
 
+def integer_id(value: str, field_name: str) -> int:
+    if not re.fullmatch(r"\d+", value or ""):
+        raise SystemExit(f"{field_name} must be a numeric Codeup project id, got: {value}")
+    return int(value)
+
+
+def resolve_project_ids(config: dict[str, str]) -> tuple[int, int]:
+    repository_id = config["repository_id"]
+    if not config["source_project_id"] and re.fullmatch(r"\d+", repository_id):
+        config["source_project_id"] = repository_id
+    if not config["target_project_id"] and re.fullmatch(r"\d+", repository_id):
+        config["target_project_id"] = repository_id
+
+    missing = [key for key in ("source_project_id", "target_project_id") if not config[key]]
+    if missing:
+        joined = ", ".join(missing)
+        raise SystemExit(
+            "Missing required Codeup config: "
+            f"{joined}. CreateChangeRequest requires numeric sourceProjectId and targetProjectId in the body. "
+            "When CODEUP_REPOSITORY_ID is a full path, set CODEUP_SOURCE_PROJECT_ID and CODEUP_TARGET_PROJECT_ID too."
+        )
+
+    return (
+        integer_id(config["source_project_id"], "sourceProjectId"),
+        integer_id(config["target_project_id"], "targetProjectId"),
+    )
+
+
 def require_config(args: argparse.Namespace, env_values: dict[str, str]) -> dict[str, str]:
     token = config_value("YUNXIAO_TOKEN", None, env_values)
     if not token:
@@ -156,18 +204,26 @@ def require_config(args: argparse.Namespace, env_values: dict[str, str]) -> dict
         "source_project_id": config_value("CODEUP_SOURCE_PROJECT_ID", args.source_project_id, env_values),
         "target_project_id": config_value("CODEUP_TARGET_PROJECT_ID", args.target_project_id, env_values),
         "target_branch": config_value("CODEUP_TARGET_BRANCH", args.target_branch, env_values, "master"),
+        "reviewer_user_ids": config_value("CODEUP_REVIEWER_USER_IDS", args.reviewer_user_ids, env_values),
+        "work_item_ids": config_value("CODEUP_WORK_ITEM_IDS", args.work_item_ids, env_values),
+        "create_from": config_value("CODEUP_CREATE_FROM", args.create_from, env_values, "COMMAND_LINE"),
+        "trigger_ai_review": config_value("CODEUP_TRIGGER_AI_REVIEW", None, env_values),
     }
 
     missing = [key for key in ("domain", "repository_id") if not config[key]]
     if missing:
         joined = ", ".join(missing)
         raise SystemExit(f"Missing required Codeup config: {joined}. Pass CLI args or set local env values.")
+
+    if config["create_from"] not in {"WEB", "COMMAND_LINE"}:
+        raise SystemExit("CODEUP_CREATE_FROM must be WEB or COMMAND_LINE.")
     return config
 
 
 def build_payload(args: argparse.Namespace, config: dict[str, str]) -> dict[str, Any]:
     source_branch = args.source_branch or current_git_branch()
     target_branch = config["target_branch"]
+    source_project_id, target_project_id = resolve_project_ids(config)
     task_id = args.task or extract_task_id(source_branch, args.title or "", args.description or "")
     if args.title:
         title = args.title
@@ -176,24 +232,34 @@ def build_payload(args: argparse.Namespace, config: dict[str, str]) -> dict[str,
     else:
         title = f"Change request from {source_branch}"
     description = read_description(args, task_id, source_branch, target_branch)
+    if not source_branch:
+        raise SystemExit("sourceBranch is required.")
+    if not target_branch:
+        raise SystemExit("targetBranch is required.")
+    if len(title) > 256:
+        raise SystemExit("title must be 256 characters or fewer.")
+    if len(description) > 10000:
+        raise SystemExit("description must be 10000 characters or fewer.")
+
+    trigger_ai_review = bool(args.trigger_ai_review)
+    if not args.trigger_ai_review and config["trigger_ai_review"]:
+        trigger_ai_review = parse_bool(config["trigger_ai_review"])
 
     payload: dict[str, Any] = {
-        "createFrom": "COMMAND_LINE",
+        "createFrom": config["create_from"],
         "sourceBranch": source_branch,
+        "sourceProjectId": source_project_id,
         "targetBranch": target_branch,
+        "targetProjectId": target_project_id,
         "title": title,
         "description": description,
-        "triggerAIReviewRun": bool(args.trigger_ai_review),
+        "triggerAIReviewRun": trigger_ai_review,
     }
 
-    if config["source_project_id"]:
-        payload["sourceProjectId"] = int(config["source_project_id"])
-    if config["target_project_id"]:
-        payload["targetProjectId"] = int(config["target_project_id"])
-    if args.reviewer_user_ids:
-        payload["reviewerUserIds"] = parse_csv(args.reviewer_user_ids)
-    if args.work_item_ids:
-        payload["workItemIds"] = args.work_item_ids
+    if config["reviewer_user_ids"]:
+        payload["reviewerUserIds"] = parse_csv(config["reviewer_user_ids"])
+    if config["work_item_ids"]:
+        payload["workItemIds"] = config["work_item_ids"]
 
     return payload
 

@@ -1,7 +1,7 @@
 ---
 kind: task-board
 version: 4
-updated_at: 2026-05-21T07:05:27Z
+updated_at: 2026-05-22T00:00:00Z
 updated_by: codex
 board_status: active
 ---
@@ -106,7 +106,7 @@ board_status: active
 - assignment_path: `none`
 - depends_on: `TASK-007`
 - blocked_by: `none`
-- next_action: `User review Codeup change request defaults`
+- next_action: `Commit and push release 4.1.1 to Codeup origin and GitHub github`
 
 ### TASK-009 - Add test environment branch push flow
 

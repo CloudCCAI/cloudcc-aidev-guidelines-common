@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.1.1 - 2026-05-22
+
+- Corrected `scripts/create-codeup-change-request.py` to align Codeup `CreateChangeRequest` payloads with the Yunxiao OpenAPI contract: `repositoryId` stays in the path, while numeric `sourceProjectId` and `targetProjectId` are sent in the body.
+- Documented the same-repository default where a numeric `repositoryId` supplies both project ids, and the full-path repository case that requires explicit project ids.
+- Stored the current repository's local ignored Codeup defaults in `.claw-local/codeup.env` after resolving repository id `6551067` through the Codeup repository list API.
+
 ## 4.1.0 - 2026-05-21
 
 - Added progressive state disclosure rules: `current-status.md` is a hot index, `task-board.md` is a compact task directory, and each active task links to `.claw/tasks/TASK-xxx.md`.

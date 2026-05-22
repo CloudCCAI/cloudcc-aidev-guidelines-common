@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 4.1.0
+version: 4.1.1
 ---
 
 # State Model Reference
@@ -414,7 +414,9 @@ Behavior:
 - stops before the API call when `YUNXIAO_TOKEN` is missing
 - prints the official Yunxiao personal access token documentation link when the token is missing
 - calls Codeup `CreateChangeRequest` through Yunxiao OpenAPI
-- accepts domain, repository, source branch, target branch, title, description, reviewers, and work item ids as CLI flags or local env values
+- accepts domain, repository, source project id, target project id, source branch, target branch, title, description, reviewers, and work item ids as CLI flags or local env values
+- treats `repositoryId` as the request path parameter and sends numeric `sourceProjectId` and `targetProjectId` in the JSON body
+- defaults both project ids to the numeric `repositoryId` for same-repository change requests, but requires explicit project ids when `repositoryId` is a full path
 
 ### `scripts/push-test-environment.py`
 

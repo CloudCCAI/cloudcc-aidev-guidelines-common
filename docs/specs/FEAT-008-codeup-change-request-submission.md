@@ -33,6 +33,7 @@ Developers should be able to create a Codeup change request through OpenAPI. Bef
 - Missing `YUNXIAO_TOKEN` exits before any OpenAPI request and prints the token document link.
 - Token storage writes only to ignored local files.
 - Codeup create script supports dry-run output without exposing the token.
+- Codeup create script sends `repositoryId` only in the API path and always sends numeric `sourceProjectId` and `targetProjectId` in the body.
 - README, SKILL, STATE-MODEL, templates, and changelog describe Codeup as the default flow.
 - Existing validation still passes.
 

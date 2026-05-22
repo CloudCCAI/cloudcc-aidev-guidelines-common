@@ -25,6 +25,8 @@ Set platform configuration through CLI flags, shell environment variables, or `.
 ```bash
 export YUNXIAO_DOMAIN="https://openapi-rdc.aliyuncs.com"
 export CODEUP_REPOSITORY_ID="2813489"
+export CODEUP_SOURCE_PROJECT_ID="2813489"
+export CODEUP_TARGET_PROJECT_ID="2813489"
 export CODEUP_TARGET_BRANCH="master"
 ```
 
@@ -37,6 +39,8 @@ python3 scripts/create-codeup-change-request.py \
   --description-file .claw/tasks/TASK-001.md \
   --reviewer-user-ids "62c795xxxb468af8"
 ```
+
+`CODEUP_REPOSITORY_ID` is the path parameter. It can be the numeric repository id or the URL-encoded full path. The request body still requires numeric `sourceProjectId` and `targetProjectId`; when `CODEUP_REPOSITORY_ID` is numeric, the script uses it as the default for both project ids.
 
 For center-version Yunxiao endpoints, also provide:
 

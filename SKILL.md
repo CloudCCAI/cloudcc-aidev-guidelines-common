@@ -1,7 +1,7 @@
 ---
 name: cc-aidev-guidelines-common
 description: Externalizes compact project state into `.claw` or `.ai-dev` files, keeps hot files as indexes, tracks each task in its own small status file, and supports spec-driven delivery, greenfield and brownfield adoption, project-manager-gated async parallel delivery, Codeup review requests, and test-environment branch pushes. Use for AI-assisted software delivery, persistent project memory, progressive disclosure, task handoff, ADR tracking, issue tracking, test logging, multi-developer coordination, authorization gates, or agent coding standards.
-skill_version: 4.1.0
+skill_version: 4.1.1
 ---
 
 # AI Agent Project State Protocol
@@ -10,7 +10,7 @@ Use this skill to turn project state into durable files that an AI agent can rea
 
 ## Skill Version
 
-Canonical skill version: `4.1.0`
+Canonical skill version: `4.1.1`
 
 Use the `skill_version` field in this file's front matter as the source of truth for the installed skill version. If `README.md`, `CHANGELOG.md`, or other references drift, this field wins.
 
@@ -172,7 +172,7 @@ In `Project-Manager-Gated Authorization Mode`:
 - Developers and AI agents must run or logically perform the preflight authorization check before editing: identity active, assignment active, assignee matches, branch matches when known, and target files are permitted by the assignment scope mode.
 - If the preflight result is not allowed, the agent must stop development and ask the project manager to update the assignment or team record.
 - CI or platform automation should call `scripts/check-assignment.py` with the review author identity, branch, and changed files. Branch protection should require the check to pass before merge.
-- For Codeup, each developer stores a local `YUNXIAO_TOKEN` outside the repository. Before creating a change request, `scripts/create-codeup-change-request.py` checks for `YUNXIAO_TOKEN`; if missing, it stops and links to the Yunxiao personal access token documentation. Use `scripts/store-yunxiao-token.py` to write the token to `.claw-local/codeup.env`.
+- For Codeup, each developer stores a local `YUNXIAO_TOKEN` outside the repository. Before creating a change request, `scripts/create-codeup-change-request.py` checks for `YUNXIAO_TOKEN`; if missing, it stops and links to the Yunxiao personal access token documentation. Use `scripts/store-yunxiao-token.py` to write the token to `.claw-local/codeup.env`. The create script treats `repositoryId` as the path parameter and sends numeric `sourceProjectId` and `targetProjectId` in the JSON body; when `repositoryId` is a full path, configure `CODEUP_SOURCE_PROJECT_ID` and `CODEUP_TARGET_PROJECT_ID` explicitly.
 - When the user asks to "push to the test environment" or "推送到测试环境", use `scripts/push-test-environment.py` by default. It treats the current branch as the development branch, merges it into `dev`, uses a source-branch-wins policy for conflicts, pushes `dev` to the remote, and restores the original branch after success.
 - For GitHub Actions, copy `templates/github-workflows/check-assignment.yml` into `.github/workflows/check-assignment.yml` in the adopting project and adapt it as needed.
 

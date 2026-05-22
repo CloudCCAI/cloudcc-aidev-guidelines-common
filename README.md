@@ -30,7 +30,7 @@ It now covers eight layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`4.1.0`
+当前 skill 版本：`4.1.1`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -244,12 +244,21 @@ https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-to
 python3 /path/to/this-skill/scripts/create-codeup-change-request.py \
   --domain https://openapi-rdc.aliyuncs.com \
   --repository-id 2813489 \
+  --source-project-id 2813489 \
+  --target-project-id 2813489 \
   --source-branch feat/TASK-001-feature-title \
   --target-branch master \
   --title "[TASK-001] Feature title" \
   --description-file .claw/tasks/TASK-001.md \
   --reviewer-user-ids "62c795xxxb468af8"
 ```
+
+参数约定：
+
+- `repository-id` 是请求路径中的代码库 ID，或 URL-Encoder 编码后的代码库完整路径
+- `sourceProjectId` 和 `targetProjectId` 是请求 body 中必需的数字代码库 ID
+- 如果 `repository-id` 是数字，脚本默认用它填充同仓库合并请求的 `sourceProjectId` 和 `targetProjectId`
+- 如果 `repository-id` 是完整路径，必须同时传入 `--source-project-id` 和 `--target-project-id`，或在本地环境中设置 `CODEUP_SOURCE_PROJECT_ID` 和 `CODEUP_TARGET_PROJECT_ID`
 
 推荐约定：
 
@@ -734,7 +743,7 @@ docs/specs/
 
 ---
 
-*版本 4.1.0 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交、测试环境推送和渐进式状态披露的项目状态与交付规范*
+*版本 4.1.1 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交、测试环境推送和渐进式状态披露的项目状态与交付规范*
 
 <!-- cc-aidev-guidelines-common:begin -->
 ## AI Development Protocol
