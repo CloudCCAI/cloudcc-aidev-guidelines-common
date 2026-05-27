@@ -1,7 +1,7 @@
 ---
 kind: task-board
 version: 4
-updated_at: 2026-05-22T00:00:00Z
+updated_at: 2026-05-27T09:21:22Z
 updated_by: codex
 board_status: active
 ---
@@ -94,7 +94,7 @@ board_status: active
 - assignment_path: `none`
 - depends_on: `TASK-006`
 - blocked_by: `none`
-- next_action: `User review broad code authorization model`
+- next_action: `Release 4.1.3`
 
 ### TASK-008 - Add Codeup change request submission flow
 
@@ -130,7 +130,7 @@ board_status: active
 - assignment_path: `none`
 - depends_on: `TASK-009`
 - blocked_by: `none`
-- next_action: `User review progressive state indexing model`
+- next_action: `Release 4.1.3`
 
 ## Completed Tasks
 

@@ -1,9 +1,9 @@
 ---
 kind: test-report
 version: 4
-updated_at: 2026-05-22T01:00:00Z
+updated_at: 2026-05-27T09:21:22Z
 updated_by: codex
-last_run_at: 2026-05-22T01:00:00Z
+last_run_at: 2026-05-27T09:21:22Z
 last_run_status: passed
 ---
 
@@ -14,19 +14,19 @@ last_run_status: passed
 ## Latest Run Summary
 
 - 状态：`passed`
-- Scope: `Codeup CreateChangeRequest payload dry-run, local Codeup config generation, explicit repository id fallback, Python syntax, state validation, diff whitespace`
-- Commands: Codeup `ListRepositories` lookup for `cloudcc-aidev-guidelines-common`; `python3 scripts/configure-codeup-change-request.py --dry-run`; `python3 scripts/configure-codeup-change-request.py --dry-run --env-file /private/tmp/codeup-config-test.env --repository-id 123 --target-branch dev`; `python3 scripts/configure-codeup-change-request.py`; `python3 scripts/create-codeup-change-request.py --dry-run --source-branch codex/test --title '[TASK-008] dry-run local config'`; `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/configure-codeup-change-request.py scripts/create-codeup-change-request.py scripts/store-yunxiao-token.py scripts/check-assignment.py scripts/validate-state.py scripts/summarize-team-status.py scripts/dev-login.py scripts/push-test-environment.py`; `python3 scripts/validate-state.py .claw`; `git diff --check`
+- Scope: `release 4.1.3, bare directory write-root matching, protected-path recursion, exact scope_files behavior, Python syntax, state validation, diff whitespace`
+- Commands: temporary assignment fixture with `allowed_write_roots: frontend/src`; temporary exact `scope_files` fixture; `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/check-assignment.py scripts/dev-login.py scripts/validate-state.py`; `python3 scripts/validate-state.py .claw`; `git diff --check`
 - Environment: `local workspace`
 
 ## Result Summary
 
 | Type | Total | Passed | Failed | Skipped | Coverage |
 |------|-------|--------|--------|---------|----------|
-| Codeup dry-run | 6 | 6 | 0 | 0 | n/a |
+| Assignment fixture | 3 | 3 | 0 | 0 | n/a |
 | Python syntax | 1 | 1 | 0 | 0 | n/a |
 | State validation | 1 | 1 | 0 | 0 | n/a |
 | Diff whitespace | 1 | 1 | 0 | 0 | n/a |
-| Total | 9 | 9 | 0 | 0 | n/a |
+| Total | 6 | 6 | 0 | 0 | n/a |
 
 ## Failures
 
@@ -34,14 +34,10 @@ last_run_status: passed
 
 ## Notes
 
-- Numeric `repositoryId` dry-run included numeric `sourceProjectId` and `targetProjectId` in the payload.
-- URL-encoded full-path `repositoryId` without project ids failed with explicit missing project-id guidance.
-- URL-encoded full-path `repositoryId` with explicit project ids produced the expected endpoint and payload.
-- Codeup `ListRepositories` resolved current repository `cloudcc-aidev-guidelines-common` to repository id `6551067`.
-- Local `.claw-local/codeup.env` dry-run used `/repositories/6551067/changeRequests` and body ids `6551067`.
-- `configure-codeup-change-request.py --dry-run` resolved current project defaults without printing the token.
-- `configure-codeup-change-request.py` wrote current project defaults back to `.claw-local/codeup.env`.
-- Explicit repository id dry-run with `--repository-id 123 --target-branch dev` generated source/target ids `123` without needing a token.
+- `allowed_write_roots: frontend/src` allowed nested files under `frontend/src/...`.
+- Bare `protected_paths: .claw/assignments` still blocked `.claw/assignments/TASK-138.yaml` unless explicitly listed in `scope_files`.
+- Exact `scope_files: docs/specs/FEAT-138.md` allowed that file but did not allow `docs/specs/FEAT-138.md.bak`.
+- State validation passed after updating `.claw/current-status.md`, `.claw/tasks/TASK-007.md`, and `.claw/test-report.md`.
 
 ## Common Commands
 

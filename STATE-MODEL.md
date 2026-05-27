@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 4.1.2
+version: 4.1.3
 ---
 
 # State Model Reference
@@ -10,7 +10,7 @@ This file defines the detailed state model used by `SKILL.md`.
 ## Core Principles
 
 1. `current-status.md` is the mandatory entry point for every session.
-2. `task-board.md` is the authoritative execution queue for implementation and handoff work.
+2. `task-board.md` is the authoritative coordination queue for implementation and handoff work.
 3. `task-archive.md` stores older completed or canceled work once the active board exceeds its retention window.
 4. Non-trivial feature work should have a primary spec under `docs/specs/`.
 5. Brownfield projects should establish `PROJECT-BASELINE.md` before broad legacy changes.
@@ -87,7 +87,7 @@ Update only when product intent changes.
 
 ### `task-board.md`
 
-Use as the compact queue for executable work items. It should point to per-task status files instead of embedding task detail.
+Use as the compact queue for executable work items. It should point to per-task status files instead of embedding task detail. In async manager-gated delivery, it is normally written by the project manager or integration owner, not by each developer for routine progress.
 
 Each task should record:
 
@@ -108,6 +108,8 @@ Each task should record:
 Each active task must link to `.claw/tasks/TASK-xxx.md` through `task_status_path`.
 
 Do not put long done-when checklists, changed-file lists, verification logs, or handoff narratives in the task card. Put those in `.claw/tasks/TASK-xxx.md`, `docs/specs/`, or `test-report.md`.
+
+Do not require a developer assignment to include `task-board.md` just to record that work started. The assigned developer records routine status changes in `.claw/tasks/TASK-xxx.md`. The board can lag briefly, and the manager or integration owner reconciles it when coordination state changes, unless the assignment explicitly lists `task-board.md` in `scope_files`.
 
 Size budget:
 
@@ -333,6 +335,11 @@ Recommended `scope_mode` values:
 - `exact_files`: all changed files must match `scope_files`; use for narrow documentation, configuration, or sensitive tasks.
 - `task_bounded_broad_code`: normal source and test changes may use `allowed_write_roots`; protected paths are blocked unless explicitly listed in `scope_files`; the linked task and feature spec define the work boundary.
 
+Path semantics:
+
+- `allowed_write_roots`, `protected_paths`, and developer `allowed_scopes` treat bare directories as recursive roots. For example, `frontend/src`, `frontend/src/`, and `frontend/src/**` all allow files below `frontend/src`.
+- `scope_files` treats bare paths as exact file/path authorization unless the manager writes an explicit glob such as `docs/specs/**`.
+
 ### `scripts/dev-login.py`
 
 Use as the mandatory local "who is currently editing" gate before manager-gated development starts.
@@ -385,7 +392,7 @@ Checks:
 - active duplicate Git usernames follow the role-sharing exception rules
 - optional branch matches the assignment branch
 - for `scope_mode: exact_files`, every file path is inside assignment `scope_files`
-- for `scope_mode: task_bounded_broad_code`, every file path is inside `allowed_write_roots` or exact `scope_files`
+- for `scope_mode: task_bounded_broad_code`, every file path is inside recursive `allowed_write_roots` or exact/glob `scope_files`
 - changed files matching `protected_paths` are blocked unless explicitly authorized by `scope_files`
 
 Outputs:
@@ -481,7 +488,7 @@ Record:
 - blockers
 - handoff notes
 
-This file is the right place for routine progress, changed files, verification evidence, blocker detail, and handoff notes for one task. `current-status.md` should only link to it or summarize it briefly. `task-board.md` should link to it through `task_status_path`.
+This file is the right place for routine progress, changed files, verification evidence, blocker detail, and handoff notes for one task. In async manager-gated delivery, it is also the developer-writable source of truth for contribution status such as `ready`, `in_progress`, `blocked`, and `review`. `current-status.md` should only link to it or summarize it briefly. `task-board.md` should link to it through `task_status_path`.
 
 ### `task-archive.md`
 
@@ -722,7 +729,7 @@ If files disagree:
 
 Priority examples:
 
-- `task-board.md` wins over `current-status.md` for task status, dependencies, owner role, and task status path.
+- `task-board.md` wins over `current-status.md` for queue membership, board index status, dependencies, owner role, and task status path.
 - `task-archive.md` wins over `task-board.md` for older completed or canceled tasks that have already been archived.
 - `PROJECT-BASELINE.md` wins over `current-status.md` for legacy-baseline notes and current architectural unknowns.
 - `docs/specs/FEAT-xxx-*.md` wins over `task-board.md` for feature-specific acceptance criteria and design details.
@@ -730,7 +737,7 @@ Priority examples:
 - `.claw/assignments/TASK-xxx.yaml` wins over `task-board.md` for authorized assignee, manager, branch, write scope, assignment status, and touch policy.
 - `.claw/developers/DEV-xxx.yaml` wins over chat or Git author metadata for developer id, active status, Git platform username, and SSH signing fingerprint.
 - `.claw-local/identity.json` and `.ai-dev-local/identity.json` are local caches only; if they conflict with `.claw/developers/*.yaml`, the developer record wins and login must be rerun.
-- `.claw/tasks/TASK-xxx.md` wins over `current-status.md` and `task-board.md` for task progress, changed files, evidence, blocker detail, and handoff notes.
+- `.claw/tasks/TASK-xxx.md` wins over `current-status.md` and `task-board.md` for developer contribution status, task progress, changed files, evidence, blocker detail, and handoff notes.
 - `.claw/integration-queue.md` wins over task cards for merge order and integration gate state.
 - `developers`, `assignments`, `tasks`, `task-board`, and `integration-queue` all win over `team-status.md`; regenerate `team-status.md` when stale.
 

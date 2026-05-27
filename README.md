@@ -30,7 +30,7 @@ It now covers eight layers:
 
 ## 版本标识 | Version Marker
 
-当前 skill 版本：`4.1.2`
+当前 skill 版本：`4.1.3`
 
 唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
@@ -364,8 +364,8 @@ python3 /path/to/this-skill/scripts/check-assignment.py /path/to/your-project/.c
 ```yaml
 scope_mode: task_bounded_broad_code
 allowed_write_roots:
-  - src/**
-  - tests/**
+  - src
+  - tests
 scope_files:
   - docs/specs/FEAT-036-openapi-dify-parity.md
   - .claw/tasks/TASK-112.md
@@ -381,7 +381,7 @@ task_boundary:
 change_manifest_required: true
 ```
 
-`scope_mode: task_bounded_broad_code` 表示门禁控制的是开发者是否有权处理当前任务，而不是让 PM 预判每一个实现文件。开发者可以在允许的源码和测试根路径内修改必要调用链，但不能修改治理文件、身份授权、CI、迁移、门禁脚本等受保护路径，除非这些路径被 PM 精确列入 `scope_files`。窄任务仍可使用 `scope_mode: exact_files`，此时 `scope_files` 是硬边界。
+`scope_mode: task_bounded_broad_code` 表示门禁控制的是开发者是否有权处理当前任务，而不是让 PM 预判每一个实现文件。开发者可以在允许的源码和测试根路径内修改必要调用链，但不能修改治理文件、身份授权、CI、迁移、门禁脚本等受保护路径，除非这些路径被 PM 精确列入 `scope_files`。`allowed_write_roots`、`protected_paths` 和开发者 `allowed_scopes` 中的裸目录会递归匹配，例如 `frontend/src` 等价于 `frontend/src/` 或 `frontend/src/**`；`scope_files` 中的裸路径仍是精确授权，除非显式写 glob。窄任务仍可使用 `scope_mode: exact_files`，此时 `scope_files` 是硬边界。
 
 注意：Git author name 和 email 不能作为强身份依据。它们可以作为辅助信息，但真正可信的门禁应结合 Git 平台账号、SSH commit signing、分支保护和 CI。
 
@@ -464,7 +464,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 | 层级 | 文件 | 默认动作 | 用途 |
 |------|------|----------|------|
 | Hot | `current-status.md` | 每次读，每次更新 | 当前快照、下一步、读取索引 |
-| Warm | `task-board.md` | 实现/交接时读写 | 任务、依赖、责任角色、交接 |
+| Warm | `task-board.md` | 实现/交接时读；PM/集成者写 | 任务、依赖、责任角色、交接 |
 | Warm | `integration-queue.md` | 异步并行集成时读写 | 集成分支、合并顺序、验证门禁 |
 | Warm | `team-status.md` | 管理者查看团队状态时生成/读取 | 团队成员、任务分配、贡献状态、集成状态的派生视图 |
 | Warm | `developers/*.yaml` | 身份/授权相关时读写 | 开发者 ID、Git 平台账号、SSH 签名指纹、角色、状态 |
@@ -484,7 +484,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 | 文件 | 唯一事实源 |
 |------|------------|
 | `current-status.md` | 当前阶段、活跃任务、下一步和读取索引 |
-| `task-board.md` | 执行队列索引、`owner_role`、依赖、阻塞和任务状态文件路径 |
+| `task-board.md` | 执行队列索引、看板索引状态、`owner_role`、依赖、阻塞和任务状态文件路径 |
 | `.claw/developers/*.yaml` | 开发者身份、Git 平台账号、SSH 签名指纹、角色状态、长期范围 |
 | `.claw/assignments/*.yaml` | 项目经理任务授权、分支、任务边界、写入根路径、受保护路径、管理者签名 |
 | `.claw/tasks/*.md` | 单个任务的当前状态、进度、变更文件、验证证据、交接说明 |
@@ -500,6 +500,13 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 | `devops.md` | 已验证运维知识 |
 
 不要在多个文件里独立维护同一事实。
+
+异步并行开发时，任务状态需要分清两个层次：
+
+- `.claw/tasks/TASK-xxx.md` 是开发者可写的进度事实源，用来记录 `ready` -> `in_progress`、验证、阻塞、变更文件和交接。
+- `task-board.md` 是项目经理或集成者维护的协调索引，用来记录队列、优先级、依赖、授权链接、review/完成和归档。
+- 开发者不需要为了表示“我开始做了”去改 `task-board.md`；除非 PM 在对应 assignment 的 `scope_files` 中显式加入 `.claw/task-board.md`。
+- 因此短时间内 `task-board.md` 显示 `ready`、而 `.claw/tasks/TASK-xxx.md` 显示 `in_progress` 是允许的。团队状态应由脚本从任务状态文件派生，必要时把看板索引状态单独展示。
 
 ## `task-board.md` 设计建议
 
@@ -555,7 +562,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 
 ## `task-board.md` 更新与归档机制
 
-`task-board.md` 需要始终保持“当前最新索引”。任务的详细状态不写在看板里，而是写入对应的 `.claw/tasks/TASK-xxx.md`。
+`task-board.md` 需要保持“当前协调索引”。任务的详细状态不写在看板里，而是写入对应的 `.claw/tasks/TASK-xxx.md`。在异步 PM 授权模式下，普通开发者只为日常进度更新自己的任务状态文件；`task-board.md` 由项目经理或集成者在创建、排序、阻塞、进入 review、完成、取消或归档时对齐。
 
 推荐机制：
 
@@ -571,6 +578,7 @@ python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.cla
 - 任务历史不会丢失
 - `task-board.md` 会维持较短、适合日常协作的索引窗口
 - 更老的完成记录统一进入 `task-archive.md`
+- 开发者分支可以只提交 `.claw/tasks/TASK-xxx.md` 的进度变化；需要同步看板时，由 PM 授权或在集成阶段统一处理
 
 ## 渐进式追踪与披露
 
@@ -671,6 +679,7 @@ docs/specs/
 
 - `assigned_by` 应指向 `MANAGER-xxx`
 - 普通功能开发推荐 `scope_mode: task_bounded_broad_code`，精确文件范围只用于任务文档、任务状态和受保护路径
+- `allowed_write_roots`、`protected_paths` 和开发者 `allowed_scopes` 中的裸目录会按递归目录处理；`scope_files` 中的裸路径保持精确匹配
 - 若使用 `scope_mode: exact_files`，所有目标文件都必须落在 `scope_files` 内
 - 默认签名方案是 SSH commit signing
 - Git author name/email 只可作为辅助信息，不能单独作为强身份依据
@@ -760,7 +769,7 @@ docs/specs/
 
 ---
 
-*版本 4.1.2 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交、测试环境推送和渐进式状态披露的项目状态与交付规范*
+*版本 4.1.3 | 面向 AI 多智能体协作、老项目渐进接入、项目级技能声明、任务归档、身份化异步并行交付、硬阻断登录式身份验证、任务边界宽代码权限、项目经理门控授权、Codeup 合并请求提交、测试环境推送和渐进式状态披露的项目状态与交付规范*
 
 <!-- cc-aidev-guidelines-common:begin -->
 ## AI Development Protocol

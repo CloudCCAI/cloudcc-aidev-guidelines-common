@@ -10,6 +10,8 @@ board_status: active
 
 `task-board.md` is a compact index. Each task keeps its detailed state in `.claw/tasks/TASK-xxx.md`.
 
+In async manager-gated delivery, routine developer progress is recorded in the linked task status file. The project manager or integration owner reconciles this board when coordination state changes.
+
 Recommended statuses: `todo` / `ready` / `in_progress` / `blocked` / `review` / `done` / `canceled`
 Recommended priorities: `critical` / `high` / `medium` / `low`
 
@@ -36,4 +38,5 @@ Recommended priorities: `critical` / `high` / `medium` / `low`
 - Keep each task card under 20 lines.
 - Store only index fields here.
 - Store current task details in `.claw/tasks/TASK-xxx.md`.
+- Do not require developers to edit this board for routine `ready` -> `in_progress` progress unless their assignment explicitly includes this file.
 - Store old completed or canceled task cards in `.claw/task-archive.md`.

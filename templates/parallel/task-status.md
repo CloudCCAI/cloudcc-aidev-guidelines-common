@@ -21,6 +21,8 @@ updated_by: ai
 - Spec: none
 - Assignment: none
 
+This file is the developer-writable source for routine contribution progress. In async manager-gated delivery, `task-board.md` may be reconciled later by the project manager or integration owner.
+
 ## Progress
 
 - No durable progress recorded yet.

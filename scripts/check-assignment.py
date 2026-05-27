@@ -16,6 +16,7 @@ DEVELOPER_PREFIXES = ("DEV-", MANAGER_PREFIX)
 SCOPE_MODE_EXACT = "exact_files"
 SCOPE_MODE_BROAD = "task_bounded_broad_code"
 SCOPE_MODES = {SCOPE_MODE_EXACT, SCOPE_MODE_BROAD}
+GLOB_CHARS = set("*?[")
 
 
 def clean_value(value: object) -> str:
@@ -77,7 +78,11 @@ def normalize_path(path: str) -> str:
     return str(PurePosixPath(cleaned))
 
 
-def path_matches(path: str, pattern: str) -> bool:
+def has_glob(pattern: str) -> bool:
+    return any(char in pattern for char in GLOB_CHARS)
+
+
+def path_matches(path: str, pattern: str, *, plain_directory: bool = False) -> bool:
     normalized_path = normalize_path(path)
     normalized_pattern = normalize_path(pattern)
     if normalized_pattern in {"*", "**"}:
@@ -90,11 +95,13 @@ def path_matches(path: str, pattern: str) -> bool:
     if normalized_pattern.endswith("/"):
         prefix = normalized_pattern.rstrip("/")
         return normalized_path == prefix or normalized_path.startswith(f"{prefix}/")
+    if plain_directory and not has_glob(normalized_pattern):
+        return normalized_path == normalized_pattern or normalized_path.startswith(f"{normalized_pattern}/")
     return False
 
 
-def path_allowed(path: str, patterns: list[str]) -> bool:
-    return any(path_matches(path, pattern) for pattern in patterns)
+def path_allowed(path: str, patterns: list[str], *, plain_directories: bool = False) -> bool:
+    return any(path_matches(path, pattern, plain_directory=plain_directories) for pattern in patterns)
 
 
 def scope_mode(assignment: dict[str, object]) -> str:
@@ -305,7 +312,8 @@ def check_authorization(args: argparse.Namespace) -> tuple[bool, list[str], dict
     developer_scopes = value_list(developer, "allowed_scopes")
     if developer_scopes:
         for scope in write_patterns:
-            if not path_allowed(scope.rstrip("/").replace("/**", "/placeholder"), developer_scopes):
+            scope_probe = scope.rstrip("/").replace("/**", "/placeholder")
+            if not path_allowed(scope_probe, developer_scopes, plain_directories=True):
                 findings.append(
                     f"blocked_assignment_scope_violation: assignment scope `{scope}` is outside developer allowed_scopes"
                 )
@@ -313,14 +321,21 @@ def check_authorization(args: argparse.Namespace) -> tuple[bool, list[str], dict
         findings.append(f"blocked_developer_scope_missing: developer `{args.developer}` has no allowed_scopes")
 
     for changed_file in args.files:
-        if mode == SCOPE_MODE_BROAD and path_allowed(changed_file, protected_paths):
+        if mode == SCOPE_MODE_BROAD and path_allowed(changed_file, protected_paths, plain_directories=True):
             if not path_allowed(changed_file, assignment_scopes):
                 findings.append(
                     f"blocked_protected_path: `{changed_file}` matches protected_paths and is not explicitly listed in scope_files"
                 )
                 continue
 
-        if not path_allowed(changed_file, write_patterns):
+        if mode == SCOPE_MODE_BROAD:
+            is_allowed = path_allowed(changed_file, allowed_write_roots, plain_directories=True) or path_allowed(
+                changed_file, assignment_scopes
+            )
+        else:
+            is_allowed = path_allowed(changed_file, assignment_scopes)
+
+        if not is_allowed:
             if mode == SCOPE_MODE_BROAD:
                 findings.append(f"blocked_write_root_violation: `{changed_file}` is outside allowed_write_roots")
             else:

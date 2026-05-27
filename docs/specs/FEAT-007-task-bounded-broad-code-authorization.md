@@ -7,7 +7,7 @@ owner_role: shared
 task_ids: TASK-007
 related_decisions: ADR-007
 related_issues: none
-updated_at: 2026-05-18T00:00:00Z
+updated_at: 2026-05-27T08:16:30Z
 updated_by: codex
 ---
 
@@ -42,6 +42,7 @@ updated_by: codex
 - 开发者处理 OpenAPI/Dify parity 任务时，发现必须修改聊天编排或模型路由模块，才能在正确层解决问题。
 - 旧模式会阻止该文件写入，诱导开发者把修复塞回 OpenAPI 层。
 - 新模式允许开发者在 `src/**` 和 `tests/**` 内修改必要调用链，同时阻止其触碰 `.claw/assignments/**`、`.claw/developers/**`、CI、迁移和门禁脚本。
+- 授权根路径应符合人的目录直觉：`frontend/src`、`frontend/src/` 和 `frontend/src/**` 都表示递归目录根，不应因为 PM 少写 `/**` 而阻止目标文件。
 
 ## 现状与约束
 
@@ -59,6 +60,7 @@ updated_by: codex
   - 普通源码和测试可匹配 `allowed_write_roots`。
   - `protected_paths` 命中时默认阻止，除非该具体路径同时匹配 `scope_files`。
   - `scope_files` 继续用于当前任务 spec、任务状态文件和受保护路径精确授权。
+  - `allowed_write_roots`、`protected_paths` 和开发者 `allowed_scopes` 中的裸目录按递归目录根处理；`scope_files` 中的裸路径保持精确匹配，除非显式写 glob。
   - `task_boundary` 和 linked spec 的验收标准定义产品范围。
   - `change_manifest_required: true` 要求开发者解释跨模块变更原因。
 
@@ -78,7 +80,7 @@ updated_by: codex
 
 - 默认功能任务 assignment 推荐：
   - `scope_mode: task_bounded_broad_code`
-  - `allowed_write_roots: src/**, tests/**`
+  - `allowed_write_roots: src, tests`
   - `scope_files`: 当前 feature spec 和当前 task status
   - `protected_paths`: identity、assignment、CI、迁移、门禁脚本、infra 和 secret 路径
 - 集成者和 reviewer 检查 change manifest 是否能解释每个跨模块修改。
@@ -97,6 +99,7 @@ updated_by: codex
 ## 验收标准
 
 - `scope_mode: task_bounded_broad_code` 下，`src/**` 和 `tests/**` 内文件可通过授权检查。
+- `allowed_write_roots: frontend/src` 下，`frontend/src/...` 目标文件可通过授权检查。
 - 命中 `protected_paths` 的文件如果不在 `scope_files` 内会被阻止。
 - `scope_mode: exact_files` 旧行为保持不变。
 - 状态校验和 Python 语法检查通过。
@@ -110,7 +113,7 @@ updated_by: codex
 ## 实现进展
 
 - 当前状态：已实现。
-- 已完成项：协议文本、README、STATE-MODEL、模板、脚本和校验器。
+- 已完成项：协议文本、README、STATE-MODEL、模板、脚本和校验器；裸目录写入根递归匹配。
 - 未完成项：无。
 
 ## 交接说明

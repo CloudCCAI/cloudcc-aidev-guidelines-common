@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.1.3 - 2026-05-27
+
+- Clarified async manager-gated task status ownership: developers record routine contribution progress in `.claw/tasks/TASK-xxx.md`, while `task-board.md` remains a manager/integration-owned coordination index unless explicitly authorized in assignment scope.
+- Fixed assignment path matching so bare directory entries in `allowed_write_roots`, `protected_paths`, and developer `allowed_scopes` are treated as recursive roots, while `scope_files` remains exact unless a glob is explicit.
+
 ## 4.1.2 - 2026-05-22
 
 - Added `scripts/configure-codeup-change-request.py` so each Codeup-hosted project can resolve its own repository id and write local `CODEUP_REPOSITORY_ID`, `CODEUP_SOURCE_PROJECT_ID`, `CODEUP_TARGET_PROJECT_ID`, `CODEUP_TARGET_BRANCH`, and `CODEUP_CREATE_FROM` defaults.
