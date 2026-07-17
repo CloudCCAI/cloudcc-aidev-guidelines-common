@@ -33,10 +33,10 @@ As projects grow, the skill must keep hot files small and make state loading pro
 - Templates start new projects in compact index mode.
 - Current repository tasks are migrated into separate `.claw/tasks/TASK-xxx.md` files.
 - Async manager-gated docs explain that developer progress updates do not require `task-board.md` write scope.
-- `scripts/validate-state.py .claw` passes after migration.
+- `skill/scripts/validate-state.py .claw` passes after migration.
 - Python syntax checks pass for updated scripts.
 
 ## Verification
 
-- `python3 scripts/validate-state.py .claw`
+- `python3 skill/scripts/validate-state.py .claw`
 - `git diff --check`

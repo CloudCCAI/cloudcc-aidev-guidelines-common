@@ -28,7 +28,7 @@ updated_by: codex
 - 扩展开发者身份模板，记录 Git 平台账号、SSH 签名公钥指纹、长期功能范围和授权管理者。
 - 扩展任务授权模板，记录授权状态、授权分支、授权范围、签名验证引用和越界审批要求。
 - 增加开发前 preflight 授权检查脚本，校验开发者、任务、分支和文件范围。
-- 更新 `SKILL.md`、`README.md`、`STATE-MODEL.md`、模板、校验器和状态文件。
+- 更新 `skill/SKILL.md`、`README.md`、`skill/STATE-MODEL.md`、模板、校验器和状态文件。
 
 ### Out Of Scope
 
@@ -69,7 +69,7 @@ updated_by: codex
   - `status` 必须为 `active` 才能开发
   - `branch`、`scope_files` 和 `touch_policy` 是开发前硬边界
   - `signature` 记录项目经理签名提交、PR approval 或外部验证引用
-- 新增 `scripts/check-assignment.py`，用于本地和 CI：
+- 新增 `skill/scripts/check-assignment.py`，用于本地和 CI：
   - 校验开发者身份存在且 active
   - 校验开发者记录绑定的 Git 平台账号和 SSH 签名指纹
   - 校验任务授权存在、active、assignee 匹配、assigned_by 是项目经理
@@ -102,8 +102,8 @@ updated_by: codex
 
 ## 接口与数据影响
 
-- 新增脚本入口：`scripts/check-assignment.py`
-- 新增 GitHub Actions 示例：`templates/github-workflows/check-assignment.yml`
+- 新增脚本入口：`skill/scripts/check-assignment.py`
+- 新增 GitHub Actions 示例：`skill/templates/github-workflows/check-assignment.yml`
 - 开发者模板新增 Git 平台账号、SSH 签名指纹、长期范围字段。
 - 任务授权模板新增 `status` 和项目经理授权要求。
 - 校验器新增对项目经理授权、签名身份字段和授权状态的最低结构校验。
@@ -114,10 +114,10 @@ updated_by: codex
 
 ## 验收标准
 
-- `SKILL.md`、`README.md`、`STATE-MODEL.md` 明确项目经理唯一授权入口和 SSH signing 默认推荐。
+- `skill/SKILL.md`、`README.md`、`skill/STATE-MODEL.md` 明确项目经理唯一授权入口和 SSH signing 默认推荐。
 - 模板能指导项目经理添加成员、绑定 Git 账号/SSH 签名指纹、分配任务范围。
-- `scripts/check-assignment.py` 能在授权通过、身份不符、分支不符和文件越界时给出明确结果。
-- `scripts/validate-state.py .claw` 通过。
+- `skill/scripts/check-assignment.py` 能在授权通过、身份不符、分支不符和文件越界时给出明确结果。
+- `skill/scripts/validate-state.py .claw` 通过。
 - Python 脚本语法检查通过。
 
 ## 风险与回滚
@@ -134,7 +134,7 @@ updated_by: codex
 
 ## 交接说明
 
-- 下一位接手者先看本文件，再检查 `SKILL.md` 的授权流程、`templates/parallel/*.yaml` 和 `scripts/check-assignment.py` 是否一致；如果要做更强门禁，优先新增 CI workflow 示例而不是把任何 token 写入仓库。
+- 下一位接手者先看本文件，再检查 `skill/SKILL.md` 的授权流程、`skill/templates/parallel/*.yaml` 和 `skill/scripts/check-assignment.py` 是否一致；如果要做更强门禁，优先新增 CI workflow 示例而不是把任何 token 写入仓库。
 
 ## 3.8.0 任务边界宽代码权限补充
 

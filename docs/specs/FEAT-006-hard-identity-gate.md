@@ -15,7 +15,7 @@ updated_by: codex
 
 ## 背景与目标
 
-- 3.7.0 增加了 `scripts/dev-login.py`，但实际项目中仍可能出现 agent 在“明确身份”但未完成 SSH challenge-response 验证时直接修改代码。
+- 3.7.0 增加了 `skill/scripts/dev-login.py`，但实际项目中仍可能出现 agent 在“明确身份”但未完成 SSH challenge-response 验证时直接修改代码。
 - 用户要求：只要使用此技能，就必须自动触发硬阻断规则，不能通过聊天声明、缓存、Git metadata 或其他路径绕过。
 - 目标是把本地身份验证从推荐流程升级为使用身份/授权记录项目中的强制编辑前门禁。
 
@@ -24,10 +24,10 @@ updated_by: codex
 ### In Scope
 
 - 明确硬身份门禁自动启用条件。
-- 明确 `scripts/dev-login.py` 是本地编辑前唯一有效身份验证入口。
-- 明确 `scripts/check-assignment.py` 不能替代本地 challenge-response 登录。
+- 明确 `skill/scripts/dev-login.py` 是本地编辑前唯一有效身份验证入口。
+- 明确 `skill/scripts/check-assignment.py` 不能替代本地 challenge-response 登录。
 - 明确未验证、验证失败、缺少私钥路径、缺少任务/分支/文件范围或缺少 assignment 时必须停止。
-- 更新 `SKILL.md`、`README.md`、`STATE-MODEL.md`、模板、ADR、任务状态和使用说明。
+- 更新 `skill/SKILL.md`、`README.md`、`skill/STATE-MODEL.md`、模板、ADR、任务状态和使用说明。
 
 ### Out Of Scope
 
@@ -43,9 +43,9 @@ updated_by: codex
 - `.claw/assignments/` 或 `.ai-dev/assignments/`
 - 任务卡包含 `assignment_path`
 - assignment 包含 `local_login_required: true`
-- task/spec 指定 `scripts/dev-login.py` 为本地身份检查
+- task/spec 指定 `skill/scripts/dev-login.py` 为本地身份检查
 
-门禁启用后，AI agent 或开发者在修改以下文件前必须先让 `scripts/dev-login.py` 返回 `allowed`：
+门禁启用后，AI agent 或开发者在修改以下文件前必须先让 `skill/scripts/dev-login.py` 返回 `allowed`：
 
 - 源码
 - 测试
@@ -62,7 +62,7 @@ updated_by: codex
 - 已知用户名或 Git author/email
 - 历史会话记忆
 - `.claw-local/identity.json` 或 `.ai-dev-local/identity.json` 的存在
-- `scripts/check-assignment.py` 通过
+- `skill/scripts/check-assignment.py` 通过
 
 ## 允许的登录前修改
 
@@ -77,7 +77,7 @@ updated_by: codex
 
 ## 验收标准
 
-- `SKILL.md` 使用 `must` 描述本地 `dev-login.py` 硬门禁。
+- `skill/SKILL.md` 使用 `must` 描述本地 `dev-login.py` 硬门禁。
 - README 和 STATE-MODEL 明确聊天声明、缓存、Git metadata 和 `check-assignment.py` 不能绕过本地登录。
 - 模板引导新项目启用 hard gate。
 - 状态校验和 Python 语法检查通过。

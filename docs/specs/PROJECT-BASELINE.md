@@ -17,10 +17,10 @@ updated_by: codex
 
 ## Verified Facts
 
-- 仓库以 `SKILL.md` 为技能协议主入口，以 `README.md` 和 `STATE-MODEL.md` 作为对外说明。
-- `scripts/init-state.sh` 是项目初始化入口，`scripts/validate-state.py` 是状态校验入口。
-- 仓库已经提供 `.claw/`、`docs/specs/` 模板和 `examples/sample-project/` 示例项目。
-- 当前会话已新增 `scripts/ensure-agent-guidance.sh`，用于幂等写入项目根目录的 `README.md` 与 `AGENTS.md` 声明块。
+- 仓库以 `skill/SKILL.md` 为技能协议主入口，以 `README.md` 和 `skill/STATE-MODEL.md` 作为对外说明。
+- `skill/scripts/init-state.sh` 是项目初始化入口，`skill/scripts/validate-state.py` 是状态校验入口。
+- 仓库已经提供 `.claw/`、`docs/specs/` 模板和 `skill/examples/sample-project/` 示例项目。
+- 当前会话已新增 `skill/scripts/ensure-agent-guidance.sh`，用于幂等写入项目根目录的 `README.md` 与 `AGENTS.md` 声明块。
 
 ## Inferred Facts
 
@@ -29,22 +29,22 @@ updated_by: codex
 
 ## Pending Verification
 
-- 尚未验证在更多真实外部仓库上运行 `scripts/ensure-agent-guidance.sh` 的效果。
+- 尚未验证在更多真实外部仓库上运行 `skill/scripts/ensure-agent-guidance.sh` 的效果。
 - 尚未建立对 README/AGENTS 声明块位置或格式的更细粒度定制规则。
 
 ## Legacy Hotspots
 
-- `scripts/validate-state.py` 的 front matter 解析逻辑较轻量，后续如果状态文件结构更复杂，需要评估是否升级解析方式。
+- `skill/scripts/validate-state.py` 的 front matter 解析逻辑较轻量，后续如果状态文件结构更复杂，需要评估是否升级解析方式。
 - 文档、脚本、示例和模板之间存在跨文件一致性约束，版本升级时容易漏改。
 
 ## Key Entry Points
 
-- 技能入口：`SKILL.md`
+- 技能入口：`skill/SKILL.md`
 - 项目说明：`README.md`
-- 状态模型：`STATE-MODEL.md`
-- 初始化脚本：`scripts/init-state.sh`
-- 项目级声明写入器：`scripts/ensure-agent-guidance.sh`
-- 校验脚本：`scripts/validate-state.py`
+- 状态模型：`skill/STATE-MODEL.md`
+- 初始化脚本：`skill/scripts/init-state.sh`
+- 项目级声明写入器：`skill/scripts/ensure-agent-guidance.sh`
+- 校验脚本：`skill/scripts/validate-state.py`
 
 ## Active Delivery Surface
 
@@ -60,4 +60,4 @@ updated_by: codex
 ## Handoff Notes
 
 - 新接手的智能体先读 `.claw/current-status.md`、`.claw/task-board.md`、本文件和 `docs/specs/FEAT-001-project-skill-declaration.md`。
-- 如果继续演进初始化流程，优先检查 `scripts/init-state.sh`、`scripts/ensure-agent-guidance.sh` 和 `scripts/validate-state.py` 三者的一致性。
+- 如果继续演进初始化流程，优先检查 `skill/scripts/init-state.sh`、`skill/scripts/ensure-agent-guidance.sh` 和 `skill/scripts/validate-state.py` 三者的一致性。

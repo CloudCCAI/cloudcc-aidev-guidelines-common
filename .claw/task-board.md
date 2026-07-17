@@ -1,7 +1,7 @@
 ---
 kind: task-board
 version: 4
-updated_at: 2026-05-27T09:21:22Z
+updated_at: 2026-07-17T07:13:02Z
 updated_by: codex
 board_status: active
 ---
@@ -131,6 +131,30 @@ board_status: active
 - depends_on: `TASK-009`
 - blocked_by: `none`
 - next_action: `Release 4.1.3`
+
+### TASK-011 - Separate the distributable skill package
+
+- status: `review`
+- priority: `high`
+- owner_role: `shared`
+- spec_path: `docs/specs/FEAT-011-skill-package-layout.md`
+- task_status_path: `.claw/tasks/TASK-011.md`
+- assignment_path: `none`
+- depends_on: `none`
+- blocked_by: `none`
+- next_action: `User review the skill package layout`
+
+### TASK-012 - Translate and consolidate the skill protocol
+
+- status: `review`
+- priority: `high`
+- owner_role: `shared`
+- spec_path: `docs/specs/FEAT-012-chinese-skill-protocol.md`
+- task_status_path: `.claw/tasks/TASK-012.md`
+- assignment_path: `none`
+- depends_on: `TASK-011`
+- blocked_by: `none`
+- next_action: `User review the Chinese consolidated skill protocol`
 
 ## Completed Tasks
 

@@ -9,7 +9,7 @@ README_PATH="${TARGET_DIR}/README.md"
 AGENTS_PATH="${TARGET_DIR}/AGENTS.md"
 MARKER_BEGIN="<!-- cc-aidev-guidelines-common:begin -->"
 MARKER_END="<!-- cc-aidev-guidelines-common:end -->"
-SKILL_REPO_URL="https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common"
+SKILL_REPO_URL="https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
 
 README_BLOCK=$(cat <<EOF
 ${MARKER_BEGIN}

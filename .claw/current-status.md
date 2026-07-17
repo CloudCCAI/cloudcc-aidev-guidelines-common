@@ -1,11 +1,11 @@
 ---
 kind: current-status
 version: 4
-updated_at: 2026-05-27T09:21:22Z
+updated_at: 2026-07-17T07:13:02Z
 updated_by: codex
 phase: review
-active_task: "TASK-007"
-next_action: "Commit and push release 4.1.3"
+active_task: "TASK-012"
+next_action: "Review the Chinese consolidated SKILL.md"
 read_next:
   goals: false
   decisions: true
@@ -22,16 +22,16 @@ read_next:
 
 ## Snapshot
 
-- Goal: release skill version 4.1.3 with task-status ownership and write-root matching fixes.
-- Focus: `TASK-007`
+- Goal: provide a concise Chinese skill protocol without changing behavior.
+- Focus: `TASK-012`
 - Blocked: none
-- Latest verification: assignment fixtures, Python syntax, state validation, and diff whitespace checks passed for release 4.1.3.
+- Latest verification: standard Skill validation, project state validation, 25-token protocol check, line-budget check, reference check, and diff check passed.
 
 ## Read Next
 
 - `.claw/task-board.md` - compact task index
-- `.claw/tasks/TASK-007.md` - current task state and handoff
-- `docs/specs/FEAT-007-task-bounded-broad-code-authorization.md` - broad code authorization design
+- `.claw/tasks/TASK-012.md` - current task state and handoff
+- `docs/specs/FEAT-012-chinese-skill-protocol.md` - translation and consolidation design
 - `.claw/test-report.md` - latest validation evidence
 
 ## Maintenance Rules

@@ -57,8 +57,8 @@ updated_by: ai
 - 团队状态汇总：`.claw/team-status.md` / `n/a`
 - 项目经理门控授权：`yes` / `no`
 - 默认身份绑定：Git 平台账号 + SSH commit signing
-- 本地身份登录：`scripts/dev-login.py` hard gate / `n/a`
-- 开发前检查：`scripts/check-assignment.py` / `n/a`
+- 本地身份登录：`skill/scripts/dev-login.py` hard gate / `n/a`
+- 开发前检查：`skill/scripts/check-assignment.py` / `n/a`
 - 不允许提交管理者口令、开发者 token、私钥或可复用密钥
 
 ## 并行与集成计划

@@ -21,11 +21,11 @@ Developers should be able to create a Codeup change request through OpenAPI. Bef
 
 ## Design
 
-- Add `scripts/store-yunxiao-token.py` to store a token in `.claw-local/codeup.env`.
-- Add `scripts/create-codeup-change-request.py` to call Codeup `CreateChangeRequest`.
+- Add `skill/scripts/store-yunxiao-token.py` to store a token in `.claw-local/codeup.env`.
+- Add `skill/scripts/create-codeup-change-request.py` to call Codeup `CreateChangeRequest`.
 - Add `.gitignore` entries for local secret files.
-- Add `templates/platforms/codeup/` as the default platform guide.
-- Keep `templates/github-workflows/check-assignment.yml` as an optional GitHub example.
+- Add `skill/templates/platforms/codeup/` as the default platform guide.
+- Keep `skill/templates/github-workflows/check-assignment.yml` as an optional GitHub example.
 - Preserve GitHub `3.8.0` hard identity and task-bounded broad authorization changes; publish this Codeup layer as `3.9.0`.
 
 ## Acceptance Criteria
@@ -40,6 +40,6 @@ Developers should be able to create a Codeup change request through OpenAPI. Bef
 
 ## Verification
 
-- `python3 scripts/create-codeup-change-request.py --dry-run --domain https://example.com --repository-id 123 --source-branch feat/TASK-008-codeup --title "[TASK-008] Codeup"` without token returns setup guidance.
-- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/create-codeup-change-request.py scripts/store-yunxiao-token.py`
-- `python3 scripts/validate-state.py .claw`
+- `python3 skill/scripts/create-codeup-change-request.py --dry-run --domain https://example.com --repository-id 123 --source-branch feat/TASK-008-codeup --title "[TASK-008] Codeup"` without token returns setup guidance.
+- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile skill/scripts/create-codeup-change-request.py skill/scripts/store-yunxiao-token.py`
+- `python3 skill/scripts/validate-state.py .claw`

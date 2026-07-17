@@ -36,4 +36,4 @@ updated_by: codex
 
 ## Handoff
 
-- There is no chat-context or Git metadata bypass for `scripts/dev-login.py`.
+- There is no chat-context or Git metadata bypass for `skill/scripts/dev-login.py`.

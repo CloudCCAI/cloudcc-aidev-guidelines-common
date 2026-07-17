@@ -25,7 +25,7 @@ integration_owner: codex
 - related_tasks: `TASK-002, TASK-003`
 - related_prs: `none`
 - merge_order: `TASK-002, TASK-003`
-- validation_gates: `python3 scripts/validate-state.py .claw`
+- validation_gates: `python3 skill/scripts/validate-state.py .claw`
 - blocked_by: `none`
 
 #### Merge Notes

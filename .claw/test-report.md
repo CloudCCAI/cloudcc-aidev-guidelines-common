@@ -1,9 +1,9 @@
 ---
 kind: test-report
 version: 4
-updated_at: 2026-05-27T09:21:22Z
+updated_at: 2026-07-17T07:13:02Z
 updated_by: codex
-last_run_at: 2026-05-27T09:21:22Z
+last_run_at: 2026-07-17T07:13:02Z
 last_run_status: passed
 ---
 
@@ -14,19 +14,19 @@ last_run_status: passed
 ## Latest Run Summary
 
 - 状态：`passed`
-- Scope: `release 4.1.3, bare directory write-root matching, protected-path recursion, exact scope_files behavior, Python syntax, state validation, diff whitespace`
-- Commands: temporary assignment fixture with `allowed_write_roots: frontend/src`; temporary exact `scope_files` fixture; `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/check-assignment.py scripts/dev-login.py scripts/validate-state.py`; `python3 scripts/validate-state.py .claw`; `git diff --check`
+- Scope: `Chinese SKILL.md translation, content consolidation, protocol preservation`
+- Commands: standard `quick_validate.py`; project `validate-state.py`; 25-token protocol check; line-budget, Chinese-content, reference, and `git diff --check` checks
 - Environment: `local workspace`
 
 ## Result Summary
 
 | Type | Total | Passed | Failed | Skipped | Coverage |
 |------|-------|--------|--------|---------|----------|
-| Assignment fixture | 3 | 3 | 0 | 0 | n/a |
-| Python syntax | 1 | 1 | 0 | 0 | n/a |
-| State validation | 1 | 1 | 0 | 0 | n/a |
-| Diff whitespace | 1 | 1 | 0 | 0 | n/a |
-| Total | 6 | 6 | 0 | 0 | n/a |
+| Skill quick validation | 1 | 1 | 0 | 0 | n/a |
+| Project state validation | 1 | 1 | 0 | 0 | n/a |
+| Protocol preservation | 1 | 1 | 0 | 0 | n/a |
+| Content and reference checks | 1 | 1 | 0 | 0 | n/a |
+| Total | 4 | 4 | 0 | 0 | n/a |
 
 ## Failures
 
@@ -34,17 +34,17 @@ last_run_status: passed
 
 ## Notes
 
-- `allowed_write_roots: frontend/src` allowed nested files under `frontend/src/...`.
-- Bare `protected_paths: .claw/assignments` still blocked `.claw/assignments/TASK-138.yaml` unless explicitly listed in `scope_files`.
-- Exact `scope_files: docs/specs/FEAT-138.md` allowed that file but did not allow `docs/specs/FEAT-138.md.bak`.
-- State validation passed after updating `.claw/current-status.md`, `.claw/tasks/TASK-007.md`, and `.claw/test-report.md`.
+- `skill/SKILL.md` was reduced from 520 lines to 293 lines.
+- Explanatory prose is Chinese; technical identifiers, fields, commands, paths, and status values remain unchanged.
+- Hard identity gates, assignment scope, Codeup flow, test-environment push behavior, and state source-of-truth rules remain present.
+- `PyYAML` was installed only into a temporary directory for the external skill validator.
 
 ## Common Commands
 
-- `python3 scripts/validate-state.py .claw`
-- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/validate-state.py scripts/summarize-team-status.py scripts/check-assignment.py scripts/dev-login.py`
-- `python3 scripts/dev-login.py .claw --ssh-key ~/.ssh/id_ed25519_cc_dev --developer DEV-xxx --task TASK-xxx --files path/to/file`
-- `python3 scripts/check-assignment.py .claw --developer DEV-xxx --task TASK-xxx --files path/to/file`
+- `python3 skill/scripts/validate-state.py .claw`
+- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile skill/scripts/*.py`
+- `python3 skill/scripts/dev-login.py .claw --ssh-key ~/.ssh/id_ed25519_cc_dev --developer DEV-xxx --task TASK-xxx --files path/to/file`
+- `python3 skill/scripts/check-assignment.py .claw --developer DEV-xxx --task TASK-xxx --files path/to/file`
 
 ## Maintenance Rules
 

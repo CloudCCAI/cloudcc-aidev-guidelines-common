@@ -8,7 +8,7 @@ status: derived
 
 # 团队状态汇总
 
-`team-status.md` 是管理者视图，由 `scripts/summarize-team-status.py` 根据项目状态文件生成。它不是事实源。
+`team-status.md` 是管理者视图，由 `skill/scripts/summarize-team-status.py` 根据项目状态文件生成。它不是事实源。
 
 ## 汇总规则
 
@@ -51,5 +51,5 @@ status: derived
 ## 维护规则
 
 - 不手工维护本文件的事实内容。
-- 管理者需要查看团队状态时，运行 `python3 scripts/summarize-team-status.py .claw --write`。
+- 管理者需要查看团队状态时，运行 `python3 skill/scripts/summarize-team-status.py .claw --write`。
 - 远端 PR/CI 数据只有在写入任务状态或由后续平台脚本接入后，才会进入本汇总。

@@ -22,7 +22,7 @@ OPTIONAL_STATE_KINDS = {
     "team-status.md": "team-status",
 }
 STATE_KINDS = {**EXPECTED_KINDS, **OPTIONAL_STATE_KINDS}
-SKILL_REPO_URL = "https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common"
+SKILL_REPO_URL = "https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
 GUIDANCE_MARKER_BEGIN = "<!-- cc-aidev-guidelines-common:begin -->"
 GUIDANCE_MARKER_END = "<!-- cc-aidev-guidelines-common:end -->"
 GUIDANCE_REQUIRED_FILES = ("README.md", "AGENTS.md")

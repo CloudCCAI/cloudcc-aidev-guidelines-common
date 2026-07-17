@@ -23,7 +23,7 @@ updated_by: codex
 
 ## Progress
 
-- SSH challenge-response local identity verification is implemented through `scripts/dev-login.py`.
+- SSH challenge-response local identity verification is implemented through `skill/scripts/dev-login.py`.
 
 ## Changed Files
 

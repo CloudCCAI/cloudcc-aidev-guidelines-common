@@ -18,7 +18,7 @@ lifecycle: active
 
 ### In Scope Now
 
-- 维护 `SKILL.md`、`README.md` 和 `STATE-MODEL.md` 的一致协议
+- 维护 `skill/SKILL.md`、`README.md` 和 `skill/STATE-MODEL.md` 的一致协议
 - 提供可直接运行的初始化、声明写入和校验脚本
 - 为新项目和老项目都建立统一的 `.claw/`、`docs/specs/`、`README.md` 和 `AGENTS.md` 接入方式
 - 提供可选的身份、公钥、任务授权、单任务状态、团队状态汇总和集成队列模型，支持独立开发者异步并行开发

@@ -36,7 +36,7 @@ That block must say:
 
 - the project follows `cc-aidev-guidelines-common`
 - every AI agent must automatically use the skill
-- if the skill is missing locally, install it from `https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common`
+- if the skill is missing locally, install it from `https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill`
 
 The recommended writer is `scripts/ensure-agent-guidance.sh`.
 

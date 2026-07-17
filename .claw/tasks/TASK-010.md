@@ -30,12 +30,12 @@ updated_by: codex
 
 ## Changed Files
 
-- `SKILL.md`, `STATE-MODEL.md`, `README.md`, `templates/task-board.md`, `templates/parallel/assignment.yaml`, `templates/parallel/task-status.md`, `.claw/tasks/TASK-010.md`, `docs/specs/FEAT-010-progressive-state-indexing.md`, `CHANGELOG.md`
+- `skill/SKILL.md`, `skill/STATE-MODEL.md`, `README.md`, `skill/templates/task-board.md`, `skill/templates/parallel/assignment.yaml`, `skill/templates/parallel/task-status.md`, `.claw/tasks/TASK-010.md`, `docs/specs/FEAT-010-progressive-state-indexing.md`, `CHANGELOG.md`
 
 ## Verification
 
 - Status: `passed`
-- Evidence: `python3 scripts/validate-state.py .claw`; `git diff --check`
+- Evidence: `python3 skill/scripts/validate-state.py .claw`; `git diff --check`
 
 ## Handoff
 

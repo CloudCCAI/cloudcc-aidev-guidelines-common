@@ -46,7 +46,7 @@ updated_by: codex
 
 ## 现状与约束
 
-- 硬身份门禁仍然是前置条件：`scripts/dev-login.py` 必须返回 `allowed`。
+- 硬身份门禁仍然是前置条件：`skill/scripts/dev-login.py` 必须返回 `allowed`。
 - `.claw/assignments/TASK-xxx.yaml` 仍是项目经理授权的事实源。
 - 宽代码权限不能替代 feature spec、验收标准、PR review 和 CI。
 - 现有项目如果不声明 `scope_mode`，默认按 `exact_files` 处理，保持兼容。
@@ -73,8 +73,8 @@ updated_by: codex
 - 单任务状态文件：`.claw/tasks/TASK-xxx.md`
 - 项目经理门控授权：`yes`
 - 默认身份绑定：Git 平台账号 + SSH commit signing
-- 本地身份登录：`scripts/dev-login.py` hard gate
-- 开发前检查：`scripts/check-assignment.py`
+- 本地身份登录：`skill/scripts/dev-login.py` hard gate
+- 开发前检查：`skill/scripts/check-assignment.py`
 
 ## 并行与集成计划
 
@@ -87,8 +87,8 @@ updated_by: codex
 
 ## 接口与数据影响
 
-- `scripts/check-assignment.py` 新增对 `scope_mode`、`allowed_write_roots` 和 `protected_paths` 的检查。
-- `scripts/validate-state.py` 新增 assignment `scope_mode` 最低结构校验。
+- `skill/scripts/check-assignment.py` 新增对 `scope_mode`、`allowed_write_roots` 和 `protected_paths` 的检查。
+- `skill/scripts/validate-state.py` 新增 assignment `scope_mode` 最低结构校验。
 - assignment 模板新增宽代码授权字段。
 - 旧 assignment 未声明 `scope_mode` 时按 `exact_files` 处理。
 
@@ -118,5 +118,5 @@ updated_by: codex
 
 ## 交接说明
 
-- 下一位接手者先看 `scripts/check-assignment.py` 的 scope mode 分支，再看 assignment 模板。
+- 下一位接手者先看 `skill/scripts/check-assignment.py` 的 scope mode 分支，再看 assignment 模板。
 - 若要进一步增强，可以在 PR 模板或 CI 中检查 change manifest 是否覆盖所有 changed files。

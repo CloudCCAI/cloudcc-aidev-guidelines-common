@@ -32,33 +32,39 @@ It now covers eight layers:
 
 当前 skill 版本：`4.1.3`
 
-唯一权威版本标识位于 [SKILL.md](SKILL.md) front matter 中的 `skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
+唯一权威版本标识位于 [skill/SKILL.md](skill/SKILL.md) front matter 中的 `metadata.skill_version` 字段。智能体需要判断当前安装的是哪个版本时，应优先读取这个字段，而不是以 README 或 CHANGELOG 为准。
 
 ## 仓库内容 | Repository Contents
 
 | 路径 | 说明 |
 |------|------|
-| `SKILL.md` | 主 skill 协议 / main skill protocol |
-| `STATE-MODEL.md` | 详细状态模型 / detailed state model |
-| `templates/` | 核心状态与可选并行协作模板 / core state and optional parallel coordination templates |
-| `scripts/ensure-agent-guidance.sh` | 项目级 README/AGENTS 声明写入器 / managed README/AGENTS declaration writer |
-| `scripts/dev-login.py` | 开发前本地 SSH challenge-response 身份登录 / local SSH challenge-response identity login |
-| `scripts/check-assignment.py` | 开发前身份、任务、分支、任务边界和受保护路径检查 / preflight identity, task, branch, task boundary, and protected-path check |
-| `scripts/store-yunxiao-token.py` | 本地保存云效个人访问令牌 / local Yunxiao token storage helper |
-| `scripts/configure-codeup-change-request.py` | 解析并写入本项目 Codeup 合并请求默认参数 / local Codeup change request defaults configurator |
-| `scripts/create-codeup-change-request.py` | 通过 Codeup OpenAPI 创建合并请求 / Codeup change request creator |
-| `scripts/push-test-environment.py` | 合并开发分支到 dev 并推送测试环境 / test-environment branch push helper |
-| `scripts/summarize-team-status.py` | 团队状态汇总器 / derived team status summarizer |
-| `templates/platforms/codeup/` | 默认 Codeup 合并请求流程 / default Codeup change request flow |
-| `templates/github-workflows/check-assignment.yml` | GitHub Actions 授权检查示例 / GitHub Actions assignment gate example |
-| `templates/team-status.md` | 管理者团队状态汇总模板 / manager team status view template |
-| `templates/integration-queue.md` | 异步并行集成队列模板 / async parallel integration queue template |
-| `templates/parallel/` | 开发者身份、任务授权、单任务状态模板 / identity, assignment, and task-status templates |
-| `templates/docs/feature-spec-template.md` | 功能设计模板 / feature spec template |
-| `templates/docs/project-baseline-template.md` | 老项目基线模板 / legacy baseline template |
-| `scripts/` | 初始化与校验脚本 / init and validation scripts |
-| `examples/` | 完整示例状态与 spec / sample state and feature spec |
+| `skill/SKILL.md` | 主 skill 协议 / main skill protocol |
+| `skill/STATE-MODEL.md` | 详细状态模型 / detailed state model |
+| `skill/templates/` | 核心状态与可选并行协作模板 / core state and optional parallel coordination templates |
+| `skill/scripts/ensure-agent-guidance.sh` | 项目级 README/AGENTS 声明写入器 / managed README/AGENTS declaration writer |
+| `skill/scripts/dev-login.py` | 开发前本地 SSH challenge-response 身份登录 / local SSH challenge-response identity login |
+| `skill/scripts/check-assignment.py` | 开发前身份、任务、分支、任务边界和受保护路径检查 / preflight identity, task, branch, task boundary, and protected-path check |
+| `skill/scripts/store-yunxiao-token.py` | 本地保存云效个人访问令牌 / local Yunxiao token storage helper |
+| `skill/scripts/configure-codeup-change-request.py` | 解析并写入本项目 Codeup 合并请求默认参数 / local Codeup change request defaults configurator |
+| `skill/scripts/create-codeup-change-request.py` | 通过 Codeup OpenAPI 创建合并请求 / Codeup change request creator |
+| `skill/scripts/push-test-environment.py` | 合并开发分支到 dev 并推送测试环境 / test-environment branch push helper |
+| `skill/scripts/summarize-team-status.py` | 团队状态汇总器 / derived team status summarizer |
+| `skill/templates/platforms/codeup/` | 默认 Codeup 合并请求流程 / default Codeup change request flow |
+| `skill/templates/github-workflows/check-assignment.yml` | GitHub Actions 授权检查示例 / GitHub Actions assignment gate example |
+| `skill/templates/team-status.md` | 管理者团队状态汇总模板 / manager team status view template |
+| `skill/templates/integration-queue.md` | 异步并行集成队列模板 / async parallel integration queue template |
+| `skill/templates/parallel/` | 开发者身份、任务授权、单任务状态模板 / identity, assignment, and task-status templates |
+| `skill/templates/docs/feature-spec-template.md` | 功能设计模板 / feature spec template |
+| `skill/templates/docs/project-baseline-template.md` | 老项目基线模板 / legacy baseline template |
+| `skill/scripts/` | 初始化与校验脚本 / init and validation scripts |
+| `skill/examples/` | 完整示例状态与 spec / sample state and feature spec |
 | `CHANGELOG.md` | 版本变更记录 / version history |
+
+### 目录边界 | Directory Boundary
+
+- 仓库根目录用于开发和管理该技能，保留项目 README、开发指令、状态、spec、发布记录和许可证。
+- `skill/` 是独立的可发布技能包，安装或发布时应将该目录视为技能根目录。
+- 本 README 中的 `skill/...` 是源码仓库路径；技能安装后，包内仍以 `SKILL.md`、`scripts/`、`templates/` 和 `examples/` 为相对路径。
 
 ## 设计原则 | Design Principles
 
@@ -85,12 +91,12 @@ It now covers eight layers:
 
 - 当前项目遵循 `cc-aidev-guidelines-common`
 - 所有 AI 智能体必须自动使用此技能
-- 如果当前环境尚未安装此技能，必须先从 GitHub 安装：`https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common`
+- 如果当前环境尚未安装此技能，必须先从 GitHub 安装：`https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill`
 
 推荐使用：
 
 ```bash
-bash /path/to/this-skill/scripts/ensure-agent-guidance.sh /path/to/your-project
+bash /path/to/repository/skill/scripts/ensure-agent-guidance.sh /path/to/your-project
 ```
 
 ## 快速开始
@@ -100,7 +106,7 @@ bash /path/to/this-skill/scripts/ensure-agent-guidance.sh /path/to/your-project
 推荐直接使用脚本：
 
 ```bash
-bash /path/to/this-skill/scripts/init-state.sh /path/to/your-project
+bash /path/to/repository/skill/scripts/init-state.sh /path/to/your-project
 ```
 
 它会创建：
@@ -230,13 +236,13 @@ Codeup OpenAPI 创建合并请求使用云效个人访问令牌，请求头为 `
 本地保存令牌：
 
 ```bash
-python3 /path/to/this-skill/scripts/store-yunxiao-token.py
+python3 /path/to/repository/skill/scripts/store-yunxiao-token.py
 ```
 
 为当前 Codeup 项目生成本地合并请求默认参数：
 
 ```bash
-python3 /path/to/this-skill/scripts/configure-codeup-change-request.py
+python3 /path/to/repository/skill/scripts/configure-codeup-change-request.py
 ```
 
 该脚本会基于当前 Git remote 和本地 `YUNXIAO_TOKEN` 查询 Codeup 仓库 ID，并把以下项目专属参数写入 `.claw-local/codeup.env`：
@@ -258,7 +264,7 @@ https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-to
 创建 Codeup 合并请求：
 
 ```bash
-python3 /path/to/this-skill/scripts/create-codeup-change-request.py \
+python3 /path/to/repository/skill/scripts/create-codeup-change-request.py \
   --domain https://openapi-rdc.aliyuncs.com \
   --repository-id 2813489 \
   --source-project-id 2813489 \
@@ -284,9 +290,9 @@ python3 /path/to/this-skill/scripts/create-codeup-change-request.py \
 - 描述包含变更范围、验证结果、风险和回滚说明
 - 创建后把返回的 `detailUrl` 写入 `.claw/tasks/TASK-xxx.md` 的 `change_request_url`
 - 保护分支要求 Codeup 评审、CodeOwner（如启用）和云效 Flow 检查通过
-- 云效 Flow 或 Webhook 适配层应调用 `scripts/check-assignment.py`，检查开发者身份、任务授权、分支和 changed files
+- 云效 Flow 或 Webhook 适配层应调用 `skill/scripts/check-assignment.py`，检查开发者身份、任务授权、分支和 changed files
 
-更完整的 Codeup 平台模板见 `templates/platforms/codeup/`。
+更完整的 Codeup 平台模板见 `skill/templates/platforms/codeup/`。
 
 ### 8. 测试环境推送 | Test Environment Push
 
@@ -295,13 +301,13 @@ python3 /path/to/this-skill/scripts/create-codeup-change-request.py \
 推荐使用脚本：
 
 ```bash
-python3 /path/to/this-skill/scripts/push-test-environment.py
+python3 /path/to/repository/skill/scripts/push-test-environment.py
 ```
 
 常用显式参数：
 
 ```bash
-python3 /path/to/this-skill/scripts/push-test-environment.py \
+python3 /path/to/repository/skill/scripts/push-test-environment.py \
   --source-branch feat/TASK-001-feature-title \
   --target-branch dev \
   --remote origin
@@ -333,7 +339,7 @@ python3 /path/to/this-skill/scripts/push-test-environment.py \
 本地开发前必须先运行登录式身份验证。只要项目存在 `.claw/developers/`、`.claw/assignments/`、`assignment_path` 或 `local_login_required: true`，这个硬身份门禁就自动启用：
 
 ```bash
-python3 /path/to/this-skill/scripts/dev-login.py /path/to/your-project/.claw \
+python3 /path/to/repository/skill/scripts/dev-login.py /path/to/your-project/.claw \
   --ssh-key ~/.ssh/id_ed25519_cc_dev \
   --developer DEV-alice \
   --task TASK-001 \
@@ -348,7 +354,7 @@ python3 /path/to/this-skill/scripts/dev-login.py /path/to/your-project/.claw \
 合并请求 CI、PR CI 或只需要检查任务授权时运行：
 
 ```bash
-python3 /path/to/this-skill/scripts/check-assignment.py /path/to/your-project/.claw \
+python3 /path/to/repository/skill/scripts/check-assignment.py /path/to/your-project/.claw \
   --developer DEV-alice \
   --task TASK-001 \
   --branch feat/TASK-001-feature-title \
@@ -372,8 +378,8 @@ scope_files:
 protected_paths:
   - .claw/assignments/**
   - .claw/developers/**
-  - scripts/dev-login.py
-  - scripts/check-assignment.py
+  - skill/scripts/dev-login.py
+  - skill/scripts/check-assignment.py
   - .github/workflows/**
   - migrations/**
 task_boundary:
@@ -391,16 +397,16 @@ change_manifest_required: true
 - 如果同一个 Git 账号必须同时承担项目经理和开发者等多个身份，必须为每个身份使用不同 SSH signing key fingerprint，并在身份记录里显式说明
 - 默认不允许同一个 Git 账号 + 同一个 SSH signing key 同时代表 `MANAGER-xxx` 和 `DEV-xxx`
 - 同一个 Git 账号兼任多个角色时，`dev-login.py` 通过不同私钥的 challenge-response 结果自动解析当前使用的是哪个 `developer_id`
-- `scripts/check-assignment.py` 不能替代本地 `dev-login.py`；它用于 CI、PR 和 assignment-only 检查
+- `skill/scripts/check-assignment.py` 不能替代本地 `dev-login.py`；它用于 CI、PR 和 assignment-only 检查
 
 GitHub Actions 示例作为可选平台说明保留：
 
 ```bash
 mkdir -p .github/workflows
-cp /path/to/this-skill/templates/github-workflows/check-assignment.yml .github/workflows/check-assignment.yml
+cp /path/to/repository/skill/templates/github-workflows/check-assignment.yml .github/workflows/check-assignment.yml
 ```
 
-这个 workflow 会从 PR 分支名、标题或正文解析 `TASK-xxx`，用 PR author 匹配 `.claw/developers/*.yaml` 里的 `git_username`，收集 changed files，然后调用 `scripts/check-assignment.py`。项目启用 GitHub 时应在分支保护里要求这个 check 通过。
+这个 workflow 会从 PR 分支名、标题或正文解析 `TASK-xxx`，用 PR author 匹配 `.claw/developers/*.yaml` 里的 `git_username`，收集 changed files，然后调用 `skill/scripts/check-assignment.py`。项目启用 GitHub 时应在分支保护里要求这个 check 通过。
 
 ### 9. 管理者团队状态汇总 | Manager Team Status
 
@@ -409,13 +415,13 @@ cp /path/to/this-skill/templates/github-workflows/check-assignment.yml .github/w
 推荐命令：
 
 ```bash
-python3 /path/to/this-skill/scripts/summarize-team-status.py /path/to/your-project/.claw
+python3 /path/to/repository/skill/scripts/summarize-team-status.py /path/to/your-project/.claw
 ```
 
 写入 `.claw/team-status.md`：
 
 ```bash
-python3 /path/to/this-skill/scripts/summarize-team-status.py /path/to/your-project/.claw --write
+python3 /path/to/repository/skill/scripts/summarize-team-status.py /path/to/your-project/.claw --write
 ```
 
 标准汇总顺序：
@@ -433,13 +439,13 @@ python3 /path/to/this-skill/scripts/summarize-team-status.py /path/to/your-proje
 
 每次会话：
 
-- 先确认当前环境已经安装 `cc-aidev-guidelines-common`；如果没有，先从 `https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common` 安装
+- 先确认当前环境已经安装 `cc-aidev-guidelines-common`；如果没有，先从 `https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill` 安装
 - 先看项目根目录 `README.md` 和 `AGENTS.md` 中的技能声明块
 - 先读 `current-status.md`
 - 做实现或交接时再读 `task-board.md`
 - 任务有 `spec_path` 时先读对应 spec
 - 任务有 `assignment_path` 或 `task_status_path` 时，只读取对应授权和单任务状态
-- 异步多人开发时，先识别 `developer_id`，再用 `scripts/check-assignment.py` 或等价逻辑检查 assignment、branch、scope mode、写入根路径和受保护路径
+- 异步多人开发时，先识别 `developer_id`，再用 `skill/scripts/check-assignment.py` 或等价逻辑检查 assignment、branch、scope mode、写入根路径和受保护路径
 - 如果 preflight 不通过，停止开发并要求项目经理更新授权
 - 管理者询问团队状态时，用标准汇总脚本生成或读取 `.claw/team-status.md`
 - 结束时至少回写 `current-status.md`
@@ -447,7 +453,7 @@ python3 /path/to/this-skill/scripts/summarize-team-status.py /path/to/your-proje
 ### 10. 运行校验
 
 ```bash
-python3 /path/to/this-skill/scripts/validate-state.py /path/to/your-project/.claw
+python3 /path/to/repository/skill/scripts/validate-state.py /path/to/your-project/.claw
 ```
 
 校验器会检查：
@@ -684,8 +690,8 @@ docs/specs/
 - 默认签名方案是 SSH commit signing
 - Git author name/email 只可作为辅助信息，不能单独作为强身份依据
 - 默认一个 Git 平台账号只绑定一个 active 身份；同账号多身份必须使用不同 SSH signing key fingerprint
-- PR CI 或 assignment-only 检查必须运行 `scripts/check-assignment.py`；本地开发必须先运行 `scripts/dev-login.py`
-- 本地开发前必须运行 `scripts/dev-login.py`，用 `public_key` 验证当前用户确实持有对应私钥
+- PR CI 或 assignment-only 检查必须运行 `skill/scripts/check-assignment.py`；本地开发必须先运行 `skill/scripts/dev-login.py`
+- 本地开发前必须运行 `skill/scripts/dev-login.py`，用 `public_key` 验证当前用户确实持有对应私钥
 - `.claw-local/identity.json` 和 `.ai-dev-local/identity.json` 是本机缓存，不是事实源，必须加入 `.gitignore`
 
 `.claw/tasks/TASK-xxx.md` 推荐记录：
@@ -725,10 +731,10 @@ docs/specs/
 - 用 ID 和引用代替长段复制
 - 把交接信息放到 `task-board.md` 或 feature spec，而不是聊天记录
 - 异步多开发者协作时，把单人进度放到 `.claw/tasks/TASK-xxx.md`，让 `current-status.md` 保持短小
-- 管理者查看团队状态时，使用 `scripts/summarize-team-status.py` 生成 `.claw/team-status.md`
-- 异步多人开发时，使用项目经理授权、SSH commit signing 和 `scripts/check-assignment.py` 做开发前门禁
+- 管理者查看团队状态时，使用 `skill/scripts/summarize-team-status.py` 生成 `.claw/team-status.md`
+- 异步多人开发时，使用项目经理授权、SSH commit signing 和 `skill/scripts/check-assignment.py` 做开发前门禁
 - 普通功能任务放开源码/测试写入根路径，用任务 spec、验收标准和变更清单约束工作边界
-- 本地开发会话开始时，先用 `scripts/dev-login.py` 报告并验证当前身份，再让 AI 或开发者修改代码
+- 本地开发会话开始时，先用 `skill/scripts/dev-login.py` 报告并验证当前身份，再让 AI 或开发者修改代码
 - 如果 `dev-login.py` 未运行、运行失败或缺少 task/branch/files 等必要输入，AI agent 必须停止，不得先修改再补验证
 - 同一 Git 账号兼任多个身份时，用不同 SSH signing key 区分项目经理身份和开发者身份
 - 共享接口、数据结构、配置 key 和迁移顺序先写进 spec，再让下游任务并行
@@ -755,16 +761,16 @@ docs/specs/
 - 用过窄的 `scope_files` 逼开发者把必要调用链修复塞进错误模块
 - 只依赖 Git author name/email 判断开发者身份
 - 只记住私钥路径但不重新做 challenge-response 验证
-- 在 `scripts/dev-login.py` 返回 `allowed` 前修改源码、测试、配置、迁移、feature spec 或任务状态
-- 把聊天声明、历史记忆、缓存路径或 `scripts/check-assignment.py` 当成本地身份登录替代品
+- 在 `skill/scripts/dev-login.py` 返回 `allowed` 前修改源码、测试、配置、迁移、feature spec 或任务状态
+- 把聊天声明、历史记忆、缓存路径或 `skill/scripts/check-assignment.py` 当成本地身份登录替代品
 - 让开发者自行扩大自己的授权范围或添加团队成员
 - 同一个 Git 账号和同一把 SSH signing key 同时代表项目经理和开发者
 
 ## 参考文档 | References
 
-- [SKILL.md](SKILL.md)
-- [STATE-MODEL.md](STATE-MODEL.md)
-- [examples/README.md](examples/README.md)
+- [skill/SKILL.md](skill/SKILL.md)
+- [skill/STATE-MODEL.md](skill/STATE-MODEL.md)
+- [skill/examples/README.md](skill/examples/README.md)
 - [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -777,12 +783,12 @@ docs/specs/
 This project follows the `cc-aidev-guidelines-common` skill.
 
 - All AI agents must automatically use this skill before project analysis, planning, implementation, testing, or maintenance.
-- If the current agent does not have this skill installed, install it first from GitHub: https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common
+- If the current agent does not have this skill installed, install it first from GitHub: https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill
 - When the environment supports `AGENTS.md`, treat both this README section and `AGENTS.md` as mandatory project instructions.
 
 本项目遵循 `cc-aidev-guidelines-common` 技能规范。
 
 - 所有 AI 智能体在进行项目分析、规划、编码、测试和维护前，必须自动使用此技能。
-- 如果当前智能体尚未安装此技能，必须先从 GitHub 安装：https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common
+- 如果当前智能体尚未安装此技能，必须先从 GitHub 安装：https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill
 - 如果当前环境支持 `AGENTS.md`，应将 README 中的本节和 `AGENTS.md` 同时视为必须遵守的项目级指令。
 <!-- cc-aidev-guidelines-common:end -->

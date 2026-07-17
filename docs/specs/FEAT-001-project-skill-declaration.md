@@ -49,10 +49,10 @@ updated_by: codex
 
 ## 方案设计
 
-- 新增 `scripts/ensure-agent-guidance.sh`，用受控 marker 包裹声明块，并以幂等方式写入 `README.md` 和 `AGENTS.md`。
-- `scripts/init-state.sh` 在创建状态目录前后自动调用该脚本，保证 greenfield 和 brownfield 都能补齐声明。
-- `scripts/validate-state.py` 增加项目根 README/AGENTS 检查，至少验证文件存在、受控 marker 存在、技能名存在、GitHub 来源存在。
-- 更新 `SKILL.md`、`README.md`、`STATE-MODEL.md`、示例项目和仓库自身 `AGENTS.md`，让规则、脚本和示例一致。
+- 新增 `skill/scripts/ensure-agent-guidance.sh`，用受控 marker 包裹声明块，并以幂等方式写入 `README.md` 和 `AGENTS.md`。
+- `skill/scripts/init-state.sh` 在创建状态目录前后自动调用该脚本，保证 greenfield 和 brownfield 都能补齐声明。
+- `skill/scripts/validate-state.py` 增加项目根 README/AGENTS 检查，至少验证文件存在、受控 marker 存在、技能名存在、GitHub 来源存在。
+- 更新 `skill/SKILL.md`、`README.md`、`skill/STATE-MODEL.md`、示例项目和仓库自身 `AGENTS.md`，让规则、脚本和示例一致。
 
 ## 接口与数据影响
 
@@ -68,8 +68,8 @@ updated_by: codex
 
 - 项目根目录 `README.md` 和 `AGENTS.md` 都包含受控声明块。
 - 声明块明确包含技能名、自动使用要求和 GitHub 安装来源。
-- `scripts/init-state.sh` 会自动刷新 README/AGENTS 声明块。
-- `python3 scripts/validate-state.py .claw` 在当前仓库通过。
+- `skill/scripts/init-state.sh` 会自动刷新 README/AGENTS 声明块。
+- `python3 skill/scripts/validate-state.py .claw` 在当前仓库通过。
 
 ## 风险与回滚
 

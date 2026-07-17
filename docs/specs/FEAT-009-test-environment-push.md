@@ -19,7 +19,7 @@ When a user says "push to the test environment", the skill should guide the agen
 
 ## Design
 
-- Add `scripts/push-test-environment.py` as the standard helper.
+- Add `skill/scripts/push-test-environment.py` as the standard helper.
 - Default source branch: current Git branch.
 - Default target branch: `dev`.
 - Default remote: `origin`.
@@ -38,7 +38,7 @@ When a user says "push to the test environment", the skill should guide the agen
 
 ## Verification
 
-- `python3 scripts/push-test-environment.py --help`
-- `python3 scripts/push-test-environment.py --dry-run --source-branch feature/example --target-branch dev --remote origin`
-- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile scripts/push-test-environment.py`
-- `python3 scripts/validate-state.py .claw`
+- `python3 skill/scripts/push-test-environment.py --help`
+- `python3 skill/scripts/push-test-environment.py --dry-run --source-branch feature/example --target-branch dev --remote origin`
+- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile skill/scripts/push-test-environment.py`
+- `python3 skill/scripts/validate-state.py .claw`

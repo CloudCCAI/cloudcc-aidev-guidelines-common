@@ -71,12 +71,12 @@ updated_by: codex
 
 ## 验收标准
 
-- `SKILL.md` 明确说明异步多开发者协作模式和安全边界。
+- `skill/SKILL.md` 明确说明异步多开发者协作模式和安全边界。
 - README 和 STATE-MODEL 记录新目录、角色、文件职责和推荐流程。
 - feature spec 模板包含身份授权与并行集成计划章节。
 - task-board 模板包含任务授权、分片状态、分支、PR、写入策略和集成字段。
 - 初始化脚本会创建并行协作目录和集成队列模板。
-- `scripts/validate-state.py .claw` 在当前仓库通过，并能轻量校验可选并行协作文件。
+- `skill/scripts/validate-state.py .claw` 在当前仓库通过，并能轻量校验可选并行协作文件。
 
 ## 风险与回滚
 
@@ -98,6 +98,6 @@ updated_by: codex
 
 ## 交接说明
 
-- 下一位接手者优先看本 spec，再看 `SKILL.md` 中的身份化异步并行交付章节。
+- 下一位接手者优先看本 spec，再看 `skill/SKILL.md` 中的身份化异步并行交付章节。
 - 如果要继续增强安全性，应新增独立签名/验签工具，不要把 bearer token 或管理者口令提交进仓库。
-- 如果要补充示例，建议新增一个 `examples/async-parallel-project/`，展示两个开发者分支、两个 assignment 和一个 integration queue。
+- 如果要补充示例，建议新增一个 `skill/examples/async-parallel-project/`，展示两个开发者分支、两个 assignment 和一个 integration queue。

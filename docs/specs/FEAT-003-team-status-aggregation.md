@@ -25,7 +25,7 @@ updated_by: codex
 
 - 定义团队状态汇总的事实源优先级和字段映射。
 - 新增 `.claw/team-status.md` 派生视图模板。
-- 新增 `scripts/summarize-team-status.py`，支持打印汇总或写入 `.claw/team-status.md`。
+- 新增 `skill/scripts/summarize-team-status.py`，支持打印汇总或写入 `.claw/team-status.md`。
 - 更新协议、README、STATE-MODEL、初始化脚本和校验器。
 
 ### Out Of Scope
@@ -61,8 +61,8 @@ updated_by: codex
 ## 接口与数据影响
 
 - 新增可选状态文件 `.claw/team-status.md`。
-- 新增模板 `templates/team-status.md`。
-- 新增脚本 `scripts/summarize-team-status.py`。
+- 新增模板 `skill/templates/team-status.md`。
+- 新增脚本 `skill/scripts/summarize-team-status.py`。
 - 初始化脚本会创建初始团队状态模板。
 - 校验器存在即校验 `team-status.md` front matter。
 
@@ -87,7 +87,7 @@ updated_by: codex
 ## 实现进展
 
 - 已完成：协议、README 和 STATE-MODEL 声明 `team-status.md` 为派生管理视图。
-- 已完成：新增 `templates/team-status.md` 和 `scripts/summarize-team-status.py`。
+- 已完成：新增 `skill/templates/team-status.md` 和 `skill/scripts/summarize-team-status.py`。
 - 已完成：初始化脚本创建 `.claw/team-status.md`。
 - 已完成：校验器支持可选 `team-status.md`。
 - 已完成：当前仓库生成 `.claw/team-status.md` 并通过状态校验。

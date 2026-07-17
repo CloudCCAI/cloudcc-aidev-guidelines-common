@@ -27,15 +27,15 @@ updated_by: codex
 - `CreateChangeRequest` now treats `repositoryId` as the path parameter and always sends numeric `sourceProjectId` and `targetProjectId` in the JSON body.
 - Current repository local ignored defaults were resolved from Codeup `ListRepositories` and written to `.claw-local/codeup.env` with repository/project id `6551067`.
 - Release version is `4.1.1` because Codeup `origin/main` already contained `4.1.0`.
-- Added `scripts/configure-codeup-change-request.py` so other Codeup-hosted projects can generate their own local `CODEUP_REPOSITORY_ID`, `CODEUP_SOURCE_PROJECT_ID`, `CODEUP_TARGET_PROJECT_ID`, `CODEUP_TARGET_BRANCH`, and `CODEUP_CREATE_FROM` defaults instead of reusing this repository's `6551067`.
+- Added `skill/scripts/configure-codeup-change-request.py` so other Codeup-hosted projects can generate their own local `CODEUP_REPOSITORY_ID`, `CODEUP_SOURCE_PROJECT_ID`, `CODEUP_TARGET_PROJECT_ID`, `CODEUP_TARGET_BRANCH`, and `CODEUP_CREATE_FROM` defaults instead of reusing this repository's `6551067`.
 - Release version is now `4.1.2`.
 
 ## Changed Files
 
-- `scripts/create-codeup-change-request.py`
-- `scripts/configure-codeup-change-request.py`
-- `SKILL.md`, `README.md`, `STATE-MODEL.md`, `CHANGELOG.md`
-- `templates/platforms/codeup/README.md`
+- `skill/scripts/create-codeup-change-request.py`
+- `skill/scripts/configure-codeup-change-request.py`
+- `skill/SKILL.md`, `README.md`, `skill/STATE-MODEL.md`, `CHANGELOG.md`
+- `skill/templates/platforms/codeup/README.md`
 - `docs/specs/FEAT-008-codeup-change-request-submission.md`
 - `.claw/current-status.md`, `.claw/task-board.md`, `.claw/test-report.md`, `.claw/tasks/TASK-008.md`
 
