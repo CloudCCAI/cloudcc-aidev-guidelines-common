@@ -50,8 +50,6 @@ render_template() {
 
 mkdir -p "${STATE_DIR_PATH}"
 mkdir -p "${DOCS_SPEC_DIR}"
-mkdir -p "${STATE_DIR_PATH}/developers"
-mkdir -p "${STATE_DIR_PATH}/assignments"
 mkdir -p "${STATE_DIR_PATH}/tasks"
 
 bash "${GUIDANCE_SCRIPT}" "${TARGET_DIR}"
@@ -132,7 +130,7 @@ fi
 echo
 echo "State directory initialized at: ${STATE_DIR_PATH}"
 echo "Feature specs directory initialized at: ${DOCS_SPEC_DIR}"
-echo "Async parallel directories initialized at: ${STATE_DIR_PATH}/developers, ${STATE_DIR_PATH}/assignments, ${STATE_DIR_PATH}/tasks"
+echo "Task status directory initialized at: ${STATE_DIR_PATH}/tasks"
 echo "Project guidance refreshed in: ${TARGET_DIR}/README.md and ${TARGET_DIR}/AGENTS.md"
 echo "Next steps:"
 echo "1. Review README.md and AGENTS.md to confirm the managed skill declaration still fits the project context"
@@ -142,7 +140,7 @@ echo "4. Create or update ${STATE_DIR_NAME}/task-board.md"
 echo "5. Create ${STATE_DIR_NAME}/tasks/TASK-001.md from templates/parallel/task-status.md and link it through task_status_path"
 echo "6. For existing projects, copy docs/specs/_project-baseline-template.md to docs/specs/PROJECT-BASELINE.md"
 echo "7. For non-trivial work, copy docs/specs/_feature-spec-template.md to docs/specs/FEAT-xxx-feature-name.md"
-echo "8. For async parallel work, create developer records and assignment files from templates/parallel/"
+echo "8. For async parallel work, create ${STATE_DIR_NAME}/developers and ${STATE_DIR_NAME}/assignments, then create records from templates/parallel/"
 echo "9. Before local async development, run: python3 \"${ROOT_DIR}/scripts/dev-login.py\" \"${STATE_DIR_PATH}\" --ssh-key ~/.ssh/id_ed25519_cc_dev --task TASK-xxx --files path/to/file"
 echo "10. Before CI merge or assignment-only checks, run: python3 \"${ROOT_DIR}/scripts/check-assignment.py\" \"${STATE_DIR_PATH}\" --developer DEV-xxx --task TASK-xxx --files path/to/file"
 echo "11. For Codeup change requests, read templates/platforms/codeup/ and configure local YUNXIAO_TOKEN"

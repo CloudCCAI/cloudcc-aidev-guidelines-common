@@ -120,7 +120,9 @@ bash /path/to/repository/skill/scripts/init-state.sh /path/to/your-project
 - `.claw/task-archive.md` 任务归档文件
 - `.claw/integration-queue.md` 异步并行集成队列
 - `.claw/team-status.md` 管理者团队状态派生视图
-- `.claw/developers/`、`.claw/assignments/`、`.claw/tasks/` 可选并行协作目录
+- `.claw/tasks/` 单任务状态目录
+
+初始化脚本不会创建空的 `.claw/developers/` 和 `.claw/assignments/`。只有项目启用多人身份与任务授权时，才按需创建这两个目录；目录出现后会自动触发硬身份门禁。
 
 ### 2. 先判断项目类型
 
@@ -154,6 +156,7 @@ bash /path/to/repository/skill/scripts/init-state.sh /path/to/your-project
 
 如果这是两个或更多开发者异步并行开发，再启用：
 
+- 创建 `.claw/developers/` 和 `.claw/assignments/` 目录
 - `.claw/developers/DEV-xxx.yaml`
 - `.claw/assignments/TASK-xxx.yaml`
 - `.claw/tasks/TASK-xxx.md`

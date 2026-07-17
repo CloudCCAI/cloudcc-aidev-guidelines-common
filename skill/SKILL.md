@@ -66,6 +66,8 @@ docs/specs/
 └── FEAT-xxx-feature-name.md
 ```
 
+`tasks/` 由初始化脚本创建。`developers/` 和 `assignments/` 仅在启用多人身份与任务授权时按需创建；不要在普通项目中预建空目录，因为目录存在会触发硬身份门禁。
+
 初始化项目：
 
 ```bash
