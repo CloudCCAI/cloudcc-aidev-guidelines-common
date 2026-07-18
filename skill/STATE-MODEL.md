@@ -1,816 +1,392 @@
 ---
 title: State Model Reference
-version: 4.1.3
+version: 5.0.1
 ---
 
 # State Model Reference
 
-This file defines the detailed state model used by `SKILL.md`.
+本文定义 `cc-aidev-guidelines-common` schema v5 的详细状态模型。`SKILL.md` 负责路由；本文负责字段语义、事实源、兼容和冲突规则。
 
-## Core Principles
+## 目录
 
-1. `current-status.md` is the mandatory entry point for every session.
-2. `task-board.md` is the authoritative coordination queue for implementation and handoff work.
-3. `task-archive.md` stores older completed or canceled work once the active board exceeds its retention window.
-4. Non-trivial feature work should have a primary spec under `docs/specs/`.
-5. Brownfield projects should establish `PROJECT-BASELINE.md` before broad legacy changes.
-6. Other files are read and updated only when their trigger conditions fire.
-7. A fact must have exactly one source-of-truth file.
-8. Snapshots and history should be separated.
-9. Verified evidence must be distinguishable from inference.
-10. Project-root `README.md` and `AGENTS.md` must anchor the skill requirement for every agent.
-11. Async parallel delivery should use identity records, manager assignments, per-task status slices, generated team status, and integration queues instead of shared hot-file diaries.
-12. Repository documents must not store manager passwords, bearer tokens, private keys, or reusable secrets.
-13. Manager-gated delivery should bind project identities to Git platform accounts, public SSH keys, and SSH commit signing fingerprints.
-14. Local development must verify the current operator through SSH challenge-response login before any code edit when identity or assignment records exist.
-15. Development must stop when login, preflight identity, assignment, branch, task-boundary, protected-path, file-scope checks, or hard identity gate prerequisites fail.
-16. One Git platform account should map to one active identity by default; role sharing requires distinct SSH signing key fingerprints.
-17. Test-environment pushes should merge the development branch into `dev`, use a declared source-branch-wins conflict policy, and push `dev` to the remote.
-18. State should be disclosed progressively: `current-status.md` points to `task-board.md`, `task-board.md` points to per-task status files, and detailed design/evidence stays in its own source-of-truth file.
+- 协议 profile、manifest、项目模式与模块
+- 文件初始化状态、catalog、核心/事件文件
+- FEAT/TASK 命名、个人序号与 legacy index
+- 字段级事实源、热温冷和会话流程
+- 协作门禁、change review、校验与原子恢复
 
-## Project Instruction Anchors
+## 1. 总体原则
 
-Projects using this protocol must keep a managed declaration block in the project-root `README.md` and `AGENTS.md`.
+1. 项目状态目录固定为 `.claw/`，本地私密配置固定为 `.claw-local/`。
+2. `.claw/manifest.yaml` 是 v5 的机器控制面；内容事实仍由各自文件负责。
+3. 每个事实只有一个权威来源，current status 和 team status 只做派生视图。
+4. 核心文件在初始化时创建；事件文件只在真实事件发生时创建。
+5. 所有推断与待验证内容必须显式标记，不得伪造测试、构建或部署事实。
+6. 热、温、冷表示加载策略，不强制对应物理目录。
+7. 旧文件不强制迁移；新文件必须遵守 policy 生效后的 v5 命名和字段规则。
+8. Git/OS 用户名只用于文档归属，不构成多人门禁授权。
+9. manifest 的 `language` 控制 Skill 新写入的人类可读内容；机器字段、枚举、ID、路径、命令和原始证据保持协议原值。
 
-That block must say:
+## 2. 协议 profile
 
-- the project follows `cc-aidev-guidelines-common`
-- every AI agent must automatically use the skill
-- if the skill is missing locally, install it from `https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill`
+### `manifest_v5`
 
-The recommended writer is `scripts/ensure-agent-guidance.sh`.
+`.claw/manifest.yaml` 存在且 `schema_version: 5` 时启用。初始化器、路由器和校验器按 manifest、catalog、模块开关和事件触发动态工作。
 
-## Canonical File Semantics
+### `legacy_v4`
 
-### `current-status.md`
+`.claw/` 已存在但没有 manifest 时启用。继续读取和校验原有核心文件、旧 FEAT/TASK 和单活跃任务结构，不自动重命名、补字段或创建 manifest。
 
-Use as the hot snapshot for the current phase, active task, next action, read hints, and async parallel index. This file is an index, not a session report.
+首次显式采用 v5 时，先生成 `.claw/legacy-document-index.yaml`，再写入 policy 生效时间。不得使用 Git 时间判断新旧。
 
-Must contain:
+## 3. manifest
 
-- current phase
-- active task
-- next action
-- read-next hints for other state files
-- task-status index when async parallel delivery is enabled
-- integration queue reference when async parallel delivery is enabled
-- latest verification summary as a single reference when useful
+manifest 至少表达以下逻辑字段：
 
-Must not contain:
+```yaml
+schema_version: 5
+skill_version: 5.0.1
+language: pending | en | zh-CN
+project_mode: pending | greenfield | brownfield | not_applicable
+initialization:
+  status: in_progress | ready | needs_review
+  started_at: timestamp
+  completed_at: timestamp | none
+  confirmed_by: username | developer_id | none
+modules:
+  project_state: true | false
+  collaboration_gate: true | false
+  change_review: true | false
+module_config:
+  collaboration_gate: path | none
+  change_review: path | none
+compatibility:
+  legacy_documents_allowed: true
+  legacy_index_path: .claw/legacy-document-index.yaml | none
+  new_document_policy_version: 3
+  policy_effective_at: timestamp
+```
 
-- full issue details
-- full ADR content
-- long test logs
-- long chronological session history
-- changed-file lists
-- session progress logs
-- per-developer routine progress when `.claw/tasks/TASK-xxx.md` exists
-- complete integration queue details
+实现可以使用受限 YAML 子集，但字段语义必须与 catalog 一致。
 
-Size budget:
+状态规则：
 
-- Keep under 60 lines.
+- `in_progress`：初始化已开始或正在恢复。
+- `ready`：当前模式、已启用模块的核心文件均完成并通过校验，且用户已最终确认。
+- `needs_review`：核心事实漂移、引用失效或校验失败。
 
-### `goals.md`
+manifest 的总体状态由文件状态聚合，不得反向覆盖文件状态。
 
-Use as the durable description of scope and success.
+`language: pending` 只允许作为未完成初始化的可恢复检查点。新初始化必须先由用户选择 `en` 或 `zh-CN`，再创建依赖语言的人类可读核心文件。缺少该字段的早期 v5 manifest 按 `en` 兼容读取；v4 文件不补字段。修改已完成项目的语言只影响未来新建或明确重写的内容，不自动翻译历史文件。
 
-Must contain:
+`project_mode: pending` 只允许在 `project_state=true` 且初始化尚未 ready 时作为可恢复检查点；`project_mode: not_applicable` 仅在 `project_state=false` 时合法，表示按用户选择跳过项目类型和项目状态基线问答。进入 ready 前，启用项目状态的模式必须由用户确认为 `greenfield` 或 `brownfield`。
 
-- project vision
-- in-scope outcomes
-- out-of-scope items
-- success metrics
-- hard constraints
+## 4. 项目模式
 
-Update only when product intent changes.
+### Greenfield
 
-### `task-board.md`
+当前作用域没有必须兼容的既有用户行为、数据、API 或部署契约。引导用户确认目标、架构、目录、运行方式和第一项真实工作。没有工作时保持空 task board。
 
-Use as the compact queue for executable work items. It should point to per-task status files instead of embedding task detail. In async manager-gated delivery, it is normally written by the project manager or integration owner, not by each developer for routine progress.
+### Brownfield
 
-Each task should record:
-
-- task id
-- status
-- priority
-- owner role
-- optional claimed-by runtime label
-- dependencies or blockers
-- related issues
-- scope files
-- spec path when required
-- branch and change request URL or PR URL when work is done through Git branches
-- assignment path and task status path when async parallel delivery is enabled
-- parallel group, touch policy, shared contracts, merge policy, and integration owner when multiple tasks merge together and the fields are needed for coordination
-- next action
-
-Each active task must link to `.claw/tasks/TASK-xxx.md` through `task_status_path`.
-
-Do not put long done-when checklists, changed-file lists, verification logs, or handoff narratives in the task card. Put those in `.claw/tasks/TASK-xxx.md`, `docs/specs/`, or `test-report.md`.
-
-Do not require a developer assignment to include `task-board.md` just to record that work started. The assigned developer records routine status changes in `.claw/tasks/TASK-xxx.md`. The board can lag briefly, and the manager or integration owner reconciles it when coordination state changes, unless the assignment explicitly lists `task-board.md` in `scope_files`.
-
-Size budget:
-
-- Keep each task card under 20 lines.
-
-Recommended statuses:
-
-- `todo`
-- `ready`
-- `in_progress`
-- `blocked`
-- `review`
-- `done`
-- `canceled`
-
-Recommended priority values:
-
-- `critical`
-- `high`
-- `medium`
-- `low`
-
-Recommended `owner_role` values:
-
-- `backend-agent`
-- `frontend-agent`
-- `fullstack-agent`
-- `qa-agent`
-- `release-agent`
-- `project-manager`
-- `integration-agent`
-- `human`
-- `shared`
-- `unassigned`
-
-Retention rule:
-
-- Keep active work in `Active Tasks`.
-- Keep only the most recent 20 task cards in `Completed Tasks`.
-- Move older completed or canceled task cards to `task-archive.md` instead of deleting them.
-
-### `integration-queue.md`
-
-Use as the optional queue for async parallel integration across multiple branches or developers.
-
-Record:
-
-- queue id or feature id
-- integration branch
-- integration owner
-- merge order by task id or PR
-- required validation gates
-- current integration status
-- rollback or deferral notes
-
-Recommended statuses:
-
-- `not_started`
-- `collecting`
-- `merging`
-- `verifying`
-- `ready`
-- `blocked`
-- `completed`
-
-### `team-status.md`
-
-Use as the optional generated manager view for team members, assigned tasks, contribution status, validation status, and integration status.
-
-It is a derived view, not a source of truth.
-
-Generate it from:
-
-1. `.claw/developers/*.yaml`
-2. `.claw/assignments/*.yaml`
-3. `.claw/tasks/*.md`
-4. `.claw/task-board.md`
-5. `.claw/integration-queue.md`
-6. external Git/review/CI evidence when that evidence has been imported into task status files or a future platform-specific summarizer
-
-Recommended `contribution_status` values:
-
-- `not_started`
-- `assigned`
-- `claimed`
-- `in_progress`
-- `code_submitted`
-- `review_requested`
-- `merged`
-- `blocked`
-- `canceled`
-
-Recommended `validation_status` values:
-
-- `not_run`
-- `partial`
-- `passed`
-- `failed`
-- `unknown`
-
-Recommended `integration_status` values:
-
-- `not_ready`
-- `waiting_review`
-- `ready_to_merge`
-- `merging`
-- `integrated`
-- `blocked`
-
-If `team-status.md` conflicts with source files, regenerate it or fix the source files first.
-
-### `.claw/developers/DEV-xxx.yaml`
-
-Use as the optional identity record for a developer or project manager.
-
-Record:
-
-- developer id
-- display name
-- role
-- public key or verified Git identity
-- Git platform and username
-- SSH commit signing key fingerprint
-- status
-- managing project manager
-- long-lived allowed scopes
-- optional role-sharing exception note
-- optional expiry or rotation note
-
-Recommended statuses:
-
-- `active`
-- `suspended`
-- `revoked`
-- `expired`
-
-Do not store private keys, passwords, bearer tokens, or reusable secrets.
-
-When manager-gated authorization is enabled, developer records should bind `developer_id` to a Git platform account and a commit signing identity. For local developer login, store the public SSH key so `scripts/dev-login.py` can verify private-key possession through a one-time challenge. Prefer SSH commit signing for new teams. GPG signing is compatible for teams that already manage GPG keys. Sigstore/gitsign is an advanced option for CI and supply-chain audit.
-
-Default identity binding:
-
-- one Git platform username maps to one active `developer_id`
-- a Git username may map to multiple active identities only when each identity has a distinct SSH signing key fingerprint and a `role_sharing_exception` note
-- the same Git username plus the same SSH signing key fingerprint must not represent both a manager and a developer under the default policy
-
-### `.claw-local/identity.json` or `.ai-dev-local/identity.json`
-
-Use as an optional machine-local cache for `scripts/dev-login.py`.
-
-Record:
-
-- resolved developer id
-- local private key path
-- Git platform username
-- SSH signing key fingerprint
-- cache update timestamp
-
-This file is not project state and is not a source of truth. It must be ignored by Git, must not be copied between developers, and must never contain private key contents, passwords, bearer tokens, or reusable secrets. Every development session should still re-run challenge-response verification before editing.
-
-### Hard Identity Gate
-
-Use as the mandatory pre-edit gate whenever a project using this skill contains any of:
-
-- `.claw/developers/` or `.ai-dev/developers/`
-- `.claw/assignments/` or `.ai-dev/assignments/`
-- an active task with `assignment_path`
-- an assignment with `local_login_required: true`
-- a task card or feature spec that names `scripts/dev-login.py` as the identity check
-
-When the hard identity gate is active:
-
-- `scripts/dev-login.py` must return `allowed` in the current local session before any project implementation edit.
-- Implementation edits include source code, tests, runtime configuration, migrations, generated application assets, feature specs, task status files, and other files that change project behavior or delivery state.
-- A chat-declared `developer_id`, remembered user identity, Git author/email, visible OS user, prior successful PR, or `.claw-local/identity.json` cache entry is not sufficient.
-- `scripts/check-assignment.py` is not a substitute for local challenge-response login. It is for CI, PR checks, and assignment-only validation after identity inputs are already trusted.
-- If the task id, branch, intended file paths, private key path, developer record, or assignment is missing, the agent must stop before editing and ask for the missing input or project-manager authorization.
-- The only permitted pre-login repository edits are explicit project-manager bootstrap or repair edits to create the identity and assignment records needed to make the gate runnable. These edits must not include application source, tests, runtime config, migrations, or generated assets.
-
-### `.claw/assignments/TASK-xxx.yaml`
-
-Use as the optional manager-authorized work contract for one task.
-
-Record:
-
-- task id
-- assignee developer id
-- assigning manager id
-- assignment status
-- branch name
-- change request URL or PR URL when available
-- spec path
-- task status path
-- scope mode
-- allowed write roots
-- exact scope files
-- protected paths
-- task boundary
-- change manifest requirement
-- touch policy
-- shared contracts
-- assignment timestamp and expiry
-- signature or external verification reference
-
-Recommended `touch_policy` values:
-
-- `exclusive`
-- `shared`
-- `read_only`
-
-Recommended assignment statuses:
-
-- `active`
-- `paused`
-- `revoked`
-- `expired`
-- `completed`
-
-`assigned_by` should reference a `MANAGER-xxx` identity. The assignment is the source of truth for `branch`, `scope_mode`, `allowed_write_roots`, `scope_files`, `protected_paths`, and scope expansion approvals. Developers must not self-assign, expand their own protected-path access, or change their task boundary.
-
-Recommended `scope_mode` values:
-
-- `exact_files`: all changed files must match `scope_files`; use for narrow documentation, configuration, or sensitive tasks.
-- `task_bounded_broad_code`: normal source and test changes may use `allowed_write_roots`; protected paths are blocked unless explicitly listed in `scope_files`; the linked task and feature spec define the work boundary.
-
-Path semantics:
-
-- `allowed_write_roots`, `protected_paths`, and developer `allowed_scopes` treat bare directories as recursive roots. For example, `frontend/src`, `frontend/src/`, and `frontend/src/**` all allow files below `frontend/src`.
-- `scope_files` treats bare paths as exact file/path authorization unless the manager writes an explicit glob such as `docs/specs/**`.
-
-### `scripts/dev-login.py`
-
-Use as the mandatory local "who is currently editing" gate before manager-gated development starts.
-
-Inputs:
-
-- state directory
-- local private SSH key path, or a previously saved ignored local cache
-- optional expected developer id
-- optional task id
-- optional branch
-- optional Git platform username
-- changed or intended file paths
-
-Checks:
-
-- derives the public key and SSH fingerprint from the local private key
-- finds the matching active `.claw/developers/*.yaml` identity by public key or fingerprint
-- signs a one-time challenge with the local private key
-- verifies the signature with the registered public key
-- optionally calls `scripts/check-assignment.py` for task, branch, broad write root, protected path, and exact file-scope authorization
-- writes only the local private key path and resolved public identity metadata to `.claw-local/identity.json` or `.ai-dev-local/identity.json`
-
-Outputs:
-
-- `allowed` with the resolved `developer_id` when login and optional assignment checks pass
-- `blocked_*` findings with a non-zero exit code when the key is missing, identity is unknown or inactive, challenge verification fails, or assignment scope fails
-
-### `scripts/check-assignment.py`
-
-Use as the local and CI preflight gate for manager-gated authorization.
-
-Inputs:
-
-- state directory
-- developer id
-- task id
-- optional branch
-- optional Git platform username
-- optional SSH signing key fingerprint
-- changed or intended file paths
-
-Checks:
-
-- developer record exists and is `active`
-- assignment exists and is `active`
-- assignment `assignee` matches the developer id
-- assignment `assigned_by` references `MANAGER-xxx`
-- optional Git username and SSH signing fingerprint match the developer record
-- active duplicate Git usernames follow the role-sharing exception rules
-- optional branch matches the assignment branch
-- for `scope_mode: exact_files`, every file path is inside assignment `scope_files`
-- for `scope_mode: task_bounded_broad_code`, every file path is inside recursive `allowed_write_roots` or exact/glob `scope_files`
-- changed files matching `protected_paths` are blocked unless explicitly authorized by `scope_files`
-
-Outputs:
-
-- `allowed` with a zero exit code when all checks pass
-- `blocked_*` findings with a non-zero exit code when identity, assignment, branch, or scope checks fail
-
-### `scripts/store-yunxiao-token.py`
-
-Use as the local helper for storing a developer's Yunxiao personal access token outside Git-tracked files.
-
-Behavior:
-
-- prompts for `YUNXIAO_TOKEN` without echoing it
-- writes `.claw-local/codeup.env` by default
-- sets file permissions to owner read/write only
-- never writes tokens to `.claw/`, `docs/`, source files, task status files, or logs
-
-### `scripts/configure-codeup-change-request.py`
-
-Use as the local helper for writing project-specific Codeup change request defaults after `YUNXIAO_TOKEN` is available.
-
-Behavior:
-
-- reads the current Codeup Git remote, local env file, and environment variables
-- resolves the numeric Codeup repository id through the Yunxiao Codeup repository list API when `CODEUP_REPOSITORY_ID` is not already set
-- writes `.claw-local/codeup.env` by default
-- stores `CODEUP_REPOSITORY_ID`, `CODEUP_SOURCE_PROJECT_ID`, `CODEUP_TARGET_PROJECT_ID`, `CODEUP_TARGET_BRANCH`, and `CODEUP_CREATE_FROM`
-- preserves `YUNXIAO_TOKEN` without printing it
-- sets file permissions to owner read/write only
-
-### `scripts/create-codeup-change-request.py`
-
-Use as the default platform helper for creating Codeup change requests.
-
-Behavior:
-
-- loads `YUNXIAO_TOKEN` from the environment or `.claw-local/codeup.env`
-- stops before the API call when `YUNXIAO_TOKEN` is missing
-- prints the official Yunxiao personal access token documentation link when the token is missing
-- calls Codeup `CreateChangeRequest` through Yunxiao OpenAPI
-- accepts domain, repository, source project id, target project id, source branch, target branch, title, description, reviewers, and work item ids as CLI flags or local env values
-- treats `repositoryId` as the request path parameter and sends numeric `sourceProjectId` and `targetProjectId` in the JSON body
-- defaults both project ids to the numeric `repositoryId` for same-repository change requests, but requires explicit project ids when `repositoryId` is a full path
-
-### `scripts/push-test-environment.py`
-
-Use as the default helper when a user asks to push to the test environment.
-
-Behavior:
-
-- requires a clean Git working tree before switching branches
-- treats the current branch as the source development branch unless `--source-branch` is provided
-- treats `dev` as the target test-environment branch unless `--target-branch` is provided
-- fetches the remote, checks out `dev`, fast-forwards it from the remote, merges the source branch, and pushes `dev`
-- auto-resolves merge conflicts by taking the source development branch version
-- restores the original branch after success unless `--no-restore` is provided
-
-### `templates/platforms/codeup/`
-
-Use as the default platform template for teams on Aliyun Yunxiao Codeup.
-
-Adopting projects should configure protected branches and Yunxiao Flow checks so Codeup review requests cannot merge until review, automated checks, and assignment scope checks pass.
-
-### `templates/github-workflows/check-assignment.yml`
-
-Use as the optional GitHub Actions PR gate for manager-gated authorization.
-
-Behavior:
-
-- reads the PR author as the Git platform username
-- resolves `TASK-xxx` from branch name, PR title, or PR body
-- maps PR author to `developer_id` through `.claw/developers/*.yaml`
-- collects changed files from the PR diff
-- calls `scripts/check-assignment.py .claw`
-
-GitHub-based projects should copy it into `.github/workflows/check-assignment.yml`, enable required status checks in branch protection, and adapt task-id parsing if their branch naming scheme differs.
-
-### `.claw/tasks/TASK-xxx.md`
-
-Use as the per-task status slice for one task. Every active task should have one small file here, even when the project is not using async parallel delivery.
-
-Record:
-
-- task id
-- assignee developer id or `unassigned`
-- owner role
-- branch and change request URL or PR URL
-- current status
-- completed work
-- changed files summary
-- verification evidence from real commands
-- blockers
-- handoff notes
-
-This file is the right place for routine progress, changed files, verification evidence, blocker detail, and handoff notes for one task. In async manager-gated delivery, it is also the developer-writable source of truth for contribution status such as `ready`, `in_progress`, `blocked`, and `review`. `current-status.md` should only link to it or summarize it briefly. `task-board.md` should link to it through `task_status_path`.
-
-### `task-archive.md`
-
-Use as the historical archive for completed and canceled task cards that aged out of `task-board.md`.
-
-Archived tasks should retain:
-
-- task id
-- final status
-- owner role
-- related issues
-- scope files
-- handoff summary or completion context
-- archived timestamp when available
-
-Archived tasks should use only these statuses:
-
-- `done`
-- `canceled`
-
-### `decisions.md`
-
-Use as the ADR log.
-
-Each decision should record:
-
-- status
-- date
-- context
-- options considered
-- chosen option
-- why it won
-- consequences
-
-Recommended statuses:
-
-- `proposed`
-- `accepted`
-- `rejected`
-- `superseded`
-
-### `issue-list.md`
-
-Use as the queue for bugs, blockers, risks, and follow-up work.
-
-Each issue should record:
-
-- id
-- severity
-- status
-- owner
-- summary
-- evidence
-- root cause status
-- next action
-
-Recommended statuses:
-
-- `open`
-- `in_progress`
-- `blocked`
-- `fixed`
-- `verified`
-- `closed`
-
-Recommended severity values:
-
-- `critical`
-- `high`
-- `medium`
-- `low`
-
-For root cause, use:
+必须理解并保护既有实现或契约。先读取代码、配置、入口和构建事实，再提问；创建 `docs/specs/PROJECT-BASELINE.md`，区分：
 
 - `verified`
 - `inferred`
-- `unknown`
+- `pending verification`
 
-### `test-report.md`
+不要求一次性回填全部历史。baseline 稳定后属于冷资料；当前架构、目录和 DevOps 事实仍由核心文件负责。
 
-Use as the record of the latest verified test evidence.
+AI 只能建议模式，用户最终确认。
 
-Must be updated only after a real command, CI job, or equivalent verification ran.
+## 5. 模块
 
-Recommended fields:
+### `project_state`
 
-- last run timestamp
-- command
-- scope
-- status
-- pass/fail summary
-- failing tests
-- coverage summary
+管理核心状态、会话意图、FEAT、TASK、多任务热索引和事件文件。建议默认开启。
 
-Recommended statuses:
+关闭时只保留 manifest 和合法启用的非状态模块配置，不创建或加载项目状态文件，也不强制 FEAT/TASK 流程。
 
-- `passed`
-- `failed`
-- `partial`
-- `not_run`
+### `collaboration_gate`
 
-### `devops.md`
+管理 manager/developer 身份、assignment、登录和并行授权。默认关闭，要求 `project_state=true`。启用模块本身不创建空 developers/assignments 目录。
 
-Use as the runbook for build, startup, deployment, environment, and operations.
+启用后创建并引导确认 `.claw/collaboration-config.yaml`，只保存公开的身份绑定、管理者、assignment、登录和签名策略。developer 与 assignment 文件仍由真实登记和授权事件创建。
 
-Store:
+### `change_review`
 
-- verified build commands
-- verified run commands
-- required services and environment variables
-- deployment steps
-- operational troubleshooting notes
+管理 Codeup/GitHub change request 和评审配置。默认关闭，可以独立于 `project_state` 启用；与项目状态或门禁同时启用时增加对应追踪和授权检查。
 
-Do not store speculative commands as final guidance.
+关闭模块不删除历史资料，只停止后续加载和执行。
 
-### `docs/specs/FEAT-xxx-*.md`
+## 6. 文件初始化状态
 
-Use as the primary delivery document for one feature or non-trivial change.
+所有 v5 核心内容文件包含：
 
-Each feature spec should record:
+```yaml
+kind: goals
+schema_version: 5
+init_status: not_started | in_progress | awaiting_confirmation | complete | needs_review
+init_completed_at: timestamp | none
+init_confirmed_by: username | developer_id | none
+updated_at: timestamp
+updated_by: username | developer_id | ai
+```
 
-- feature id
-- title
-- status
-- background and goals
-- scope and out-of-scope
-- current constraints
-- design approach
-- interfaces or data-shape changes
-- task breakdown
-- acceptance criteria
-- risks and rollback notes
-- implementation progress
-- handoff notes
+- `not_started`：骨架已存在，尚未开始问答。
+- `in_progress`：已保存部分答案。
+- `awaiting_confirmation`：草稿完整，等待用户确认。
+- `complete`：首次基线已确认，文件仍可继续演进。
+- `needs_review`：事实漂移、校验失败或关键未知项需要复核。
 
-Recommended statuses:
+不存在的事件文件不计为未完成；关闭模块对应文件不计入 ready。
 
-- `draft`
-- `in_design`
-- `approved`
-- `in_implementation`
-- `implemented`
-- `verified`
-- `archived`
+## 7. 状态 catalog
+
+`state-catalog.json` 是初始化器和校验器共享的机器清单。每个条目至少定义：
+
+- path 或 pattern
+- kind 和 schema version
+- module
+- `core` / `event` / `derived`
+- temperature
+- create trigger
+- init order 与依赖
+- required fields 和状态枚举
+- 是否计入 ready
+- v4/v5 compatibility profile
+
+脚本不得再各自硬编码一套固定八文件清单。
+
+## 8. 核心文件
+
+### `.claw/current-status.md`
+
+上下文热入口，是派生索引而非任务事实源。v5 frontmatter 至少包含：
+
+```yaml
+kind: current-status
+schema_version: 5
+active_task_count: 0
+active_tasks: []
+phase: bootstrap
+next_action: confirm project baseline
+updated_at: timestamp
+updated_by: generate-current-status
+```
+
+正文用紧凑表格展示用户、FEAT、TASK、工作类型、执行状态、分支和下一步。保持少于 60 行，不记录会话日志、变更文件、长验证证据或完整问题详情。
+
+### `.claw/goals.md`
+
+目标、用户、In/Out Scope、成功标准、里程碑、约束和非目标的事实源。只在产品意图变化时更新。
+
+### `.claw/decisions.md`
+
+同时承载当前架构快照和 ADR 历史。
+
+固定 `## ARCHITECTURE` 至少记录：系统类型、技术栈、架构风格、模块边界、数据、外部依赖、部署、非功能约束、事实置信状态和相关 ADR。
+
+额外 frontmatter：
+
+```yaml
+architecture_init_status: not_started | in_progress | awaiting_confirmation | complete | needs_review
+architecture_reviewed_at: timestamp | none
+architecture_confirmed_by: username | developer_id | none
+```
+
+ARCHITECTURE 表示当前有效快照；ADR 表示为什么选择以及历史如何变化。ADR 记录 context、options、choice、why、consequences 和 verification。首次初始化不要求已有 ADR。
+
+### `.claw/directory-map.md`
+
+顶层和关键目录职责、入口、模块边界、允许依赖和禁止依赖的事实源。不要把目录职责重复写入 baseline 或 current status。
+
+### `.claw/devops.md`
+
+构建、运行、测试、部署、环境、依赖服务和运维知识的事实源。命令必须已验证，或明确标记 `pending verification`。
+
+### `.claw/task-board.md`
+
+任务队列和协调索引的事实源。初始化为空，不制造 `TASK-001`。每张 active card 记录状态、优先级、owner role、依赖、spec/task/assignment 指针和 next action；单张卡片保持少于 20 行，看板整体按真实任务数量伸缩。
+
+task board 可以短暂落后于单任务执行状态；管理者或集成负责人负责协调字段。
 
 ### `docs/specs/PROJECT-BASELINE.md`
 
-Use as the brownfield adoption baseline for a legacy project that lacks prior state discipline.
+仅 Brownfield 初始化要求。记录既有用途、verified/inferred/pending、风险热点、入口和接管边界。稳定后为冷资料。
 
-The baseline should record:
+## 9. 事件文件与派生文件
 
-- current project purpose and active delivery slice
-- verified architecture facts
-- inferred architecture facts
-- active unknowns and pending verification
-- legacy hotspots and risky modules
-- known run, build, and dependency entry points
-- first adoption tasks
+- `docs/specs/FEAT-*.md`：开发类讨论形成设计时创建。
+- `.claw/tasks/TASK-*.md`：真实任务创建时创建。
+- `.claw/issue-list.md`：首次 bug、风险或阻塞时创建。
+- `.claw/test-report.md`：首次真实运行验证时创建。
+- `.claw/task-archive.md`：首次归档时创建。
+- `.claw/integration-queue.md`：出现真实并行分支时创建。
+- `.claw/developers/*.yaml`：门禁启用后登记真实成员时创建。
+- `.claw/assignments/*.yaml`：产生真实授权时创建。
+- `.claw/team-status.md`：管理者查询时生成，不手工维护。
+- `.claw-local/identity.json`：本地登录成功后创建，必须 Git ignore。
 
-Recommended statuses:
+安装包模板不复制为目标项目中的 `_feature-spec-template.md` 或 `_project-baseline-template.md`。
 
-- `draft`
-- `adopting`
-- `active_reference`
-- `verified`
-- `archived`
+## 10. FEAT
 
-## Front Matter Schema
+新路径：
 
-Every state file should start with YAML front matter. Keep it small and stable.
-
-Recommended minimum fields:
-
-```yaml
----
-kind: current-status
-version: 3
-updated_at: 2026-04-01T10:30:00Z
-updated_by: ai
----
+```text
+docs/specs/FEAT-<author-slug>-<nnn>-<description>.md
 ```
 
-Recommended `kind` values:
+规范 ID：`FEAT-<author-slug>-<nnn>`。
 
-- `current-status`
-- `goals`
-- `decisions`
-- `issue-list`
-- `task-board`
-- `task-archive`
-- `test-report`
-- `devops`
-- `integration-queue`
-- `team-status`
-- `task-status`
+必需字段：
 
-## Read Strategy
+- `kind: feature-spec`
+- `feature_id`
+- `work_type`
+- `title`
+- `status`
+- `init_status`
+- created/updated attribution
+- `contributors`
+- `task_ids`
+- related issue/decision IDs
+- `policy_version: 3`
 
-Use this read order:
+推荐状态：`draft`、`in_design`、`approved`、`in_implementation`、`implemented`、`verified`、`archived`。
 
-1. Read `current-status.md`.
-2. Inspect its `read_next` or equivalent hints.
-3. Read `task-board.md` for implementation, prioritization, or handoff work.
-4. Read the active task's `.claw/tasks/TASK-xxx.md`.
-5. Read `task-archive.md` only when archived completed-work history matters.
-6. In brownfield projects, open `PROJECT-BASELINE.md` before major legacy implementation when it exists.
-7. Open the feature spec referenced by `spec_path` before non-trivial implementation.
-8. In async parallel delivery, read only the referenced `developer`, `assignment`, and `integration_queue` files.
-9. In manager-gated delivery, automatically run `scripts/dev-login.py` for local sessions before editing files. Use `scripts/check-assignment.py` for CI and assignment-only checks, not as a local-login substitute.
-10. When a manager asks for team status, generate or read `team-status.md` through the standard aggregation method.
-11. Read only the additional files needed for the task.
-12. Avoid loading cold files or unrelated specs unless the task truly needs them.
+文件名作者是原始创建者；多人贡献只更新 contributors，不重命名。
 
-## Update Strategy
+## 11. TASK
 
-Apply these rules:
+新路径：
 
-1. Update `current-status.md` at the end of every meaningful session by rewriting a compact snapshot.
-2. Update `task-board.md` whenever compact index fields changed.
-3. Update `.claw/tasks/TASK-xxx.md` whenever progress, changed files, verification, blocker detail, or handoff context changed.
-4. When completed or canceled task cards exceed 20 items on the board, move the oldest cards into `task-archive.md`.
-5. In brownfield projects, update `PROJECT-BASELINE.md` whenever verified legacy understanding materially changed.
-6. In async parallel delivery, developers update their assigned `.claw/tasks/TASK-xxx.md` for routine progress, while the project manager or integration owner reconciles `task-board.md`, `current-status.md`, and `integration-queue.md`.
-7. In manager-gated delivery, only the project manager updates developer records and assignment scope.
-8. Regenerate `team-status.md` when the manager needs a current team view or when source contribution state changed.
-9. Update at most the triggered warm/cold files and referenced delivery docs.
-10. Prefer appending concise structured entries over rewriting unrelated content.
-11. If a task changes no durable state, update only `current-status.md` and the active task status file if its next action changed.
-
-## Conflict Resolution
-
-If files disagree:
-
-1. Identify the authoritative file from the source-of-truth table.
-2. Keep the authoritative fact unless the current session verified it is outdated.
-3. Repair summaries and references in non-authoritative files.
-4. If the conflict involves user intent, preserve the user-authored version and mark the discrepancy for confirmation.
-
-Priority examples:
-
-- `task-board.md` wins over `current-status.md` for queue membership, board index status, dependencies, owner role, and task status path.
-- `task-archive.md` wins over `task-board.md` for older completed or canceled tasks that have already been archived.
-- `PROJECT-BASELINE.md` wins over `current-status.md` for legacy-baseline notes and current architectural unknowns.
-- `docs/specs/FEAT-xxx-*.md` wins over `task-board.md` for feature-specific acceptance criteria and design details.
-- `issue-list.md` wins over task cards for blocker details and root-cause status.
-- `.claw/assignments/TASK-xxx.yaml` wins over `task-board.md` for authorized assignee, manager, branch, write scope, assignment status, and touch policy.
-- `.claw/developers/DEV-xxx.yaml` wins over chat or Git author metadata for developer id, active status, Git platform username, and SSH signing fingerprint.
-- `.claw-local/identity.json` and `.ai-dev-local/identity.json` are local caches only; if they conflict with `.claw/developers/*.yaml`, the developer record wins and login must be rerun.
-- `.claw/tasks/TASK-xxx.md` wins over `current-status.md` and `task-board.md` for developer contribution status, task progress, changed files, evidence, blocker detail, and handoff notes.
-- `.claw/integration-queue.md` wins over task cards for merge order and integration gate state.
-- `developers`, `assignments`, `tasks`, `task-board`, and `integration-queue` all win over `team-status.md`; regenerate `team-status.md` when stale.
-
-## Suggested `current-status.md` Read Index
-
-Use a small hint block such as:
-
-```yaml
-read_next:
-  goals: false
-  decisions: false
-  issue_list: true
-  task_board: true
-  test_report: false
-  devops: false
+```text
+.claw/tasks/TASK-<owner-slug>-<nnn>-<description>.md
 ```
 
-Or a short markdown section such as:
+规范 ID：`TASK-<owner-slug>-<nnn>`。
 
-```markdown
-## Read Next
-- `issue-list.md` - active blocker on login latency
-- `decisions.md` - database adapter choice affects this task
-```
+所有任务类型共享该用户的个人序列。必需字段至少包含 task ID/type、可选 feature ID、creator、assignee、owner role、status/stage、branch、assignment path、next action、updated attribution 和 policy version。
 
-Either format is acceptable as long as it is explicit.
+推荐 task type：`feature`、`iteration`、`bugfix`、`refactor`、`documentation`、`test`、`release`、`deployment`、`investigation`、`project_management`、`other`。
 
-## What To Record vs What To Avoid
+任务转交只更新 assignee，不改变 ID 或路径。
 
-Record:
+## 12. 作者与个人序号
 
-- durable decisions
-- task ownership by role
-- task dependencies and handoff notes
-- archived completed-work history
-- project-root skill declaration anchors in `README.md` and `AGENTS.md`
-- developer IDs and public identity records when async parallel delivery is enabled
-- manager-signed task assignments and write scopes
-- per-task progress slices instead of hot-file diaries
-- generated team status summaries for manager review
-- integration branch, merge order, and validation gates
-- legacy baseline facts and active unknowns
-- feature acceptance criteria
-- verified commands
-- verified failures
-- active blockers
-- next actions
-- project constraints
+作者 slug 解析顺序：
 
-Avoid:
+1. 已验证 developer 的 `document_slug`。
+2. Git `user.name`。
+3. 操作系统用户名。
+4. 用户确认。
 
-- ephemeral thought process
-- duplicate summaries of the same fact
-- noisy line-by-line diaries
-- unsupported assumptions presented as facts
-- free-floating todos with no task id, status, or owner role
-- feature specs that drift from the implemented approach
-- brownfield baseline notes that do not distinguish `verified` from `inferred`
-- unbounded growth in `Completed Tasks` when those tasks should have been archived
-- projects that claim to use this protocol but omit the managed declaration block from `README.md` or `AGENTS.md`
-- private keys, manager passwords, bearer tokens, or reusable secrets in repository files
-- treating `.claw-local/identity.json` or `.ai-dev-local/identity.json` as proof without re-running challenge-response verification
-- editing source, tests, config, migrations, generated assets, feature specs, or task status files before `scripts/dev-login.py` returns `allowed`
-- using chat context, remembered identity, Git author/email, or `scripts/check-assignment.py` as a bypass for local SSH challenge-response login
-- multi-developer progress journals inside `current-status.md`
-- hand-maintained `team-status.md` presented as authoritative truth
-- code changes outside an exact assignment `scope_files` without an updated assignment
-- protected-path changes without exact `scope_files` authorization
-- using narrow `scope_files` so aggressively that developers are pushed to implement fixes in the wrong module instead of the real call chain
+FEAT 和 TASK 分别维护每位用户的最高已分配序号。分配器必须：
 
-## Maintenance Guidelines
+- 在项目锁内运行。
+- 同时扫描文件和持久计数登记。
+- 使用排他创建或原子预留。
+- 删除或归档文件后仍不复用编号。
+- 不把旧全局编号归属给任何用户。
 
-- Keep hot files short enough to read quickly.
-- Archive history outside the hot path when it grows.
-- Prefer IDs and references over duplicating paragraphs.
-- Keep terminology consistent across all files.
+`.claw/document-id-registry.json` 是可提交的机器登记，用于防止删除或归档后的编号复用；`.claw/.locks/` 仅用于瞬时互斥，不提交版本库。
+
+## 13. Legacy index
+
+`.claw/legacy-document-index.yaml` 至少记录 captured/policy time，以及每个 grandfathered 路径、kind、ID 和原 schema version。
+
+规则：
+
+- index 中的旧文件按旧 schema 校验。
+- policy 生效后的新文件按 v5 校验。
+- policy 生效后新建旧式 ID 报错。
+- 旧、新 FEAT/TASK 可以长期交叉引用。
+- 没有 manifest 的项目保持 v4 profile，仅给迁移提示。
+
+批量迁移必须由用户明确请求，并生成 path/ID mapping；默认不迁移。
+
+## 14. 字段级事实源
+
+| 事实 | 权威来源 |
+|---|---|
+| 项目模式、文档语言、模块开关、初始化聚合状态 | manifest |
+| 用户目标、范围、成功标准 | goals |
+| 当前架构 | decisions / ARCHITECTURE |
+| 技术选择原因和历史 | decisions / ADR |
+| 目录职责 | directory-map |
+| 队列、优先级、依赖、协调指针 | task-board |
+| 执行进展、验证、变更、阻塞、下一步、交接 | task status |
+| 需求、设计、验收 | FEAT |
+| bug/risk 根因和严重度 | issue-list |
+| 真实测试证据 | test-report |
+| 授权身份、分支和写入范围 | assignment |
+| 开发者公开身份和状态 | developer record |
+| 合并顺序和集成 gate | integration-queue |
+| 热索引 | current-status（派生） |
+| 团队摘要 | team-status（派生） |
+
+冲突时按字段权威来源修复，不能让整个文件全局覆盖其他文件。current status 和 team status 与来源冲突时重新生成。
+
+## 15. 热、温、冷
+
+- 机器热：manifest。
+- 上下文热：current status。
+- 温：task board、选中 task、选中 FEAT、相关 architecture/ADR、directory map、当前 issue/test/devops、启用模块配置。
+- 冷：稳定 goals、ADR 历史、baseline、archive、已完成 FEAT/TASK。
+
+每次会话：manifest 路由 → current status → task board（实现/排期时）→ 选中 task → 关联 FEAT → 仅触发的其他文件。
+
+## 16. 会话意图与交付门槛
+
+用户目标清楚时不要重复问固定菜单。目标不清楚时开放式确认，可以提示新需求、迭代和 bug，但接受任何操作。
+
+开发类工作通常执行：讨论 → FEAT 草稿 → 用户确认 → TASK 拆分 → 实现 → 真实验证 → 评审/关闭。简单查询和小型独立维护可以不创建 FEAT。
+
+已有活跃工作时，开始新工作前显示当前工作并确认继续、并行、暂停或取消，不能静默覆盖。
+
+## 17. 协作门禁
+
+v5 中 `modules.collaboration_gate=true` 是主要触发条件；legacy 项目存在 developers/assignments 或 active assignment 也触发。
+
+触发后，任何实现和交付状态写入前必须由 `dev-login.py` 完成 SSH challenge-response，并在有 task 时检查 assignment。缓存、聊天身份、Git author 和 `check-assignment.py` 不能替代登录。
+
+repository 文件不得保存 private key、password、token、secret 或 bearer token。`.claw-local/identity.json` 只缓存私钥路径和公开身份，不能作为已登录证明。
+
+## 18. Change review
+
+`.claw/review-config.yaml` 保存 platform、target branch、reviewer 和 required checks，不保存 secret。只读取被选中的平台 reference。
+
+Codeup token 保存于 `.claw-local/codeup.env`；GitHub secret 使用平台 secret store。评审描述关联完整 TASK ID，并记录 scope、verification、risk、rollback 和状态链接。
+
+用户明确要求推送到测试环境时，`change_review` 模块路由到 `push-test-environment.py`。默认目标为 `dev`，冲突采用 source-branch-wins；该策略仅限测试环境，不能静默套用于生产发布。门禁同时启用时仍需登录和 assignment 授权。
+
+## 19. 校验
+
+无 manifest 时运行 legacy v4 校验。有 v5 manifest 时按 catalog 动态校验：
+
+- 只要求当前模式、启用模块和已触发事件的文件。
+- 核心文件 frontmatter、init status 和确认字段合法。
+- `complete` 文件没有未解释占位符。
+- current status 计数、引用和活跃 task 一致。
+- 新式 ID、路径、作者和个人序号一致。
+- legacy index 与 policy 边界一致。
+- 禁用模块没有被初始化器意外创建或要求。
+- 新版 manifest 已确认受支持语言，ready 状态不保留 `language: pending`。
+- repository 状态和 review config 不包含 secret。
+
+校验失败不得把 manifest 标为 ready。
+
+## 20. 原子性与恢复
+
+- 初始化、编号分配和 hot index 生成使用项目锁；`.claw/.locks/` 是 Git ignore 的瞬时协调目录。
+- 写入使用同目录临时文件和原子替换。
+- 重复初始化相同内容为 no-op。
+- 已被用户修改的文件不自动覆盖；报告冲突。
+- 中断后从 checkpoint 和第一个未完成核心文件恢复。
+- 并发 revision 冲突时停止并协调，不采用最后写入覆盖。
+
+## 21. 项目指令锚点
+
+项目根 README 和 AGENTS 必须保留受控声明块，要求所有 Agent 在项目工作前加载本 Skill，并给出安装来源。它们是指令锚点，不是状态文件，不计入 init completion。

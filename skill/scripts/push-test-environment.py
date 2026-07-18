@@ -171,7 +171,10 @@ def main() -> int:
                 subprocess.run(["git", "checkout", original_branch], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         raise
 
-    print(f"Pushed {target_branch} to {args.remote} for test-environment deployment.")
+    if args.dry_run:
+        print("Dry run complete; no branch was changed or pushed.")
+    else:
+        print(f"Pushed {target_branch} to {args.remote} for test-environment deployment.")
     return 0
 
 

@@ -17,6 +17,8 @@ LOGIN_NAMESPACE = "cc-aidev-login"
 
 
 def clean_value(value: object) -> str:
+    if value is None:
+        return ""
     cleaned = str(value).strip().strip('"').strip("'")
     if cleaned.startswith("`") and cleaned.endswith("`") and len(cleaned) >= 2:
         cleaned = cleaned[1:-1].strip()
@@ -152,11 +154,10 @@ def active_identity_policy_findings(records: list[tuple[Path, dict[str, object]]
     return findings
 
 
-def resolve_cache_path(state_dir: Path, cache_path: str) -> Path:
+def resolve_cache_path(state_dir: Path, cache_path: str = "") -> Path:
     if cache_path:
         return Path(cache_path).expanduser()
-    local_dir_name = ".ai-dev-local" if state_dir.name == ".ai-dev" else ".claw-local"
-    return state_dir.parent / local_dir_name / "identity.json"
+    return state_dir.parent / ".claw-local" / "identity.json"
 
 
 def load_cached_identity(path: Path) -> dict[str, object]:
@@ -332,7 +333,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Verify the current local developer identity before development starts."
     )
-    parser.add_argument("state_dir", help="Path to .claw or .ai-dev")
+    parser.add_argument("state_dir", help="Path to the project's .claw directory")
     parser.add_argument("--ssh-key", default="", help="Path to the local private SSH key used for login signing")
     parser.add_argument("--developer", default="", help="Optional expected developer id such as DEV-alice")
     parser.add_argument("--task", default="", help="Optional task id; when provided, assignment scope is checked")
@@ -360,6 +361,8 @@ def main() -> int:
     }
 
     try:
+        if state_dir.name != ".claw":
+            raise PermissionError(f"blocked_state_directory: expected `.claw`, got `{state_dir.name}`")
         if not ssh_key_arg:
             raise PermissionError("blocked_login_required: provide --ssh-key for the first login")
 

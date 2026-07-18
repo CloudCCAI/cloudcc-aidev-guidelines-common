@@ -1,5 +1,23 @@
 # Changelog
 
+## 5.0.1 - 2026-07-18
+
+- Added manifest `language` selection with resumable `pending`, `en`, and `zh-CN` states.
+- Added deterministic English and Simplified Chinese templates for all v5 human-readable project-management documents.
+- Made onboarding, FEAT/TASK allocation, current-status generation, team-status generation, and managed README/AGENTS blocks honor the selected language.
+- Preserved v4 and early v5 compatibility without automatically translating existing files.
+- Updated validation, schema, catalog, examples, documentation, and tests for document policy version 3.
+
+## 5.0.0 - 2026-07-18
+
+- Added `.claw/manifest.yaml` and a shared state catalog for guided, resumable Greenfield/Brownfield initialization.
+- Added independent switches for project state, collaboration gate, and Codeup/GitHub change review with conditional resource loading.
+- Added per-file initialization states, the `ARCHITECTURE` module in `decisions.md`, `directory-map.md`, empty task-board bootstrap, and event-created state files.
+- Added per-user FEAT/TASK names and counters, atomic ID reservation, and multi-workstream `current-status.md` generation.
+- Added legacy document snapshots and v4/v5 validation so existing files remain grandfathered while new files follow policy version 2.
+- Simplified `SKILL.md` into a progressive router and moved detailed onboarding, module, and platform workflows into references.
+- Standardized project state on `.claw/` and local private configuration on `.claw-local/`.
+
 ## 4.1.3 - 2026-05-27
 
 - Clarified async manager-gated task status ownership: developers record routine contribution progress in `.claw/tasks/TASK-xxx.md`, while `task-board.md` remains a manager/integration-owned coordination index unless explicitly authorized in assignment scope.
@@ -55,7 +73,7 @@
 ## 3.7.0 - 2026-05-17
 
 - Added `scripts/dev-login.py` for local SSH challenge-response identity verification before development starts.
-- Added optional local identity cache guidance for `.claw-local/identity.json` and `.ai-dev-local/identity.json`; caches store only key paths and public identity metadata.
+- Added optional local identity cache guidance for `.claw-local/identity.json`; caches store only key paths and public identity metadata.
 - Documented the local login flow: derive public key and fingerprint from a private key, match `.claw/developers/*.yaml`, sign a one-time challenge, verify with the registered public key, then run assignment checks.
 - Updated protocol docs to require public SSH keys when projects want login-style verification of the current local operator.
 - Updated README, state model, templates, state files, and validation evidence for the new local login gate.
@@ -108,7 +126,7 @@
 
 - Added `task-board.md` as a first-class state file for executable work, handoff, and role-based ownership.
 - Added spec-driven delivery rules and a feature spec template under `docs/specs/`.
-- Defined state-directory resolution rules for `.claw/` and `.ai-dev/`.
+- Defined state-directory resolution rules for `.claw/`.
 - Reworked the templates to be generic and multi-stack friendly instead of Node-specific.
 - Fixed the `test-report.md` scaffold so it no longer reports `passed` before any real run.
 - Extended `scripts/init-state.sh` to create `docs/specs/` and seed `_feature-spec-template.md`.

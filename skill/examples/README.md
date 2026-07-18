@@ -1,28 +1,38 @@
-# 示例项目状态
+# 示例项目
 
-`examples/sample-project/` 展示了一个完整的多智能体交付样例，包括：
+这里提供三个兼容 profile，用于理解路由并做回归验证。
 
-- 项目根目录 `README.md` 和 `AGENTS.md` 中的技能声明锚点
-- `.claw/current-status.md` 作为热状态入口
-- `.claw/task-board.md` 作为执行任务和交接队列
-- `.claw/task-archive.md` 作为已完成任务的归档历史
-- `.claw/goals.md` 定义范围与成功标准
-- `.claw/decisions.md` 记录 ADR
-- `.claw/issue-list.md` 记录问题与风险
-- `.claw/test-report.md` 记录真实测试结果
-- `.claw/devops.md` 记录可执行运维知识
-- `docs/specs/FEAT-001-login-reliability.md` 记录功能设计与落地过程
+| 示例 | Profile | 语言 | 重点 |
+|---|---|---|---|
+| `greenfield-v5-project/` | manifest v5 / Greenfield | `en` | 已完成的核心基线、空看板、没有预建事件文件 |
+| `brownfield-v5-project/` | manifest v5 / Brownfield | `en` | verified/inferred/pending baseline、兼容边界、空看板 |
+| `sample-project/` | legacy v4 | legacy 默认 `en` | 没有 manifest 的既有文件、旧全局 FEAT/TASK ID 和旧单任务热状态 |
 
-建议阅读顺序：
+## 推荐阅读顺序
 
-1. `examples/sample-project/.claw/current-status.md`
-2. `examples/sample-project/.claw/task-board.md`
-3. `examples/sample-project/README.md`
-4. `examples/sample-project/AGENTS.md`
-5. `examples/sample-project/.claw/task-archive.md`
-6. `examples/sample-project/docs/specs/FEAT-001-login-reliability.md`
-7. `examples/sample-project/.claw/goals.md`
-8. `examples/sample-project/.claw/issue-list.md`
-9. `examples/sample-project/.claw/test-report.md`
-10. `examples/sample-project/.claw/decisions.md`
-11. `examples/sample-project/.claw/devops.md`
+对 v5 示例：
+
+1. `.claw/manifest.yaml`
+2. `.claw/current-status.md`
+3. `.claw/task-board.md`
+4. `.claw/goals.md`
+5. `.claw/decisions.md` 的 `ARCHITECTURE`
+6. `.claw/directory-map.md`
+7. `.claw/devops.md`
+8. Brownfield 再读 `docs/specs/PROJECT-BASELINE.md`
+
+两个 v5 示例都故意没有 issue、test report、archive、integration queue、team status、developer、assignment、FEAT 或 TASK；这些文件只在真实事件发生时创建。
+
+中文确定性模板位于 `skill/templates/locales/zh-CN/`，测试会通过真实初始化和文档分配流程验证中文输出。
+
+legacy 示例用于证明旧文件不被强制改名或补字段。新版本读取它时继续使用 v4 profile；只有用户显式采用 v5 时才建立历史边界。
+
+## 校验
+
+从仓库根目录运行：
+
+```bash
+python3 skill/scripts/validate-state.py skill/examples/greenfield-v5-project/.claw --strict-v5
+python3 skill/scripts/validate-state.py skill/examples/brownfield-v5-project/.claw --strict-v5
+python3 skill/scripts/validate-state.py skill/examples/sample-project/.claw
+```

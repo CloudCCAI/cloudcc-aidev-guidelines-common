@@ -1,8 +1,8 @@
 ---
 kind: task-board
 version: 4
-updated_at: 2026-07-17T07:13:02Z
-updated_by: codex
+updated_at: 2026-07-18T12:35:09Z
+updated_by: Bimo
 board_status: active
 ---
 
@@ -158,7 +158,12 @@ board_status: active
 
 ## Completed Tasks
 
-- None.
+- `TASK-bimo-001` — done — guided onboarding core.
+- `TASK-bimo-002` — done — personal document naming and legacy boundary.
+- `TASK-bimo-003` — done — multi-task hot status.
+- `TASK-bimo-004` — done — dynamic v4/v5 validation.
+- `TASK-bimo-005` — done — protocol integration and release readiness.
+- `TASK-bimo-006` — done — configurable English/Chinese document language.
 
 ## Maintenance Rules
 

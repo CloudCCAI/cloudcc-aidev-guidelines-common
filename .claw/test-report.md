@@ -1,9 +1,9 @@
 ---
 kind: test-report
-version: 4
-updated_at: 2026-07-17T07:13:02Z
-updated_by: codex
-last_run_at: 2026-07-17T07:13:02Z
+version: 5
+updated_at: 2026-07-18T12:41:57Z
+updated_by: Bimo
+last_run_at: 2026-07-18T12:39:25Z
 last_run_status: passed
 ---
 
@@ -14,19 +14,19 @@ last_run_status: passed
 ## Latest Run Summary
 
 - 状态：`passed`
-- Scope: `Chinese SKILL.md translation, content consolidation, protocol preservation`
-- Commands: standard `quick_validate.py`; project `validate-state.py`; 25-token protocol check; line-budget, Chinese-content, reference, and `git diff --check` checks
+- Scope: `manifest language selection, bilingual templates and generators, v5 lifecycle, and legacy compatibility`
+- Commands: 72-test unittest suite; four state fixture validations; pending/zh-CN/en forward projects; Python/Shell/JSON/YAML/frontmatter checks
 - Environment: `local workspace`
 
 ## Result Summary
 
 | Type | Total | Passed | Failed | Skipped | Coverage |
 |------|-------|--------|--------|---------|----------|
-| Skill quick validation | 1 | 1 | 0 | 0 | n/a |
-| Project state validation | 1 | 1 | 0 | 0 | n/a |
-| Protocol preservation | 1 | 1 | 0 | 0 | n/a |
-| Content and reference checks | 1 | 1 | 0 | 0 | n/a |
-| Total | 4 | 4 | 0 | 0 | n/a |
+| Python unit tests | 72 | 72 | 0 | 0 | n/a |
+| Project state fixtures | 4 | 4 | 0 | 0 | n/a |
+| Syntax/format checks | 6 | 6 | 0 | 0 | n/a |
+| Independent forward-test tracks | 4 | 4 | 0 | 0 | n/a |
+| Total | 86 | 86 | 0 | 0 | n/a |
 
 ## Failures
 
@@ -34,15 +34,15 @@ last_run_status: passed
 
 ## Notes
 
-- `skill/SKILL.md` was reduced from 520 lines to 293 lines.
-- Explanatory prose is Chinese; technical identifiers, fields, commands, paths, and status values remain unchanged.
-- Hard identity gates, assignment scope, Codeup flow, test-environment push behavior, and state source-of-truth rules remain present.
-- `PyYAML` was installed only into a temporary directory for the external skill validator.
+- Greenfield, Brownfield, legacy adoption, language pending/resume, English/Chinese generation, module combinations, per-user ID allocation, FEAT confirmation, and multi-workflow aggregation were exercised.
+- Standard `quick_validate.py` could not import PyYAML in this environment; the same frontmatter constraints were checked with Ruby YAML and passed.
+- Commit/push authorization is release state, not test evidence; no change request or deployment was exercised by this test run.
 
 ## Common Commands
 
 - `python3 skill/scripts/validate-state.py .claw`
-- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-pycache python3 -m py_compile skill/scripts/*.py`
+- `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s skill/tests -p 'test_*.py' -v`
+- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-final-pycache python3 -m compileall -q skill/scripts skill/tests`
 - `python3 skill/scripts/dev-login.py .claw --ssh-key ~/.ssh/id_ed25519_cc_dev --developer DEV-xxx --task TASK-xxx --files path/to/file`
 - `python3 skill/scripts/check-assignment.py .claw --developer DEV-xxx --task TASK-xxx --files path/to/file`
 

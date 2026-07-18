@@ -1,0 +1,29 @@
+schema_version: 5
+skill_version: "5.0.1"
+language: en
+project_mode: greenfield
+initialization:
+  status: ready
+  started_at: "2026-01-01T00:00:00Z"
+  completed_at: "2026-01-01T00:10:00Z"
+  confirmed_by: "sample-owner"
+modules:
+  project_state: true
+  collaboration_gate: false
+  change_review: false
+module_config:
+  collaboration_gate: "none"
+  change_review: "none"
+compatibility:
+  legacy_documents_allowed: true
+  legacy_index_path: "none"
+  new_document_policy_version: 3
+  policy_effective_at: "2026-01-01T00:00:00Z"
+file_status:
+  manifest: complete
+  goals: complete
+  decisions: complete
+  directory_map: complete
+  devops: complete
+  task_board: complete
+  current_status: complete

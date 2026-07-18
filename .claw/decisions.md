@@ -1,13 +1,54 @@
 ---
 kind: decisions
-version: 3
-updated_at: 2026-07-17T06:55:02Z
-updated_by: codex
+version: 4
+architecture_init_status: complete
+architecture_reviewed_at: 2026-07-18T02:36:33Z
+architecture_confirmed_by: Bimo
+updated_at: 2026-07-18T12:39:25Z
+updated_by: Bimo
 ---
 
 # 技术决策记录
 
 `decisions.md` 是架构和技术选型的唯一事实源。
+
+## ARCHITECTURE
+
+### 系统类型与技术栈
+
+- 状态：`verified`。
+- 本项目是一个可独立发布的项目管理 Skill，不是常驻运行服务。
+- 发布包位于 `skill/`，主要使用 Markdown、YAML、JSON、Python 标准库和 Shell；平台集成模板覆盖 Codeup 与 GitHub。
+
+### 运行流程
+
+1. `skill/SKILL.md` 先调用只读 preflight，以 `.claw/manifest.yaml` 或 legacy 状态选择 profile。
+2. manifest 先用 `language` 选择人类可读模板，再根据 `project_state`、`collaboration_gate`、`change_review` 开关按需路由 reference 和核心文件。
+3. Greenfield/Brownfield 引导由 catalog、模板和初始化脚本驱动，每个核心文件独立保存初始化状态。
+4. 运行期按“讨论 → FEAT → 用户确认 → TASK → 实现 → 验证 → 评审”推进；热索引从字段级事实源生成。
+
+### 模块与边界
+
+- `skill/references/`：按初始化、模块和平台渐进加载的协议。
+- `skill/state-catalog.json` 与 `skill/schemas/`：机器可读文件生命周期、条件和结构约束。
+- `skill/scripts/`：预检、初始化、模块配置、个人编号、热状态聚合、身份门禁、评审与校验。
+- `skill/templates/`：英文规范模板和 `locales/zh-CN/` 中文镜像，只在核心初始化或真实事件触发时渲染。
+- `skill/tests/` 与 `skill/examples/`：Greenfield、Brownfield、legacy 和模块组合的回归证据。
+- `.claw/` 与 `docs/specs/`：本仓库自身的项目事实和设计，不属于可发布 Skill 运行代码。
+
+### 数据、依赖与发布
+
+- 项目状态只写入 `.claw/`；本机私密配置只写入 Git 忽略的 `.claw-local/`。
+- 状态文件是可审计文本，不依赖数据库；写入关键索引和个人编号时使用锁、排他创建与原子替换。
+- 核心初始化和校验脚本只依赖 Python 标准库；Git、OpenSSH、Codeup/GitHub API 只在对应能力实际启用时需要。
+- 发布单元是 `skill/` 目录，版本权威为 `skill/SKILL.md` 的 `metadata.skill_version`。
+
+### 非功能约束
+
+- 旧项目默认继续使用 legacy profile；未经明确请求不得改名、补字段或批量迁移。
+- 禁用模块的资料不得加载；事件文件不得在初始化时伪造。
+- 不记录 secret，不伪造测试或部署结果；所有 ready/complete 状态必须有确认与真实校验依据。
+- 相关决策：ADR-001、ADR-002、ADR-003、ADR-010、ADR-011、ADR-012、ADR-013。
 
 ## 决策索引
 
@@ -22,7 +63,10 @@ updated_by: codex
 | ADR-007 | Use task-bounded broad code authorization for normal feature work | accepted | 2026-05-18 | - |
 | ADR-008 | Use Codeup change requests as the default review platform flow | accepted | 2026-05-19 | - |
 | ADR-009 | Use source-branch-wins conflict resolution for test-environment pushes | accepted | 2026-05-20 | - |
+| ADR-010 | Keep state progressive with per-task status files | accepted | 2026-05-21 | - |
 | ADR-011 | Keep the distributable skill in a dedicated directory | accepted | 2026-07-17 | - |
+| ADR-012 | Use a manifest-driven modular v5 state lifecycle | accepted | 2026-07-18 | - |
+| ADR-013 | Use manifest-selected language for human-readable project documents | accepted | 2026-07-18 | - |
 
 推荐状态值：`proposed` / `accepted` / `rejected` / `superseded`
 
@@ -71,7 +115,7 @@ updated_by: codex
 - 备选方案：让管理者手工维护 `.claw/team-status.md`；把所有贡献状态写回 `current-status.md`；把 `team-status.md` 定义为派生视图并用脚本生成。
 - 最终结论：`team-status.md` 是派生管理视图，由 `skill/scripts/summarize-team-status.py` 按标准顺序生成，不作为事实源。
 - 为什么这个方案胜出：它给管理者一个统一入口，同时避免多人频繁编辑热文件，也避免把汇总快照误当成真实授权或进度来源。
-- 后续影响：初始化流程会创建团队状态模板；校验器会校验其 front matter；当开发者、授权、任务状态或集成队列变化后，应重新生成团队状态。
+- 后续影响：`team-status.md` 只在管理者请求真实汇总时生成；ADR-012 已取消初始化阶段的预创建。当开发者、授权、任务状态或集成队列变化后，应重新生成团队状态。
 - 验证方式：运行 `python3 skill/scripts/summarize-team-status.py .claw --write` 和 `python3 skill/scripts/validate-state.py .claw`。
 
 ## ADR-004 - Gate multi-developer work through project-manager assignments and SSH-signed Git identity
@@ -94,7 +138,7 @@ updated_by: codex
 - 备选方案：继续要求用户手工声明身份；把私钥或 token 写入项目文件；使用本机私钥签名一次性 challenge，并用仓库登记的 public key 验签。
 - 最终结论：新增 `skill/scripts/dev-login.py`，首次运行时由用户提供本机私钥路径，脚本自动推导 public key 和 fingerprint、匹配 `.claw/developers/*.yaml`、完成 challenge-response 验签，并可串联 `check-assignment.py`。
 - 为什么这个方案胜出：它证明当前操作者持有登记身份对应的私钥，同时不把私钥、token 或密码写入仓库；本机缓存只保存私钥路径和公开身份元数据，每次开发仍重新验签。
-- 后续影响：开发者记录必须保存 `public_key` 才能做登录式验签；采用此模式的项目应把 `.claw-local/` 或 `.ai-dev-local/` 加入 `.gitignore`。
+- 后续影响：开发者记录必须保存 `public_key` 才能做登录式验签；采用此模式的项目应把 `.claw-local/` 加入 `.gitignore`。
 - 验证方式：生成临时 SSH key 和临时 `.claw` 状态，运行 `skill/scripts/dev-login.py` 的通过、缓存复用、错误 key 和越界文件用例，并运行状态校验和 Python 语法检查。
 
 ## ADR-006 - Make local identity login a hard pre-edit gate
@@ -162,6 +206,28 @@ updated_by: codex
 - 为什么这个方案胜出：它建立了明确的发布边界，同时保留技能内部的相对路径关系。
 - 后续影响：根 `README.md`、`AGENTS.md`、当前项目状态和发布模板需改用 `skill/` 路径；发布时以 `skill/` 作为技能包根目录。
 - 验证方式：运行状态校验、Python/Shell 语法检查和全新项目初始化冒烟测试。
+
+## ADR-012 - Use a manifest-driven modular v5 state lifecycle
+
+- 状态：`accepted`
+- 日期：`2026-07-18`
+- 背景：固定复制一组状态文件无法判断初始化是否完成，也无法按项目需要关闭项目状态、多人门禁或代码评审；单值热状态和全局编号也不支持多人、多窗口并行。
+- 备选方案：继续扩充固定 v4 模板；强制所有历史项目一次性迁移；增加 manifest、catalog、模块开关、逐文件初始化状态和显式 legacy 边界。
+- 最终结论：采用 v5 manifest 控制面和共享 catalog。Greenfield/Brownfield 由证据建议、用户确认；项目状态、协作门禁和代码评审独立开关；新 FEAT/TASK 使用带用户名的个人序列；current status 由多个任务事实源生成；旧文件只在用户显式采用时登记边界，不自动改写。
+- 为什么这个方案胜出：它能可靠恢复初始化、只加载启用能力、避免虚假占位文件，同时为新项目建立一致规则并保留历史项目的非破坏性运行路径。
+- 后续影响：`SKILL.md` 成为轻量路由器，详细流程进入 references；初始化器、模板、校验器、示例和本仓库状态必须共享同一 catalog 契约。
+- 验证方式：运行全部单元测试、Greenfield/Brownfield/legacy 严格校验、模块组合与显式 adoption 冒烟测试、Skill 标准校验和 diff 检查。
+
+## ADR-013 - Use manifest-selected language for human-readable project documents
+
+- 状态：`accepted`
+- 日期：`2026-07-18`
+- 背景：v5 的核心模板、事件模板和派生视图存在英文或中英混合内容，项目无法声明统一的文档语言，初始化会看似默认英文。
+- 备选方案：继续使用固定英文；根据会话语言临时翻译但不保存配置；在 manifest 中保存语言并提供确定性本地化模板与生成器。
+- 最终结论：manifest 增加 `language: pending | en | zh-CN`。新初始化必须先确认语言，再生成依赖语言的人类可读文件；机器字段、枚举、ID、路径、命令和原始证据不翻译。该兼容性新增能力按补丁位从 `5.0.0` 递增为 `5.0.1`。
+- 为什么这个方案胜出：manifest 是所有会话共享的控制面，能让初始化、FEAT/TASK 分配和派生视图使用同一个稳定事实源；确定性模板避免不同 Agent 临时翻译造成结构漂移。
+- 后续影响：规范英文模板与 `templates/locales/zh-CN/` 必须镜像维护；解析器接受关键中英文 section；早期 v5 缺字段按英文兼容，已有文件不自动翻译。
+- 验证方式：运行 72 项单元测试、严格 v5 示例校验，并实际创建 pending、`zh-CN`、`en` 三种前向项目验证模板、FEAT 和派生视图。
 
 ## 维护规则
 

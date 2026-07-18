@@ -8,8 +8,11 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
+from lib.atomic_io import atomic_write_text, file_lock
+from lib.document_ids import TASK_BOARD_HEADER_RE, document_id_from_path, extract_task_ids
+from lib.language import choose, state_dir_language
 
-TASK_HEADER_RE = re.compile(r"^###\s+(TASK-[0-9]+)\s+-\s+(.+?)\s*$")
+TASK_HEADER_RE = TASK_BOARD_HEADER_RE
 TASK_FIELD_RE = re.compile(r"^- ([a-z_]+):\s*(.+?)\s*$")
 SECTION_HEADER_RE = re.compile(r"^##\s+(.+?)\s*$")
 YAML_FIELD_RE = re.compile(r"^([A-Za-z0-9_-]+):\s*(.*?)\s*$")
@@ -130,7 +133,7 @@ def parse_integration_queue(path: Path) -> dict[str, str]:
             current_status = clean_value(stripped.split(":", 1)[1])
         if stripped.startswith("- related_tasks:") or stripped.startswith("- merge_order:"):
             raw_tasks = clean_value(stripped.split(":", 1)[1])
-            for task_id in re.findall(r"TASK-[0-9]+", raw_tasks):
+            for task_id in extract_task_ids(raw_tasks):
                 if current_status:
                     task_status[task_id] = current_status
 
@@ -172,7 +175,11 @@ def load_task_statuses(state_dir: Path) -> dict[str, dict[str, str]]:
 
     for path in sorted(tasks_dir.glob("*.md")):
         front_matter, body = read_front_matter(path)
-        task_id = front_matter.get("task_id") or path.stem
+        metadata_id = front_matter.get("task_id")
+        try:
+            task_id = document_id_from_path(path, "task", metadata_id)
+        except ValueError:
+            task_id = metadata_id or path.stem
         front_matter["path"] = str(path)
         front_matter["validation_status"] = extract_validation_status(body)
         statuses[task_id] = front_matter
@@ -240,7 +247,8 @@ def csv_join(values: list[str]) -> str:
     return ", ".join(values) if values else "none"
 
 
-def render_team_status(state_dir: Path) -> str:
+def render_team_status(state_dir: Path, language: str | None = None) -> str:
+    language = language or state_dir_language(state_dir)
     developers = load_developers(state_dir)
     assignments = load_assignments(state_dir)
     task_statuses = load_task_statuses(state_dir)
@@ -294,19 +302,23 @@ def render_team_status(state_dir: Path) -> str:
     lines = [
         "---",
         "kind: team-status",
-        "version: 3",
+        "schema_version: 5",
         f"updated_at: {timestamp}",
         "updated_by: summarize-team-status",
         "status: derived",
         "---",
         "",
-        "# 团队状态汇总",
+        choose(language, en="# Team Status Summary", zh_cn="# 团队状态汇总"),
         "",
-        "`team-status.md` 是管理者视图，由 `scripts/summarize-team-status.py` 根据项目状态文件生成。它不是事实源。",
+        choose(
+            language,
+            en="`team-status.md` is a manager view generated from project state by `scripts/summarize-team-status.py`. It is not a source of truth.",
+            zh_cn="`team-status.md` 是管理者视图，由 `scripts/summarize-team-status.py` 根据项目状态文件生成。它不是事实源。",
+        ),
         "",
-        "## 汇总规则",
+        choose(language, en="## Aggregation Rules", zh_cn="## 汇总规则"),
         "",
-        "事实源优先级：",
+        choose(language, en="Source precedence:", zh_cn="事实源优先级："),
         "",
         "1. `.claw/developers/*.yaml`",
         "2. `.claw/assignments/*.yaml`",
@@ -314,26 +326,30 @@ def render_team_status(state_dir: Path) -> str:
         "4. `.claw/task-board.md`",
         "5. `.claw/integration-queue.md`",
         "",
-        "如果本文件与事实源冲突，修复事实源后重新生成本文件。",
+        choose(
+            language,
+            en="If this file conflicts with a source, fix the source and regenerate this file.",
+            zh_cn="如果本文件与事实源冲突，修复事实源后重新生成本文件。",
+        ),
         "",
-        "## 团队概览",
+        choose(language, en="## Team Overview", zh_cn="## 团队概览"),
         "",
-        "| 指标 | 数量 |",
+        choose(language, en="| Metric | Count |", zh_cn="| 指标 | 数量 |"),
         "|------|------|",
-        f"| 开发者 | {len(developers)} |",
-        f"| 活跃开发者 | {len(active_developers)} |",
-        f"| 授权任务 | {len(assignments)} |",
-        f"| 已开始任务 | {len(started_tasks)} |",
-        f"| 等待 review | {len(review_tasks)} |",
-        f"| 已集成任务 | {len(integrated_tasks)} |",
-        f"| 阻塞任务 | {len(blocked_tasks)} |",
+        choose(language, en=f"| Developers | {len(developers)} |", zh_cn=f"| 开发者 | {len(developers)} |"),
+        choose(language, en=f"| Active developers | {len(active_developers)} |", zh_cn=f"| 活跃开发者 | {len(active_developers)} |"),
+        choose(language, en=f"| Assigned tasks | {len(assignments)} |", zh_cn=f"| 授权任务 | {len(assignments)} |"),
+        choose(language, en=f"| Started tasks | {len(started_tasks)} |", zh_cn=f"| 已开始任务 | {len(started_tasks)} |"),
+        choose(language, en=f"| Awaiting review | {len(review_tasks)} |", zh_cn=f"| 等待 review | {len(review_tasks)} |"),
+        choose(language, en=f"| Integrated tasks | {len(integrated_tasks)} |", zh_cn=f"| 已集成任务 | {len(integrated_tasks)} |"),
+        choose(language, en=f"| Blocked tasks | {len(blocked_tasks)} |", zh_cn=f"| 阻塞任务 | {len(blocked_tasks)} |"),
         "",
-        "## 成员状态",
+        choose(language, en="## Member Status", zh_cn="## 成员状态"),
         "",
     ]
 
     if not developers:
-        lines.append("- 暂无开发者记录。")
+        lines.append(choose(language, en="- No developer records.", zh_cn="- 暂无开发者记录。"))
         lines.append("")
     else:
         for developer_id in sorted(developers):
@@ -367,10 +383,10 @@ def render_team_status(state_dir: Path) -> str:
                 ]
             )
 
-    lines.extend(["## 任务状态", ""])
+    lines.extend([choose(language, en="## Task Status", zh_cn="## 任务状态"), ""])
 
     if not task_rows:
-        lines.append("- 暂无任务授权记录。")
+        lines.append(choose(language, en="- No task assignment records.", zh_cn="- 暂无任务授权记录。"))
         lines.append("")
     else:
         lines.extend(
@@ -384,9 +400,9 @@ def render_team_status(state_dir: Path) -> str:
                 f"| `{row['task_id']}` | {row['title']} | `{row['assignee']}` | `{row['board_status']}` | `{row['contribution_status']}` | `{row['validation_status']}` | `{row['integration_status']}` | `{row['branch']}` | `{row['pr_url']}` |"
             )
 
-    lines.extend(["", "## 集成状态", ""])
+    lines.extend(["", choose(language, en="## Integration Status", zh_cn="## 集成状态"), ""])
     if not integration_statuses:
-        lines.append("- 暂无集成队列记录。")
+        lines.append(choose(language, en="- No integration queue records.", zh_cn="- 暂无集成队列记录。"))
     else:
         for task_id in sorted(integration_statuses):
             lines.append(f"- `{task_id}`: `{integration_statuses[task_id]}`")
@@ -394,11 +410,11 @@ def render_team_status(state_dir: Path) -> str:
     lines.extend(
         [
             "",
-            "## 维护规则",
+            choose(language, en="## Maintenance Rules", zh_cn="## 维护规则"),
             "",
-            "- 不手工维护本文件的事实内容。",
-            "- 管理者需要查看团队状态时，运行 `python3 scripts/summarize-team-status.py .claw --write`。",
-            "- 远端 PR/CI 数据只有在写入任务状态或由后续平台脚本接入后，才会进入本汇总。",
+            choose(language, en="- Do not maintain factual content in this file by hand.", zh_cn="- 不手工维护本文件的事实内容。"),
+            choose(language, en="- Run `python3 scripts/summarize-team-status.py .claw --write` when a manager needs the team view.", zh_cn="- 管理者需要查看团队状态时，运行 `python3 scripts/summarize-team-status.py .claw --write`。"),
+            choose(language, en="- Remote PR/CI data appears only after it is recorded in task state or imported by a platform script.", zh_cn="- 远端 PR/CI 数据只有在写入任务状态或由后续平台脚本接入后，才会进入本汇总。"),
         ]
     )
 
@@ -407,20 +423,24 @@ def render_team_status(state_dir: Path) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Generate the derived team-status manager view.")
-    parser.add_argument("state_dir", nargs="?", default=".claw", help="Path to .claw or .ai-dev state directory")
+    parser.add_argument("state_dir", nargs="?", default=".claw", help="Path to the .claw state directory")
     parser.add_argument("--write", action="store_true", help="Write the generated view to team-status.md")
     args = parser.parse_args()
 
     state_dir = Path(args.state_dir)
     if not state_dir.exists():
         parser.error(f"state directory does not exist: {state_dir}")
+    if state_dir.resolve().name != ".claw":
+        parser.error("only the .claw state directory is supported")
 
-    rendered = render_team_status(state_dir)
     if args.write:
         destination = state_dir / "team-status.md"
-        destination.write_text(rendered, encoding="utf-8")
+        with file_lock(state_dir / ".locks" / "team-status.lock"):
+            rendered = render_team_status(state_dir)
+            atomic_write_text(destination, rendered)
         print(f"Updated: {destination}")
     else:
+        rendered = render_team_status(state_dir)
         print(rendered, end="")
 
     return 0

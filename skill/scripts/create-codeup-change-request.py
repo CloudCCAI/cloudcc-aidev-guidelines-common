@@ -16,9 +16,15 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from lib.document_ids import TASK_ID_RE as CANONICAL_TASK_ID_RE, extract_task_ids
+
+
 DEFAULT_ENV_FILE = Path(".claw-local/codeup.env")
 TOKEN_DOC_URL = "https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-token"
-TASK_ID_RE = re.compile(r"\bTASK-\d+\b")
 
 
 def parse_args() -> argparse.Namespace:
@@ -39,12 +45,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--source-branch", help="Source branch. Defaults to the current Git branch.")
     parser.add_argument("--target-branch", help="Target branch. Defaults to CODEUP_TARGET_BRANCH or master.")
-    parser.add_argument("--title", help="Change request title. Defaults to a title derived from TASK-xxx and branch.")
+    parser.add_argument("--title", help="Change request title. Defaults to a title derived from the task id and branch.")
     parser.add_argument("--description", help="Change request description.")
     parser.add_argument("--description-file", help="Read the change request description from a file.")
     parser.add_argument("--reviewer-user-ids", help="Comma-separated Yunxiao reviewer user ids.")
     parser.add_argument("--work-item-ids", help="Comma-separated Yunxiao work item ids.")
-    parser.add_argument("--task", help="Task id such as TASK-123. Defaults to extracting from branch/title/description.")
+    parser.add_argument(
+        "--task",
+        help="Task id such as TASK-alice-001 or legacy TASK-123. Defaults to extracting from branch/title/description.",
+    )
     parser.add_argument(
         "--create-from",
         choices=("WEB", "COMMAND_LINE"),
@@ -118,9 +127,9 @@ def parse_bool(value: str) -> bool:
 
 def extract_task_id(*values: str) -> str:
     for value in values:
-        match = TASK_ID_RE.search(value or "")
-        if match:
-            return match.group(0)
+        matches = extract_task_ids(value or "")
+        if matches:
+            return matches[0]
     return ""
 
 
@@ -224,6 +233,8 @@ def build_payload(args: argparse.Namespace, config: dict[str, str]) -> dict[str,
     source_branch = args.source_branch or current_git_branch()
     target_branch = config["target_branch"]
     source_project_id, target_project_id = resolve_project_ids(config)
+    if args.task and not CANONICAL_TASK_ID_RE.fullmatch(args.task):
+        raise SystemExit(f"invalid task id: {args.task}")
     task_id = args.task or extract_task_id(source_branch, args.title or "", args.description or "")
     if args.title:
         title = args.title

@@ -29,38 +29,56 @@ jobs:
         run: |
           set -euo pipefail
 
-          task_id="$(printf '%s\n%s\n%s\n' "$PR_BRANCH" "$PR_TITLE" "${PR_BODY:-}" | grep -Eo 'TASK-[0-9]+' | head -n 1 || true)"
+          # Use the same parser as local validation so legacy and v5 IDs cannot drift.
+          task_id="$(python3 - <<'PY'
+          import os
+          import sys
+
+          sys.path.insert(0, "scripts")
+          from lib.document_ids import extract_task_ids
+
+          text = "\n".join(
+              [
+                  os.environ.get("PR_BRANCH", ""),
+                  os.environ.get("PR_TITLE", ""),
+                  os.environ.get("PR_BODY", ""),
+              ]
+          )
+          matches = extract_task_ids(text)
+          print(matches[0] if matches else "")
+          PY
+          )"
           if [ -z "$task_id" ]; then
-            echo "Could not resolve TASK-xxx from branch, PR title, or PR body" >&2
+            echo "Could not resolve a legacy TASK-001 or v5 TASK-alice-001 ID from branch, PR title, or PR body" >&2
             exit 1
           fi
 
           developer_id="$(python3 - <<'PY'
-from pathlib import Path
-import os
+          from pathlib import Path
+          import os
 
-author = os.environ["PR_AUTHOR"]
-developers_dir = Path(".claw/developers")
+          author = os.environ["PR_AUTHOR"]
+          developers_dir = Path(".claw/developers")
 
-def parse(path):
-    fields = {}
-    for raw in path.read_text(encoding="utf-8").splitlines():
-        stripped = raw.strip()
-        if not stripped or stripped.startswith("#") or ":" not in stripped:
-            continue
-        key, value = stripped.split(":", 1)
-        fields[key.strip()] = value.strip().strip('"').strip("'")
-    return fields
+          def parse(path):
+              fields = {}
+              for raw in path.read_text(encoding="utf-8").splitlines():
+                  stripped = raw.strip()
+                  if not stripped or stripped.startswith("#") or ":" not in stripped:
+                      continue
+                  key, value = stripped.split(":", 1)
+                  fields[key.strip()] = value.strip().strip('"').strip("'")
+              return fields
 
-for path in sorted(developers_dir.glob("*.y*ml")):
-    fields = parse(path)
-    if fields.get("git_username") == author:
-        print(fields.get("developer_id") or path.stem)
-        raise SystemExit(0)
+          for path in sorted(developers_dir.glob("*.y*ml")):
+              fields = parse(path)
+              if fields.get("git_username") == author:
+                  print(fields.get("developer_id") or path.stem)
+                  raise SystemExit(0)
 
-raise SystemExit(f"No active developer record maps git_username={author!r}")
-PY
-)"
+          raise SystemExit(f"No active developer record maps git_username={author!r}")
+          PY
+          )"
 
           git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/changed-files.txt
           if [ ! -s /tmp/changed-files.txt ]; then

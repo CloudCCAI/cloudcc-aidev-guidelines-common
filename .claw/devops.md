@@ -1,33 +1,38 @@
 ---
 kind: devops
-version: 3
-updated_at: 2026-04-30T01:23:08Z
-updated_by: ai
-verification_status: pending
+version: 4
+updated_at: 2026-07-18T12:41:57Z
+updated_by: Bimo
+verification_status: verified
 ---
 
 # 项目部署运维手册
 
 `devops.md` 是构建、运行、部署和运维知识的事实源。
 
-## 构建
+## 构建与静态检查
 
-- 暂无已验证的构建命令。
-- 一旦确认真实命令，请记录安装、构建、打包和产物位置。
+- 本项目无独立编译产物；Skill 发布单元为 `skill/`。
+- Python 语法：`PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-final-pycache python3 -m compileall -q skill/scripts skill/tests`（已验证）。
+- Shell 语法：`bash -n skill/scripts/init-state.sh skill/scripts/ensure-agent-guidance.sh`（已验证）。
 
-## 启动
+## 运行与测试
 
-- 暂无已验证的启动命令、环境变量或配置文件路径。
-- 补充时优先记录开发启动、生产启动和必要环境变量。
+- 单元测试：`PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s skill/tests -p 'test_*.py' -v`（72 项通过）。
+- 本仓库状态：`python3 skill/scripts/validate-state.py .claw`（legacy v4 通过）。
+- v5 fixtures：对 Greenfield/Brownfield 示例运行 `validate-state.py --strict-v5`（均通过）。
+- legacy fixture：对 `skill/examples/sample-project/.claw` 运行普通校验（通过）。
 
 ## 依赖服务
 
-- 暂无已记录依赖服务。
+- 核心初始化、编号、聚合与校验只依赖 Python 标准库。
+- Git/SSH、Codeup/GitHub 仅在对应能力实际启用时需要。
+- 系统 `quick_validate.py` 依赖可选 PyYAML；当前环境缺少该包，因此使用同等 frontmatter 规则的 Ruby YAML 检查完成验证。
 
 ## 部署与发布
 
-- 暂无已验证的部署步骤。
-- 如果流程未验证，明确标注 `pending verification`。
+- 版本权威：`skill/SKILL.md` 的 `metadata.skill_version`，当前为 `5.0.1`。
+- 用户已授权将 `5.0.1` 提交并推送到 Codeup `origin/main`；远程结果以实际 `git push` 输出为准。
 
 ## 排障
 

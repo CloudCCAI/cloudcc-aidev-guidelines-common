@@ -1,0 +1,23 @@
+schema_version: 5
+skill_version: "{{SKILL_VERSION}}"
+language: "{{LANGUAGE}}"
+project_mode: "{{PROJECT_MODE}}"
+initialization:
+  status: in_progress
+  started_at: "{{TIMESTAMP}}"
+  completed_at: "none"
+  confirmed_by: "none"
+modules:
+  project_state: {{PROJECT_STATE}}
+  collaboration_gate: {{COLLABORATION_GATE}}
+  change_review: {{CHANGE_REVIEW}}
+module_config:
+  collaboration_gate: "none"
+  change_review: "none"
+compatibility:
+  legacy_documents_allowed: true
+  legacy_index_path: "none"
+  new_document_policy_version: 3
+  policy_effective_at: "{{TIMESTAMP}}"
+file_status:
+  manifest: complete

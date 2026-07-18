@@ -68,7 +68,7 @@ updated_by: codex
 - 启用异步多开发者协作：`yes`
 - 项目管理者身份：`MANAGER-001`
 - 开发者身份文件：`.claw/developers/DEV-xxx.yaml`
-- 本地身份缓存：`.claw-local/identity.json` 或 `.ai-dev-local/identity.json`
+- 本地身份缓存：`.claw-local/identity.json`
 - 本地身份登录：`skill/scripts/dev-login.py`
 - 开发前任务检查：`skill/scripts/check-assignment.py`
 - 默认身份绑定：SSH challenge-response + Git 平台账号 + SSH commit signing
@@ -77,7 +77,7 @@ updated_by: codex
 ## 接口与数据影响
 
 - 新增脚本入口：`skill/scripts/dev-login.py`
-- 新增本地忽略路径：`.claw-local/`、`.ai-dev-local/`
+- 新增本地忽略路径：`.claw-local/`
 - 开发者模板说明 `public_key` 用于 challenge-response 验证。
 - assignment 模板增加 `local_login_required` 和新的 `identity_policy` 示例。
 

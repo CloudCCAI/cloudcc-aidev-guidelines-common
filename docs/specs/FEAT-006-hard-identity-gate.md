@@ -39,8 +39,8 @@ updated_by: codex
 
 当项目存在任一条件时，硬身份门禁自动启用：
 
-- `.claw/developers/` 或 `.ai-dev/developers/`
-- `.claw/assignments/` 或 `.ai-dev/assignments/`
+- `.claw/developers/`
+- `.claw/assignments/`
 - 任务卡包含 `assignment_path`
 - assignment 包含 `local_login_required: true`
 - task/spec 指定 `skill/scripts/dev-login.py` 为本地身份检查
@@ -61,7 +61,7 @@ updated_by: codex
 - 聊天里声明的 `developer_id`
 - 已知用户名或 Git author/email
 - 历史会话记忆
-- `.claw-local/identity.json` 或 `.ai-dev-local/identity.json` 的存在
+- `.claw-local/identity.json` 的存在
 - `skill/scripts/check-assignment.py` 通过
 
 ## 允许的登录前修改

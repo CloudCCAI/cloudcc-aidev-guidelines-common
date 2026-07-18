@@ -1,0 +1,391 @@
+{
+  "schema_version": 1,
+  "state_schema_version": 5,
+  "state_directory": ".claw",
+  "init_statuses": [
+    "not_started",
+    "in_progress",
+    "awaiting_confirmation",
+    "complete",
+    "needs_review"
+  ],
+  "initialization_statuses": [
+    "in_progress",
+    "ready",
+    "needs_review"
+  ],
+  "project_modes": [
+    "pending",
+    "greenfield",
+    "brownfield",
+    "not_applicable"
+  ],
+  "document_languages": {
+    "supported": ["en", "zh-CN"],
+    "initialization_value": "pending",
+    "legacy_default": "en",
+    "localized_template_root": "templates/locales"
+  },
+  "modules": {
+    "project_state": {
+      "default": true,
+      "depends_on": []
+    },
+    "collaboration_gate": {
+      "default": false,
+      "depends_on": [
+        "project_state"
+      ]
+    },
+    "change_review": {
+      "default": false,
+      "depends_on": []
+    }
+  },
+  "files": [
+    {
+      "id": "manifest",
+      "kind": "manifest",
+      "schema_version": 5,
+      "path": ".claw/manifest.yaml",
+      "template": "templates/core/manifest.yaml",
+      "module": "control_plane",
+      "category": "control",
+      "lifecycle": "core",
+      "temperature": "machine_hot",
+      "init_order": 0,
+      "required_when": "always",
+      "initialization_required": false,
+      "counts_toward_ready": false,
+      "prompt": "确认项目类型、模块开关和兼容策略。",
+      "prompt_en": "Confirm project mode, module switches, and compatibility policy."
+    },
+    {
+      "id": "project_baseline",
+      "kind": "project-baseline",
+      "schema_version": 5,
+      "path": "docs/specs/PROJECT-BASELINE.md",
+      "template": "templates/project-state/project-baseline.md",
+      "module": "project_state",
+      "category": "core",
+      "project_modes": [
+        "brownfield"
+      ],
+      "lifecycle": "core",
+      "temperature": "cold",
+      "init_order": 10,
+      "required_when": {
+        "project_mode": "brownfield"
+      },
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认存量系统的 verified、inferred 与 pending verification 基线。",
+      "prompt_en": "Confirm the verified, inferred, and pending-verification baseline for the existing system."
+    },
+    {
+      "id": "goals",
+      "kind": "goals",
+      "schema_version": 5,
+      "path": ".claw/goals.md",
+      "template": "templates/core/goals.md",
+      "module": "project_state",
+      "category": "core",
+      "lifecycle": "core",
+      "temperature": "warm",
+      "init_order": 20,
+      "required_when": {
+        "all": [
+          {"module_enabled": "project_state"},
+          {"any": [{"project_mode": "greenfield"}, {"project_mode": "brownfield"}]}
+        ]
+      },
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认项目目标、用户、范围、成功标准、约束和非目标。",
+      "prompt_en": "Confirm project goals, users, scope, success criteria, constraints, and non-goals."
+    },
+    {
+      "id": "decisions",
+      "kind": "decisions",
+      "schema_version": 5,
+      "path": ".claw/decisions.md",
+      "template": "templates/core/decisions.md",
+      "module": "project_state",
+      "category": "core",
+      "lifecycle": "core",
+      "temperature": "warm",
+      "init_order": 30,
+      "required_when": {
+        "all": [
+          {"module_enabled": "project_state"},
+          {"any": [{"project_mode": "greenfield"}, {"project_mode": "brownfield"}]}
+        ]
+      },
+      "required_fields": [
+        "architecture_init_status",
+        "architecture_reviewed_at",
+        "architecture_confirmed_by"
+      ],
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认 ARCHITECTURE 当前快照；ADR 历史可以为空。",
+      "prompt_en": "Confirm the current ARCHITECTURE snapshot; ADR history may be empty."
+    },
+    {
+      "id": "directory_map",
+      "kind": "directory-map",
+      "schema_version": 5,
+      "path": ".claw/directory-map.md",
+      "template": "templates/core/directory-map.md",
+      "module": "project_state",
+      "category": "core",
+      "lifecycle": "core",
+      "temperature": "warm",
+      "init_order": 40,
+      "required_when": {
+        "all": [
+          {"module_enabled": "project_state"},
+          {"any": [{"project_mode": "greenfield"}, {"project_mode": "brownfield"}]}
+        ]
+      },
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认主要目录的职责、入口、边界和禁止依赖。",
+      "prompt_en": "Confirm responsibilities, entry points, boundaries, and forbidden dependencies for major directories."
+    },
+    {
+      "id": "devops",
+      "kind": "devops",
+      "schema_version": 5,
+      "path": ".claw/devops.md",
+      "template": "templates/core/devops.md",
+      "module": "project_state",
+      "category": "core",
+      "lifecycle": "core",
+      "temperature": "warm",
+      "init_order": 50,
+      "required_when": {
+        "all": [
+          {"module_enabled": "project_state"},
+          {"any": [{"project_mode": "greenfield"}, {"project_mode": "brownfield"}]}
+        ]
+      },
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认已验证或明确待验证的构建、运行、测试和部署入口。",
+      "prompt_en": "Confirm verified or explicitly pending build, run, test, and deployment entry points."
+    },
+    {
+      "id": "collaboration_config",
+      "kind": "collaboration-config",
+      "schema_version": 5,
+      "path": ".claw/collaboration-config.yaml",
+      "template": "templates/collaboration-gate/config.yaml",
+      "module": "collaboration_gate",
+      "category": "module_config",
+      "lifecycle": "module_config",
+      "temperature": "warm",
+      "init_order": 55,
+      "required_when": "collaboration_gate",
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认管理者、身份绑定、assignment 边界和本地登录策略；成员与授权目录仍由真实事件创建。",
+      "prompt_en": "Confirm manager, identity binding, assignment boundaries, and local login policy; member and assignment directories remain event-created."
+    },
+    {
+      "id": "review_config",
+      "kind": "change-review-config",
+      "schema_version": 5,
+      "path": ".claw/review-config.yaml",
+      "template": "templates/change-review/review-config.yaml",
+      "module": "change_review",
+      "category": "module_config",
+      "lifecycle": "module_config",
+      "temperature": "warm",
+      "init_order": 60,
+      "required_when": "change_review",
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认代码托管平台、目标分支、评审人、必需检查和创建策略。",
+      "prompt_en": "Confirm code-hosting platform, target branch, reviewers, required checks, and creation policy."
+    },
+    {
+      "id": "task_board",
+      "kind": "task-board",
+      "schema_version": 5,
+      "path": ".claw/task-board.md",
+      "template": "templates/core/task-board.md",
+      "module": "project_state",
+      "category": "core",
+      "lifecycle": "core",
+      "temperature": "warm",
+      "init_order": 70,
+      "required_when": {
+        "all": [
+          {"module_enabled": "project_state"},
+          {"any": [{"project_mode": "greenfield"}, {"project_mode": "brownfield"}]}
+        ]
+      },
+      "required_fields": [
+        "board_status"
+      ],
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认空看板已经可用；初始化不得制造占位任务。",
+      "prompt_en": "Confirm the empty task board is usable; initialization must not create placeholder tasks."
+    },
+    {
+      "id": "current_status",
+      "kind": "current-status",
+      "schema_version": 5,
+      "path": ".claw/current-status.md",
+      "template": "templates/core/current-status.md",
+      "module": "project_state",
+      "category": "core",
+      "lifecycle": "core",
+      "temperature": "hot",
+      "init_order": 80,
+      "required_when": {
+        "all": [
+          {"module_enabled": "project_state"},
+          {"any": [{"project_mode": "greenfield"}, {"project_mode": "brownfield"}]}
+        ]
+      },
+      "required_fields": [
+        "phase",
+        "active_task_count",
+        "next_action"
+      ],
+      "initialization_required": true,
+      "counts_toward_ready": true,
+      "prompt": "确认当前阶段、活跃工作流索引、下一步和按需读取提示。",
+      "prompt_en": "Confirm the current phase, active-workflow index, next action, and progressive-reading guidance."
+    },
+    {
+      "id": "feature_spec",
+      "kind": "feature-spec",
+      "schema_version": 5,
+      "path_pattern": "docs/specs/FEAT-*.md",
+      "template": "templates/project-state/feature-spec.md",
+      "module": "project_state",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "warm",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "feature_design_ready"
+    },
+    {
+      "id": "task_status",
+      "kind": "task-status",
+      "schema_version": 5,
+      "path_pattern": ".claw/tasks/TASK-*.md",
+      "template": "templates/project-state/task-status.md",
+      "module": "project_state",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "hot",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "task_created"
+    },
+    {
+      "id": "issue_list",
+      "kind": "issue-list",
+      "schema_version": 5,
+      "path": ".claw/issue-list.md",
+      "template": "templates/project-state/issue-list.md",
+      "module": "project_state",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "warm",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "issue_discovered"
+    },
+    {
+      "id": "test_report",
+      "kind": "test-report",
+      "schema_version": 5,
+      "path": ".claw/test-report.md",
+      "template": "templates/project-state/test-report.md",
+      "module": "project_state",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "warm",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "verification_executed"
+    },
+    {
+      "id": "task_archive",
+      "kind": "task-archive",
+      "schema_version": 5,
+      "path": ".claw/task-archive.md",
+      "template": "templates/project-state/task-archive.md",
+      "module": "project_state",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "cold",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "task_archived"
+    },
+    {
+      "id": "developer",
+      "kind": "developer",
+      "schema_version": 5,
+      "path_pattern": ".claw/developers/*.yaml",
+      "template": "templates/collaboration-gate/developer.yaml",
+      "module": "collaboration_gate",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "warm",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "member_registered"
+    },
+    {
+      "id": "assignment",
+      "kind": "assignment",
+      "schema_version": 5,
+      "path_pattern": ".claw/assignments/*.yaml",
+      "template": "templates/collaboration-gate/assignment.yaml",
+      "module": "collaboration_gate",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "warm",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "assignment_granted"
+    },
+    {
+      "id": "integration_queue",
+      "kind": "integration-queue",
+      "schema_version": 5,
+      "path": ".claw/integration-queue.md",
+      "template": "templates/project-state/integration-queue.md",
+      "module": "collaboration_gate",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "warm",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "parallel_integration_required"
+    },
+    {
+      "id": "team_status",
+      "kind": "team-status",
+      "schema_version": 5,
+      "path": ".claw/team-status.md",
+      "template": "templates/collaboration-gate/team-status.md",
+      "module": "collaboration_gate",
+      "category": "derived",
+      "lifecycle": "derived",
+      "temperature": "warm",
+      "required_when": "derived",
+      "initialization_required": false,
+      "create_on": "manager_status_requested"
+    }
+  ]
+}

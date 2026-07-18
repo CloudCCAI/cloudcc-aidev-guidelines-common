@@ -1,0 +1,33 @@
+kind: assignment
+schema_version: 5
+task_id: {{TASK_ID}}
+assignee: {{DEVELOPER_ID}}
+assigned_by: {{MANAGER_ID}}
+status: active
+assigned_at: {{TIMESTAMP}}
+expires_at: {{EXPIRES_AT}}
+spec_path: {{SPEC_PATH}}
+task_status_path: {{TASK_STATUS_PATH}}
+branch: {{BRANCH}}
+change_request_url: n/a
+pr_url: n/a
+scope_mode: {{SCOPE_MODE}}
+allowed_write_roots:
+  - {{ALLOWED_WRITE_ROOT}}
+scope_files:
+  - {{TASK_STATUS_PATH}}
+protected_paths:
+  - .claw/assignments
+  - .claw/developers
+  - .github/workflows
+touch_policy: exclusive
+shared_contracts:
+  - {{SPEC_PATH}}
+task_boundary:
+  - "Work must serve {{TASK_ID}} and its linked acceptance criteria."
+change_manifest_required: true
+signature: "{{SIGNATURE_OR_EXTERNAL_REFERENCE}}"
+preflight_required: true
+local_login_required: true
+identity_policy: "ssh_challenge_response + git_platform_account + ssh_commit_signing"
+notes: "Only a project manager may create, expand, pause, revoke, or extend this assignment. No secrets belong here."

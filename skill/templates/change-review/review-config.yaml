@@ -1,0 +1,14 @@
+kind: change-review-config
+schema_version: 5
+version: 1
+init_status: not_started
+init_completed_at: "none"
+init_confirmed_by: "none"
+updated_at: "{{TIMESTAMP}}"
+updated_by: onboarding
+platform: pending
+target_branch: pending
+reviewers: none
+required_checks: none
+creation_policy: manual
+token_storage: local_only

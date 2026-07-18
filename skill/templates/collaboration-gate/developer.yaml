@@ -1,0 +1,19 @@
+kind: developer
+schema_version: 5
+developer_id: {{DEVELOPER_ID}}
+display_name: "{{DISPLAY_NAME}}"
+slug: {{DEVELOPER_SLUG}}
+document_slug: {{DEVELOPER_SLUG}}
+role: {{ROLE}}
+public_key: "{{PUBLIC_KEY}}"
+git_platform: {{GIT_PLATFORM}}
+git_username: {{GIT_USERNAME}}
+verified_identity: "{{VERIFIED_IDENTITY}}"
+ssh_signing_key_fingerprint: "{{SSH_FINGERPRINT}}"
+status: active
+managed_by: {{MANAGER_ID}}
+allowed_scopes:
+  - {{ALLOWED_SCOPE}}
+role_sharing_exception: none
+allowed_until: {{ALLOWED_UNTIL}}
+notes: "Repository identity records contain public identity material only. Never store private keys, passwords, bearer tokens, or reusable secrets."

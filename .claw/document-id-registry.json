@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "allocations": [
+    {
+      "kind": "feature",
+      "document_id": "FEAT-bimo-002",
+      "owner_slug": "bimo",
+      "number": 2,
+      "path": "docs/specs/FEAT-bimo-002-configurable-document-language.md",
+      "allocated_at": "2026-07-18T12:16:09Z"
+    },
+    {
+      "kind": "task",
+      "document_id": "TASK-bimo-006",
+      "owner_slug": "bimo",
+      "number": 6,
+      "path": ".claw/tasks/TASK-bimo-006-document-language.md",
+      "allocated_at": "2026-07-18T12:16:52Z"
+    }
+  ]
+}

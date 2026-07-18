@@ -1,5 +1,5 @@
 .DS_Store
 .claw-local/
-.ai-dev-local/
+.claw/.locks/
 .env
 *.local.env

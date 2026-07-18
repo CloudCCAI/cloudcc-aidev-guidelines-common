@@ -8,6 +8,8 @@ import json
 import sys
 from pathlib import PurePosixPath, Path
 
+from lib.document_ids import TASK_ID_RE
+
 
 EMPTY_VALUES = {"", "none", "n/a", "na", "not_applicable"}
 ACTIVE_STATUSES = {"active"}
@@ -227,6 +229,12 @@ def check_authorization(args: argparse.Namespace) -> tuple[bool, list[str], dict
         "files": args.files,
     }
 
+    if not TASK_ID_RE.fullmatch(args.task):
+        findings.append(
+            "blocked_task_id_invalid: expected legacy TASK-<number> or v5 TASK-<user-slug>-<nnn>"
+        )
+        return False, findings, details
+
     findings.extend(check_duplicate_identity_policy(state_dir))
 
     developer_path = find_developer_record(state_dir, args.developer)
@@ -348,9 +356,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Check manager-gated task authorization before development or CI merge."
     )
-    parser.add_argument("state_dir", help="Path to .claw or .ai-dev")
+    parser.add_argument("state_dir", help="Path to the project's .claw directory")
     parser.add_argument("--developer", required=True, help="Developer id such as DEV-alice")
-    parser.add_argument("--task", required=True, help="Task id such as TASK-001")
+    parser.add_argument("--task", required=True, help="Task id such as TASK-001 or TASK-alice-001")
     parser.add_argument("--branch", default="", help="Current branch or PR head branch")
     parser.add_argument("--git-username", default="", help="Git platform username to match developer record")
     parser.add_argument(
@@ -376,6 +384,22 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
+
+    if Path(args.state_dir).name != ".claw":
+        if args.json:
+            print(
+                json.dumps(
+                    {
+                        "status": "blocked",
+                        "findings": ["blocked_state_directory: expected a .claw directory"],
+                        "state_dir": args.state_dir,
+                    },
+                    indent=2,
+                )
+            )
+        else:
+            print("blocked:\n- blocked_state_directory: expected a .claw directory")
+        return 1
 
     allowed, findings, details = check_authorization(args)
 

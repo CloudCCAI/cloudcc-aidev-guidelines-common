@@ -35,9 +35,9 @@ Create the change request:
 
 ```bash
 python3 scripts/create-codeup-change-request.py \
-  --source-branch feat/TASK-001-feature-title \
-  --title "[TASK-001] Feature title" \
-  --description-file .claw/tasks/TASK-001.md \
+  --source-branch feat/TASK-alice-001-feature-title \
+  --title "[TASK-alice-001] Feature title" \
+  --description-file .claw/tasks/TASK-alice-001-feature-title.md \
   --reviewer-user-ids "62c795xxxb468af8"
 ```
 
@@ -51,10 +51,10 @@ export YUNXIAO_ORGANIZATION_ID="your-organization-id"
 
 ## Required Team Convention
 
-- Branch names should include `TASK-xxx`.
-- Change request titles should include `[TASK-xxx]`.
+- Branch names should include a canonical task ID. New files use `TASK-<user-slug>-<three-digit-number>`; grandfathered `TASK-<number>` IDs remain accepted.
+- Change request titles should include the same canonical ID, for example `[TASK-alice-001]` or legacy `[TASK-001]`.
 - Change request descriptions should include scope, verification, risk, and rollback notes.
-- `.claw/tasks/TASK-xxx.md` should record `change_request_url` after creation.
+- The matching `.claw/tasks/TASK-*.md` file should record `change_request_url` after creation.
 - Protected branches should require Codeup review and Yunxiao Flow checks before merge.
 - Flow checks should call `scripts/check-assignment.py` or an equivalent adapter before merge.
 
