@@ -48,6 +48,22 @@
       "number": 8,
       "path": ".claw/tasks/TASK-bimo-008-project-documentation-directories.md",
       "allocated_at": "2026-07-19T01:15:45Z"
+    },
+    {
+      "kind": "feature",
+      "document_id": "FEAT-bimo-005",
+      "owner_slug": "bimo",
+      "number": 5,
+      "path": "docs/specs/FEAT-bimo-005-chinese-template-cleanup.md",
+      "allocated_at": "2026-07-19T01:34:46Z"
+    },
+    {
+      "kind": "task",
+      "document_id": "TASK-bimo-009",
+      "owner_slug": "bimo",
+      "number": 9,
+      "path": ".claw/tasks/TASK-bimo-009-chinese-template-cleanup.md",
+      "allocated_at": "2026-07-19T01:37:00Z"
     }
   ]
 }

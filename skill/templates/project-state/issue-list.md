@@ -5,11 +5,11 @@ updated_at: {{TIMESTAMP}}
 updated_by: "{{UPDATED_BY}}"
 ---
 
-# Issue List
+# 问题追踪列表
 
-Create `issue-list.md` when the first real bug, risk, or blocker appears.
+`issue-list.md` 在第一个真实 bug、风险或阻塞出现时创建。
 
-## Active Issues
+## 活跃问题
 
 ### {{ISSUE_ID}} - {{TITLE}}
 
@@ -21,11 +21,11 @@ Create `issue-list.md` when the first real bug, risk, or blocker appears.
 - related_tasks: `{{RELATED_TASKS}}`
 - next_action: {{NEXT_ACTION}}
 
-## Resolved Issues
+## 已解决问题
 
-- None.
+- 暂无。
 
-## Maintenance Rules
+## 维护规则
 
-- This file owns symptoms, impact, root-cause status, and blocker facts.
-- Put fix design, change scope, acceptance criteria, and regression strategy in the linked FEAT.
+- 现象、影响、根因状态和阻塞信息以本文件为准。
+- 修复设计、变更范围、验收标准和回归策略写入关联 FEAT。

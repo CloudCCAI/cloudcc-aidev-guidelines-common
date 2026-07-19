@@ -10,21 +10,21 @@ updated_by: onboarding
 board_status: active
 ---
 
-# Task Board
+# 任务看板
 
-`task-board.md` is the compact coordination index. Detailed task state belongs in event-created `.claw/tasks/TASK-*.md` files.
+`task-board.md` 是紧凑的协作索引，任务详情属于事件创建的 `.claw/tasks/TASK-*.md`。
 
-## Active Tasks
+## 活跃任务
 
-No active tasks.
+当前没有活跃任务。
 
-## Completed Tasks
+## 已完成任务
 
-No completed tasks.
+当前没有已完成任务。
 
-## Maintenance Rules
+## 维护规则
 
-- Initialization must not create a placeholder task.
-- Every task card must reference an existing task status file.
-- Non-trivial delivery work references an existing feature spec.
-- Keep long progress, verification, changed files, and handoff notes out of this index.
+- 初始化时不得创建占位任务。
+- 每张任务卡必须引用真实任务状态文件。
+- 非平凡交付工作必须引用真实 FEAT。
+- 不要在本索引保存长篇进度、验证、变更文件和交接记录。

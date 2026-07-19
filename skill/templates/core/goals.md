@@ -12,39 +12,39 @@ project_mode: {{PROJECT_MODE}}
 
 <!-- cc-aidev:onboarding-incomplete -->
 
-> Onboarding reference: this marker means the required answers below are not yet confirmed. Write the real project answers, obtain user confirmation, and only then remove the marker before setting `init_status: complete`.
+> 此标记表示必需答案尚未确认。填写真实项目答案并取得用户确认后，才能删除标记并将 `init_status` 设为 `complete`。
 
-# Project Goals
+# 项目目标
 
-`goals.md` is the source of truth for durable project intent.
+`goals.md` 是项目长期目标的事实源。
 
-## Vision and Users
+## 愿景与用户
 
-- Project purpose: pending user confirmation
-- Core users: pending user confirmation
-- Desired outcome: pending user confirmation
+- 项目用途：等待用户确认
+- 核心用户：等待用户确认
+- 预期结果：等待用户确认
 
-## Scope
+## 范围
 
-### In Scope
+### 范围内
 
-- Pending user confirmation.
+- 等待用户确认。
 
-### Out of Scope
+### 范围外
 
-- Pending user confirmation.
+- 等待用户确认。
 
-## Success Criteria
+## 成功标准
 
-- Pending user confirmation.
+- 等待用户确认。
 
-## Constraints and Non-goals
+## 约束与非目标
 
-- Technical constraints: pending user confirmation
-- Delivery constraints: pending user confirmation
-- Security or compliance constraints: pending user confirmation
+- 技术约束：等待用户确认
+- 交付约束：等待用户确认
+- 安全或合规约束：等待用户确认
 
-## Initialization Guidance
+## 初始化说明
 
-- Replace unexplained placeholders before marking this file `complete`.
-- Explicit `pending verification` facts are allowed when their owner and next verification action are recorded.
+- 标记文件完成前，替换所有未解释的占位内容。
+- 可以保留明确的 `pending verification`，但必须记录负责人和下一项验证动作。

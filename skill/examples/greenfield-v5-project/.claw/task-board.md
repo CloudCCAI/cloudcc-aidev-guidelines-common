@@ -9,14 +9,14 @@ updated_by: sample-owner
 board_status: active
 ---
 
-# Task Board
+# 任务看板
 
-## Active Tasks
+## 活跃任务
 
-No active tasks.
+当前没有活跃任务。
 
-## Completed Tasks
+## 已完成任务
 
-No completed tasks.
+当前没有已完成任务。
 
-The initializer did not manufacture a placeholder task.
+初始化器没有制造占位任务。

@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -69,17 +68,8 @@ def command_set(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             "change_review": normalize_switch(args.change_review, bool(current.get("change_review", False))),
         }
         ONBOARDING.validate_module_dependencies(modules)
-        current_language = ONBOARDING.manifest_language(manifest)
-        requested_language = (
-            ONBOARDING.normalize_language(args.language, allow_pending=False)
-            if args.language
-            else current_language
-        )
-        language_changed = requested_language != current_language
-        changed = modules != current or language_changed
+        changed = modules != current
         manifest["modules"] = modules
-        if args.language:
-            manifest["language"] = requested_language
         if not modules["project_state"]:
             manifest["project_mode"] = "not_applicable"
         elif not bool(current.get("project_state", False)):
@@ -108,16 +98,11 @@ def command_set(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         ONBOARDING.validate_mode_for_modules(manifest, allow_pending=True)
 
         ONBOARDING.write_manifest(project_root, manifest)
-        if language_changed:
-            ONBOARDING.ensure_guidance(project_root, requested_language)
         created = ONBOARDING.sync_files(project_root, manifest, timestamp)
         result = ONBOARDING.status_result(project_root, manifest)
         result["changed"] = changed
-        result["language_changed"] = language_changed
         result["created"] = created
-        result["message"] = (
-            "configuration updated; existing documents were preserved and language changes apply to future writes"
-        )
+        result["message"] = "configuration updated; existing documents were preserved"
         return result, ONBOARDING.EXIT_NEEDS_INPUT if result["next"] else ONBOARDING.EXIT_OK
 
 
@@ -192,7 +177,6 @@ def build_parser() -> argparse.ArgumentParser:
     set_parser.add_argument("--project-state", choices=("on", "off"))
     set_parser.add_argument("--collaboration-gate", choices=("on", "off"))
     set_parser.add_argument("--change-review", choices=("on", "off"))
-    set_parser.add_argument("--language", choices=ONBOARDING.SUPPORTED_LANGUAGES)
 
     review = subparsers.add_parser("review")
     add_common(review, include_now=True)

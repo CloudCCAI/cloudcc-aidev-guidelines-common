@@ -7,11 +7,10 @@ import json
 import os
 import re
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
 
-from lib.language import PENDING_LANGUAGE, manifest_language
+from lib.language import PENDING_LANGUAGE, PRIMARY_LANGUAGE, manifest_language
 
 
 EXIT_OK = 0
@@ -165,6 +164,13 @@ def read_front_matter_status(path: Path) -> str | None:
 
 def load_catalog() -> dict[str, Any]:
     return json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+
+
+def version_tuple(value: object) -> tuple[int, int, int]:
+    cleaned = str(value).strip().strip('"\'')
+    if not re.fullmatch(r"[0-9]\.[0-9]\.[0-9]", cleaned):
+        return (0, 0, 0)
+    return tuple(int(part) for part in cleaned.split("."))  # type: ignore[return-value]
 
 
 def git_commit_count(project_root: Path) -> int | None:
@@ -337,9 +343,7 @@ def inspect_project(project_root: Path) -> dict[str, Any]:
             **base,
             "status": "uninitialized",
             "ready": False,
-            "next_action": (
-                "confirm document language and module switches; if project_state is enabled, confirm greenfield/brownfield"
-            ),
+            "next_action": "confirm module switches; if project_state is enabled, confirm greenfield/brownfield",
         }
 
     if not state_dir.is_dir():
@@ -389,6 +393,15 @@ def inspect_project(project_root: Path) -> dict[str, Any]:
             "finding": str(exc),
             "next_action": "repair manifest language",
         }
+    if version_tuple(manifest.get("skill_version")) >= (5, 0, 3) and language != PRIMARY_LANGUAGE:
+        return {
+            **base,
+            "status": "needs_review",
+            "ready": False,
+            "language": language,
+            "finding": "Skill 5.0.3 及后续版本的 manifest 必须使用 `language: zh-CN`。",
+            "next_action": "repair manifest language to zh-CN",
+        }
     ready = initialization_status == "ready" and language != PENDING_LANGUAGE
     reported_status = (
         "needs_review"
@@ -397,7 +410,7 @@ def inspect_project(project_root: Path) -> dict[str, Any]:
     )
     modules = manifest.get("modules", {})
     if language == PENDING_LANGUAGE:
-        next_action = "confirm document language before creating managed files"
+        next_action = "resume guided onboarding to normalize the legacy language marker to zh-CN"
     elif ready and isinstance(modules, dict) and modules.get("project_state") is True:
         next_action = "load current-status.md"
     elif ready and isinstance(modules, dict) and modules.get("change_review") is True:

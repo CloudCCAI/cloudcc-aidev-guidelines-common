@@ -1,26 +1,26 @@
-# Product and Feature Design Documents
+# 产品与功能设计文档
 
-This directory is the canonical home for design documents for **{{PROJECT_NAME}}**.
+此目录是 **{{PROJECT_NAME}}** 产品和功能设计文档的统一入口。
 
-## What belongs here
+## 适合存放的内容
 
-- Feature goals, scope, actors, prerequisites, and constraints.
-- User journeys, business flows, interaction flows, and approval flows.
-- State transitions, decision points, exception paths, and recovery behavior.
-- Page, component, API, event, and data interaction design.
-- Diagrams, alternatives, trade-offs, risks, and traceability to FEAT/TASK records.
+- 功能目标、范围、参与角色、前置条件和约束。
+- 用户旅程、业务流转、交互流程和审批流程。
+- 状态变化、判断节点、异常分支和恢复方式。
+- 页面、组件、API、事件和数据交互设计。
+- 图示、备选方案、取舍、风险，以及与 FEAT/TASK 的关联。
 
-## Recommended document structure
+## 推荐文档结构
 
-1. Background and goals.
-2. Scope and non-goals.
-3. Actors, prerequisites, and constraints.
-4. Main flow and exception flows.
-5. States, transitions, rules, and permissions.
-6. Interfaces, data, events, and dependencies.
-7. UX or system diagrams.
-8. Risks, open questions, acceptance, and verification.
+1. 背景与目标。
+2. 范围与非目标。
+3. 角色、前置条件与约束。
+4. 主流程与异常流程。
+5. 状态、流转规则和权限。
+6. 接口、数据、事件与依赖。
+7. 交互图或系统图。
+8. 风险、未决问题、验收与验证。
 
-## Design Index
+## 设计索引
 
-- No product-specific design documents have been confirmed yet.
+- 暂无已确认的产品专项设计文档。

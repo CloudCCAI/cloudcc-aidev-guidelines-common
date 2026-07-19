@@ -9,14 +9,14 @@ updated_by: sample-maintainer
 project_mode: brownfield
 ---
 
-# Directory Map
+# 目录地图
 
-| Path | Responsibility | Entry points | Evidence |
+| 路径 | 职责 | 入口 | 证据 |
 |---|---|---|---|
-| `src/` | existing inventory domain behavior | `src/inventory.py` | verified |
-| `.claw/` | project-management state | `manifest.yaml`, `current-status.md` | verified |
-| `docs/specs/` | baseline and future feature designs | `PROJECT-BASELINE.md` | verified |
-| `docs/help/` | customer-facing product help and usage manuals | `README.md` | verified |
-| `docs/design/` | detailed feature and flow designs | `README.md` | verified |
+| `src/` | 既有库存领域行为 | `src/inventory.py` | verified |
+| `.claw/` | 项目管理状态 | `manifest.yaml`、`current-status.md` | verified |
+| `docs/specs/` | 基线和未来功能设计 | `PROJECT-BASELINE.md` | verified |
+| `docs/help/` | 面向客户的产品帮助和使用手册 | `README.md` | verified |
+| `docs/design/` | 详细功能和流程设计 | `README.md` | verified |
 
-Do not infer missing production or deployment directories from this small fixture.
+不要根据这个小型示例推断缺失的生产或部署目录。

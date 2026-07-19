@@ -1,12 +1,12 @@
-# Greenfield v5 example
+# Greenfield v5 示例
 
-This project demonstrates a completed Greenfield initialization with project state enabled and both optional modules disabled. The empty task board is intentional.
+本项目演示已完成的 Greenfield 初始化：启用项目状态模块，关闭两个可选模块。任务看板有意保持为空。
 
 <!-- cc-aidev-guidelines-common:begin -->
-## AI Development Protocol
+## AI 开发协议
 
-This project follows the `cc-aidev-guidelines-common` skill.
+本项目遵循 `cc-aidev-guidelines-common` 技能。
 
-- All AI agents must use this skill before project work.
-- Install it from https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill when unavailable.
+- 所有 AI 智能体在开展项目工作前都必须使用此技能。
+- 当前环境没有此技能时，从 https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill 安装。
 <!-- cc-aidev-guidelines-common:end -->

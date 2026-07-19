@@ -2,7 +2,7 @@
 kind: project-baseline
 schema_version: 5
 project_mode: {{PROJECT_MODE}}
-title: "Project baseline"
+title: "项目基线"
 status: adopting
 init_status: not_started
 init_completed_at: none
@@ -16,38 +16,38 @@ updated_by: onboarding
 
 <!-- cc-aidev:onboarding-incomplete -->
 
-## Project Overview
+## 项目概览
 
-- Record the current purpose, active delivery surface, and reason for adoption.
+- 当前项目用途、活跃交付面和本次接管原因。
 
-## Verified Facts
+## 已验证事实
 
-- Record only facts supported by code, configuration, commands, or user confirmation, with evidence paths.
+- 只记录有代码、配置、命令或用户确认作为证据的事实，并附证据路径。
 
-## Inferred Facts
+## 推断事实
 
-- Record assumptions needed by current work that are not fully verified, including their basis.
+- 记录当前工作依赖但尚未完全验证的推断和依据。
 
-## Pending Verification
+## 待验证事项
 
-- Record unknown behavior, commands, dependencies, configuration, and boundaries.
+- 记录未知行为、命令、依赖、配置和边界。
 
-## Legacy Hotspots
+## 历史风险热点
 
-- Record high-risk, tightly coupled, undocumented, or temporarily protected areas.
+- 记录高风险、强耦合、缺文档或暂不宜修改的区域。
 
-## Key Entry Points
+## 关键入口
 
-- Record code, configuration, test, build, runtime, and operations entry points.
+- 记录代码、配置、测试、构建、运行和运维入口。
 
-## Active Delivery Surface
+## 当前交付面
 
-- Record the real active scope; write `none` when no task exists.
+- 记录正在推进的真实范围；没有任务时写 `none`。
 
-## Adoption Plan
+## 接管计划
 
-- Add only the context needed by current delivery; do not backfill all history at once.
+- 只补当前交付需要的上下文，不要求一次性回填全部历史。
 
-## Handoff Notes
+## 交接说明
 
-- Record what the next contributor should read, run, and avoid.
+- 记录下一位接手者先读什么、运行什么、避开什么。

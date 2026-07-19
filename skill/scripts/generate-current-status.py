@@ -10,7 +10,6 @@ from pathlib import Path
 
 from lib.atomic_io import atomic_write_text, file_lock
 from lib.document_ids import TASK_BOARD_HEADER_RE, document_id_from_path, extract_feature_ids
-from lib.language import choose, state_dir_language
 from lib.state_io import clean_value, read_front_matter, utc_now
 
 
@@ -202,64 +201,53 @@ def render_current_status(
     updated_by: str,
     limit: int = 10,
     initialization: dict[str, str] | None = None,
-    language: str = "en",
+    language: str | None = None,
 ) -> str:
+    _ = language  # Retained only for callers from historical multilingual releases.
     init_fields = dict(INIT_DEFAULTS)
     if initialization:
         init_fields.update({key: value for key, value in initialization.items() if key in init_fields})
     ordered_workflows = order_workflows(workflows)
     shown = ordered_workflows[: max(limit, 0)]
     truncated = len(shown) < len(workflows)
-    next_action = shown[0].next_action if shown else choose(
-        language,
-        en="confirm the next project action",
-        zh_cn="确认下一项项目工作",
-    )
+    active_task = ordered_workflows[0].task_id if ordered_workflows else "none"
+    next_action = shown[0].next_action if shown else "确认下一项项目工作"
     lines = [
         "---",
         "kind: current-status",
         "schema_version: 5",
+        "version: 5",
         f"init_status: {json.dumps(init_fields['init_status'], ensure_ascii=False)}",
         f"init_completed_at: {json.dumps(init_fields['init_completed_at'], ensure_ascii=False)}",
         f"init_confirmed_by: {json.dumps(init_fields['init_confirmed_by'], ensure_ascii=False)}",
         f"updated_at: {utc_now()}",
         f"updated_by: {json.dumps(updated_by, ensure_ascii=False)}",
         f"phase: {'active' if workflows else 'idle'}",
+        f"active_task: {json.dumps(active_task, ensure_ascii=False)}",
         f"active_task_count: {len(workflows)}",
         f"active_tasks_shown: {len(shown)}",
         f"active_tasks_truncated: {'true' if truncated else 'false'}",
         f"next_action: {json.dumps(_cell(next_action), ensure_ascii=False)}",
         "task_board: .claw/task-board.md",
     ]
-    if shown:
-        lines.append("active_tasks:")
-        lines.extend(f"  - {workflow.task_id}" for workflow in shown)
-    else:
-        lines.append("active_tasks: []")
+    active_tasks = ", ".join(workflow.task_id for workflow in shown)
+    lines.append(f"active_tasks: [{active_tasks}]")
     lines.extend(
         [
             "---",
             "",
-            choose(language, en="# Project Current Status", zh_cn="# 项目当前状态"),
+            "# 项目当前状态",
             "",
-            choose(
-                language,
-                en="`current-status.md` is a generated hot index. The linked source files remain authoritative.",
-                zh_cn="`current-status.md` 是生成的热索引，所链接的事实源文件仍具有最终权威。",
-            ),
+            "`current-status.md` 是生成的热索引，所链接的事实源文件仍具有最终权威。",
             "",
-            choose(language, en="## Active Workflows", zh_cn="## 活跃工作流"),
+            "## 活跃工作流",
             "",
         ]
     )
     if shown:
         lines.extend(
             [
-                choose(
-                    language,
-                    en="| User | Feature | Task | Type | Status | Branch | Next Action |",
-                    zh_cn="| 用户 | 功能 | 任务 | 类型 | 状态 | 分支 | 下一步 |",
-                ),
+                "| 用户 | 功能 | 任务 | 类型 | 状态 | 分支 | 下一步 |",
                 "|---|---|---|---|---|---|---|",
             ]
         )
@@ -269,55 +257,29 @@ def render_current_status(
             )
     else:
         lines.append(
-            choose(
-                language,
-                en="- No active task. Do not create a placeholder task.",
-                zh_cn="- 当前没有活跃任务，不要创建占位任务。",
-            )
+            "- 当前没有活跃任务，不要创建占位任务。"
         )
     if truncated:
         remaining = len(workflows) - len(shown)
         lines.extend(
             [
                 "",
-                choose(
-                    language,
-                    en=f"- {remaining} more active task(s); read `.claw/task-board.md` for the full queue.",
-                    zh_cn=f"- 另有 {remaining} 个活跃任务；读取 `.claw/task-board.md` 查看完整队列。",
-                ),
+                f"- 另有 {remaining} 个活跃任务；读取 `.claw/task-board.md` 查看完整队列。",
             ]
         )
     lines.extend(
         [
             "",
-            choose(language, en="## Read Next", zh_cn="## 按需读取"),
+            "## 按需读取",
             "",
-            choose(
-                language,
-                en="- `.claw/task-board.md` for queue membership, priority, dependencies, and references.",
-                zh_cn="- 读取 `.claw/task-board.md` 获取队列归属、优先级、依赖和引用。",
-            ),
-            choose(
-                language,
-                en="- Only the selected task status and its referenced FEAT or issue.",
-                zh_cn="- 只读取选中任务的状态，以及它引用的 FEAT 或问题。",
-            ),
+            "- 读取 `.claw/task-board.md` 获取队列归属、优先级、依赖和引用。",
+            "- 只读取选中任务的状态，以及它引用的 FEAT 或问题。",
         ]
     )
     rendered = "\n".join(lines) + "\n"
     if len(rendered.splitlines()) > 60:
         raise ValueError("generated current-status.md exceeds the 60-line hot-file budget")
     return rendered
-
-
-def write_current_status(state_dir: Path, rendered: str, *, lock_timeout: float = 10.0) -> Path:
-    state_dir = Path(state_dir).resolve()
-    if state_dir.name != ".claw":
-        raise ValueError("current status generation only supports a .claw state directory")
-    destination = state_dir / "current-status.md"
-    with file_lock(state_dir / ".locks" / "current-status.lock", timeout=lock_timeout):
-        atomic_write_text(destination, rendered)
-    return destination
 
 
 def generate_and_write_current_status(
@@ -341,7 +303,6 @@ def generate_and_write_current_status(
             updated_by=updated_by,
             limit=limit,
             initialization=initialization,
-            language=state_dir_language(state_dir),
         )
         atomic_write_text(destination, rendered)
     return destination, rendered
@@ -378,7 +339,6 @@ def main() -> int:
             updated_by=args.updated_by,
             limit=args.limit,
             initialization=initialization,
-            language=state_dir_language(state_dir),
         )
         print(rendered, end="")
     return 0

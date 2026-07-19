@@ -1,5 +1,4 @@
-# Reserved Dockerfile for {{ENVIRONMENT}}.
+# 为 {{ENVIRONMENT}} 环境预留的 Dockerfile。
 #
-# This file is intentionally non-runnable until the application's runtime,
-# build stages, artifacts, ports, health check, and startup command are confirmed.
-# Add a reviewed FROM instruction and environment-specific build steps before use.
+# 在确认应用运行时、构建阶段、产物、端口、健康检查和启动命令之前，
+# 此文件有意保持不可运行。使用前请添加经过评审的 FROM 指令和环境专用构建步骤。

@@ -1,1 +1,1 @@
-# Reserved DEV Dockerfile; add a verified FROM instruction and build steps before use.
+# 预留的 DEV Dockerfile；使用前补充已验证的 FROM 指令和构建步骤。

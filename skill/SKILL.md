@@ -2,7 +2,7 @@
 name: cc-aidev-guidelines-common
 description: 通过 `.claw` manifest、引导式 Greenfield/Brownfield 初始化、逐文件初始化状态、按用户递增的 FEAT/TASK、多个并行工作流、项目经理身份门禁和可选 Codeup/GitHub 评审，持久化并渐进加载 AI 软件项目状态。用于首次接入项目、恢复未完成初始化、开始新 AI 会话、讨论和设计开发工作、拆解任务、跨会话交接、多人并行授权、创建代码合并申请、验证或维护项目状态。
 metadata:
-  skill_version: "5.0.2"
+  skill_version: "5.0.3"
 ---
 
 # AI 项目初始化与交付路由
@@ -42,13 +42,13 @@ python3 scripts/project-preflight.py /path/to/project --json
 | review platform 为 Codeup | [references/platforms/codeup.md](references/platforms/codeup.md) |
 | review platform 为 GitHub | [references/platforms/github.md](references/platforms/github.md) |
 | 需要完整字段、枚举、兼容或冲突规则 | [STATE-MODEL.md](STATE-MODEL.md) |
-| 需要可运行样例 | [examples/README.md](examples/README.md) |
+| 需要可运行样例 | [references/examples.md](references/examples.md) |
 
 禁用模块的 reference、模板说明和状态文件不得加载。`collaboration_gate=true` 要求 `project_state=true`；不能静默开启依赖模块。
 
 ## 3. 初始化门槛
 
-初始化先由用户确认文档语言和三个模块开关。语言支持 `zh-CN` 和 `en`，控制新写入的人类可读项目管理内容；不得翻译机器字段、枚举、ID、路径、命令或原始验证输出。
+初始化先由用户确认三个模块开关。Skill 5.0.3 起，新建或明确重写的人类可读项目管理内容固定使用简体中文，不再询问或配置文档语言；机器字段、枚举、ID、路径、命令和原始验证输出保持协议值。
 
 三个模块开关：
 
@@ -70,9 +70,9 @@ python3 scripts/project-preflight.py /path/to/project --json
 
 引导 `devops.md` 时先确认客户环境清单，再初始化根目录 `DevOps/`。每个环境分别拥有 `Dockerfile` 和 `.env.example`。客户尚未决定时，先建议 `DEV`、`UAT`、`PROD` 三套预留环境；只有客户明确接受后才创建，后续允许增补或调整。初始化器不得覆盖或删除已有 DevOps 资产，占位 Dockerfile 不得伪装成可运行配置。
 
-文档语言和项目模式确认后，`project_state=true` 的新项目必须初始化 `docs/help/README.md` 和 `docs/design/README.md`。`help` 保存面向用户的产品帮助和使用手册；`design` 保存功能、交互、业务流转、状态变化和异常流程等设计。路径统一小写，与 `docs/specs` 保持同一根目录；初始化只补缺，不覆盖已有内容。
+项目模式确认后，`project_state=true` 的新项目必须初始化 `docs/help/README.md` 和 `docs/design/README.md`。`help` 保存面向用户的产品帮助和使用手册；`design` 保存功能、交互、业务流转、状态变化和异常流程等设计。路径统一小写，与 `docs/specs` 保持同一根目录；初始化只补缺，不覆盖已有内容。
 
-新初始化未确认语言时使用 `language: pending`，不得先生成默认英文核心文件。早期 v5 manifest 缺少语言字段时按 `en` 兼容读取；legacy 文件和既有内容不自动翻译。
+新 manifest 固定记录 `language: zh-CN`，该字段是写入策略标记而不是用户选项。早期 v5 manifest 缺少字段时按历史 `en` 读取；5.0.1/5.0.2 的 `en` 或 `pending` 继续用于兼容，恢复中的 `pending` 会在下一次初始化写操作归一为 `zh-CN`。legacy 文件和既有内容不自动翻译。
 
 初始化为空看板；不要制造 `TASK-001`。issue、test report、archive、integration queue、team status、FEAT 和 TASK 都按真实事件创建。
 
@@ -168,7 +168,7 @@ python3 scripts/generate-current-status.py /path/to/project/.claw --write
 - 只有真实命令或检查运行后才能写 test report。
 - 初始化、编号分配和热索引生成使用锁、临时文件和原子替换。
 - 已存在且被用户修改的内容不得静默覆盖。
-- 所有新建或明确重写的人类可读内容使用 manifest 的 `language`；机器协议值保持不变。
+- 所有新建或明确重写的人类可读内容使用规范中文模板；历史 manifest 的语言标记只用于兼容读取，机器协议值保持不变。
 - README 和 AGENTS 保留受控 Skill 声明块；它们不是状态文件。
 - `change_review=true` 且用户明确要求推送到测试环境时，按 change-review reference 使用 `push-test-environment.py`；source-branch-wins 只适用于测试环境。
 

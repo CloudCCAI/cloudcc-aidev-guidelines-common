@@ -2,16 +2,16 @@
 
 用于开发和发布 AI 软件项目初始化、状态管理、多人协作门禁与代码评审管理 Skill。
 
-当前 Skill 版本：`5.0.2`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
+当前 Skill 版本：`5.0.3`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
 
 ## 核心能力
 
 - 以 `.claw/manifest.yaml` 判断项目未初始化、初始化中、已完成或 legacy 状态。
-- 初始化时选择 `zh-CN` 或 `en`，统一所有新写入的人类可读项目管理内容。
+- 所有新写入的人类可读项目管理内容使用规范中文模板，并兼容读取历史语言标记。
 - 基于仓库证据建议 Greenfield/Brownfield，并由用户确认。
 - 逐文件问答初始化 goals、ARCHITECTURE、目录职责、DevOps、空 task board 和多任务 current status。
 - 客户环境确认后，按环境初始化根目录 `DevOps/`；客户未定时可明确接受 `DEV/UAT/PROD` 三套预留文件。
-- 初始化 `docs/help` 产品使用手册目录和 `docs/design` 功能/流转设计目录，并按项目语言生成索引。
+- 初始化 `docs/help` 产品使用手册目录和 `docs/design` 功能/流转设计目录，并生成中文索引。
 - 通过开关独立控制项目状态、多人协作门禁和代码合并申请。
 - 新 FEAT/TASK 带用户名，并按用户分别从 `001` 递增。
 - 同时管理多个用户、多个聊天窗口和多个活跃任务。
@@ -32,9 +32,8 @@
 | `skill/templates/devops-assets/` | 每环境 Dockerfile、变量示例和 DevOps 目录说明模板 |
 | `skill/templates/project-docs/` | 产品帮助和详细设计文档目录索引模板 |
 | `skill/templates/project-state/` | FEAT、TASK 和事件模板 |
-| `skill/templates/collaboration-gate/` | 身份、assignment 和团队视图模板 |
+| `skill/templates/collaboration-gate/` | 身份、assignment 和门禁配置模板 |
 | `skill/templates/change-review/` | 评审配置和平台资源 |
-| `skill/templates/locales/zh-CN/` | 中文的人类可读模板；规范模板路径使用英文 |
 | `skill/scripts/` | 预检、初始化、编号、聚合、门禁和校验工具 |
 | `skill/tests/` | v5 和 legacy 回归测试 |
 | `skill/examples/` | Greenfield、Brownfield 和 legacy 示例 |
@@ -45,9 +44,10 @@
 
 ## 首次接入项目
 
-先做只读预检：
+先确保目标项目根目录已经存在，再做只读预检：
 
 ```bash
+mkdir -p /path/to/project
 python3 /path/to/skill/scripts/project-preflight.py /path/to/project --json
 ```
 
@@ -56,7 +56,6 @@ python3 /path/to/skill/scripts/project-preflight.py /path/to/project --json
 ```bash
 python3 /path/to/skill/scripts/project-onboarding.py start /path/to/project \
   --mode greenfield \
-  --language zh-CN \
   --project-state on \
   --collaboration-gate off \
   --change-review off
@@ -93,7 +92,6 @@ bash /path/to/skill/scripts/init-state.sh /path/to/project
 
 ```bash
 python3 /path/to/skill/scripts/configure-modules.py set /path/to/project \
-  --language zh-CN \
   --project-state on \
   --collaboration-gate off \
   --change-review on
@@ -141,7 +139,6 @@ python3 /path/to/skill/scripts/generate-current-status.py /path/to/project/.claw
 ```bash
 python3 /path/to/skill/scripts/project-onboarding.py adopt /path/to/project \
   --mode brownfield \
-  --language zh-CN \
   --confirmed-by user
 ```
 
@@ -189,7 +186,7 @@ git diff --check
 采用项目必须在根 `README.md` 和 `AGENTS.md` 保留受控声明块：
 
 ```bash
-bash /path/to/skill/scripts/ensure-agent-guidance.sh /path/to/project zh-CN
+bash /path/to/skill/scripts/ensure-agent-guidance.sh /path/to/project
 ```
 
 该声明要求所有 AI Agent 在项目工作前加载本 Skill；README/AGENTS 是指令锚点，不是项目状态文件。

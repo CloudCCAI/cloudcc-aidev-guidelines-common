@@ -9,7 +9,6 @@ import re
 import subprocess
 from pathlib import Path
 
-from lib.language import localized_template_path, project_language
 from lib.document_ids import document_id_from_path, is_feature_id, is_legacy_id, reserve_document
 from lib.state_io import clean_value, read_front_matter, utc_now
 
@@ -50,14 +49,6 @@ def default_content(
     title = args.title or args.description.replace("-", " ").strip().title()
     template_name = "feature-spec.md" if args.kind == "feature" else "task-status.md"
     template_path = SKILL_ROOT / "templates" / "project-state" / template_name
-    try:
-        template_path = localized_template_path(
-            SKILL_ROOT,
-            template_path,
-            project_language(Path(args.project_root).resolve()),
-        )
-    except (ValueError, FileNotFoundError) as exc:
-        raise SystemExit(str(exc)) from exc
     content = template_path.read_text(encoding="utf-8")
 
     def quoted_inner(value: str) -> str:
@@ -137,7 +128,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--work-type", default="new_feature", help="Feature work_type value.")
     parser.add_argument("--task-type", default="feature", help="Task task_type value.")
     parser.add_argument("--feature-id", help="Canonical FEAT id for a task, or omit for none.")
-    parser.add_argument("--next-action", default="define the next executable step")
+    parser.add_argument("--next-action", default="定义下一项可执行步骤")
     parser.add_argument("--lock-timeout", type=float, default=10.0)
     parser.add_argument("--json", action="store_true", help="Print the allocation as JSON.")
     return parser

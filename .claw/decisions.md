@@ -4,8 +4,8 @@ version: 4
 architecture_init_status: complete
 architecture_reviewed_at: 2026-07-18T02:36:33Z
 architecture_confirmed_by: Bimo
-updated_at: 2026-07-19T01:26:47Z
-updated_by: ai
+updated_at: 2026-07-19T02:06:38Z
+updated_by: Bimo
 ---
 
 # 技术决策记录
@@ -23,7 +23,7 @@ updated_by: ai
 ### 运行流程
 
 1. `skill/SKILL.md` 先调用只读 preflight，以 `.claw/manifest.yaml` 或 legacy 状态选择 profile。
-2. manifest 先用 `language` 选择人类可读模板，再根据 `project_state`、`collaboration_gate`、`change_review` 开关按需路由 reference 和核心文件。
+2. manifest 根据 `project_state`、`collaboration_gate`、`change_review` 开关按需路由 reference 和核心文件；新的人类可读内容统一使用规范中文模板。
 3. Greenfield/Brownfield 引导由 catalog、模板和初始化脚本驱动，每个核心文件独立保存初始化状态。
 4. 运行期按“讨论 → FEAT → 用户确认 → TASK → 实现 → 验证 → 评审”推进；热索引从字段级事实源生成。
 
@@ -32,7 +32,7 @@ updated_by: ai
 - `skill/references/`：按初始化、模块和平台渐进加载的协议。
 - `skill/state-catalog.json` 与 `skill/schemas/`：机器可读文件生命周期、条件和结构约束。
 - `skill/scripts/`：预检、初始化、模块配置、个人编号、热状态聚合、身份门禁、评审与校验。
-- `skill/templates/`：英文规范模板和 `locales/zh-CN/` 中文镜像，只在核心初始化或真实事件触发时渲染。
+- `skill/templates/`：唯一的规范中文模板，以及保持协议值的机器资产；只在核心初始化或真实事件触发时渲染。
 - `skill/tests/` 与 `skill/examples/`：Greenfield、Brownfield、legacy 和模块组合的回归证据。
 - `.claw/` 与 `docs/specs/`：本仓库自身的项目事实和设计，不属于可发布 Skill 运行代码。
 
@@ -48,7 +48,7 @@ updated_by: ai
 - 旧项目默认继续使用 legacy profile；未经明确请求不得改名、补字段或批量迁移。
 - 禁用模块的资料不得加载；事件文件不得在初始化时伪造。
 - 不记录 secret，不伪造测试或部署结果；所有 ready/complete 状态必须有确认与真实校验依据。
-- 相关决策：ADR-001、ADR-002、ADR-003、ADR-010、ADR-011、ADR-012、ADR-013。
+- 相关决策：ADR-001、ADR-002、ADR-003、ADR-010、ADR-011、ADR-012、ADR-014、ADR-015、ADR-016、ADR-017。
 
 ## 决策索引
 
@@ -66,7 +66,11 @@ updated_by: ai
 | ADR-010 | Keep state progressive with per-task status files | accepted | 2026-05-21 | - |
 | ADR-011 | Keep the distributable skill in a dedicated directory | accepted | 2026-07-17 | - |
 | ADR-012 | Use a manifest-driven modular v5 state lifecycle | accepted | 2026-07-18 | - |
-| ADR-013 | Use manifest-selected language for human-readable project documents | accepted | 2026-07-18 | - |
+| ADR-013 | Use manifest-selected language for human-readable project documents | superseded | 2026-07-18 | ADR-017 |
+| ADR-014 | Resolve document owner from stable machine Git settings | accepted | 2026-07-19 | - |
+| ADR-015 | Initialize additive per-environment DevOps assets after environment confirmation | accepted | 2026-07-19 | - |
+| ADR-016 | Use lowercase catalog-managed help and design documentation directories | accepted | 2026-07-19 | - |
+| ADR-017 | Use one canonical Chinese human-readable template set | accepted | 2026-07-19 | ADR-013 |
 
 推荐状态值：`proposed` / `accepted` / `rejected` / `superseded`
 
@@ -220,7 +224,7 @@ updated_by: ai
 
 ## ADR-013 - Use manifest-selected language for human-readable project documents
 
-- 状态：`accepted`
+- 状态：`superseded`
 - 日期：`2026-07-18`
 - 背景：v5 的核心模板、事件模板和派生视图存在英文或中英混合内容，项目无法声明统一的文档语言，初始化会看似默认英文。
 - 备选方案：继续使用固定英文；根据会话语言临时翻译但不保存配置；在 manifest 中保存语言并提供确定性本地化模板与生成器。
@@ -261,6 +265,17 @@ updated_by: ai
 - 为什么这个方案胜出：与 `docs/specs` 共用小写根目录可以避免 macOS/Windows 与 Linux 的大小写路径差异；README 既能让 Git 持久化目录，也能明确帮助文档和详细设计的边界，而不会伪造具体产品内容。
 - 后续影响：Skill 5.0.2 的新 Greenfield/Brownfield 项目必须包含这两个索引；FEAT 继续负责范围、关键决策和验收，详细流转设计由 FEAT 引用 `docs/design`，已确认的用户操作说明进入 `docs/help`。早期 v5 与 legacy 项目不强制回填。
 - 验证方式：覆盖中英文创建、project-state 关闭、缺失文件恢复和已有内容不覆盖，并执行 79 项单元测试、Python/Shell 语法检查及 Greenfield/Brownfield/legacy/本仓库状态校验。
+
+## ADR-017 - Use one canonical Chinese human-readable template set
+
+- 状态：`accepted`
+- 日期：`2026-07-19`
+- 背景：英文规范模板、中文 locale 镜像和旧版模板长期并行，造成同一结构重复维护、模板漂移和新项目输出不稳定。
+- 备选方案：继续维护中英文镜像；只删除旧版模板但保留语言选择；将中文模板提升为唯一规范模板并为历史 manifest 保留只读兼容。
+- 最终结论：Skill 5.0.3 起只维护一套规范中文人类可读模板，新 manifest 固定 `language: zh-CN`，初始化和模块配置不再提供语言选择。5.0.1/5.0.2 的 `en`、`zh-CN`、`pending` 以及早期缺字段 manifest 继续兼容读取；既有内容不自动翻译，后续新增或明确重写的内容统一使用中文。本决策替代 ADR-013 的多语言写入策略。
+- 为什么这个方案胜出：单一规范资源消除三份重复内容和 locale 路由分支，同时通过版本门槛保留旧项目可运行性，不把清理成本转嫁为客户文档迁移。
+- 后续影响：删除 locale、旧 v4 和无入口平台模板；派生视图与指导块固定中文；5.0.3 及后续校验要求 `language: zh-CN`；解析器仍保留必要的历史英文标题和状态兼容别名。
+- 验证方式：执行两轮死引用与重复内容扫描、完整单元测试、Python/Shell/JSON 语法检查、v5.0.3 中英文门槛测试以及 Greenfield/Brownfield/legacy 严格校验。
 
 ## 维护规则
 

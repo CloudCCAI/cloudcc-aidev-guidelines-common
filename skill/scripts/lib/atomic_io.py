@@ -27,6 +27,7 @@ def _fsync_directory(path: Path) -> None:
     finally:
         os.close(descriptor)
 
+
 def atomic_write_bytes(path: Path, content: bytes, *, mode: int | None = None) -> None:
     """Replace *path* atomically with bytes written and synced in the same directory."""
 

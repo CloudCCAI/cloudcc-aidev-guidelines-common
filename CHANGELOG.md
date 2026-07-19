@@ -1,5 +1,20 @@
 # Changelog
 
+## 5.0.3 - 2026-07-19
+
+- 将简体中文提升为唯一规范的人类可读模板，新项目不再询问或重配置文档语言。
+- 保留早期 v5 `en`、`zh-CN`、`pending` 和缺失语言字段的读取兼容；5.0.3 起要求 `language: zh-CN`，既有文档不自动翻译。
+- 删除 locale 镜像、无运行入口的 v4/Codeup 模板、派生 team-status 模板和死代码，派生视图与指导块固定输出中文。
+- 合并 Codeup 本地配置读写，token 轮换不再覆盖项目配置，并使用原子 `0600` 写入。
+- 让 DevOps 外部资产契约由 catalog 驱动 onboarding 与 validator，并修复重复执行时无变化却刷新状态时间的问题。
+- 将两个 v5 示例升级为中文 5.0.3，新增历史兼容、固定中文、Codeup 配置权限和二次清理回归测试。
+
+## 5.0.2 - 2026-07-19
+
+- 增加按客户环境拆分的根目录 `DevOps/`，每个环境独立维护 Dockerfile 和 `.env.example`；客户未定时可确认预留 DEV/UAT/PROD。
+- 增加 `docs/help` 产品使用手册目录和 `docs/design` 功能/流转设计目录，并通过 catalog 幂等补齐索引。
+- 将 FEAT/TASK 自动命名来源固定为全局 Git `user.name`、项目本地 Git `user.name`、操作系统用户名的顺序。
+
 ## 5.0.1 - 2026-07-18
 
 - Added manifest `language` selection with resumable `pending`, `en`, and `zh-CN` states.

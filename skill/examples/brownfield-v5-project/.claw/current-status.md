@@ -15,14 +15,14 @@ next_action: "confirm the next compatibility-sensitive change"
 task_board: .claw/task-board.md
 ---
 
-# Project Current Status
+# 项目当前状态
 
-`current-status.md` is a generated hot index.
+`current-status.md` 是生成的热索引。
 
-## Active Workflows
+## 活跃工作流
 
-- No active task. Do not create a placeholder task.
+- 当前没有活跃任务。不要创建占位任务。
 
-## Read Next
+## 后续读取
 
-- Read `docs/specs/PROJECT-BASELINE.md` before broad changes to existing behavior.
+- 广泛修改既有行为前，先读取 `docs/specs/PROJECT-BASELINE.md`。

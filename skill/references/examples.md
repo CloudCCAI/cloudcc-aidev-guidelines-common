@@ -4,9 +4,9 @@
 
 | 示例 | Profile | 语言 | 重点 |
 |---|---|---|---|
-| `greenfield-v5-project/` | manifest v5 / Greenfield | `en` | 已完成的核心基线、空看板、没有预建事件文件 |
-| `brownfield-v5-project/` | manifest v5 / Brownfield | `en` | verified/inferred/pending baseline、兼容边界、空看板 |
-| `sample-project/` | legacy v4 | legacy 默认 `en` | 没有 manifest 的既有文件、旧全局 FEAT/TASK ID 和旧单任务热状态 |
+| `examples/greenfield-v5-project/` | manifest v5 / Greenfield | `zh-CN` | 已完成的核心基线、空看板、没有预建事件文件 |
+| `examples/brownfield-v5-project/` | manifest v5 / Brownfield | `zh-CN` | verified/inferred/pending baseline、兼容边界、空看板 |
+| `examples/sample-project/` | legacy v4 | legacy 默认 `en` | 没有 manifest 的既有文件、旧全局 FEAT/TASK ID 和旧单任务热状态 |
 
 ## 推荐阅读顺序
 
@@ -25,11 +25,11 @@
 
 两个 v5 示例都故意没有 issue、test report、archive、integration queue、team status、developer、assignment、FEAT 或 TASK；这些文件只在真实事件发生时创建。
 
-中文确定性模板位于 `skill/templates/locales/zh-CN/`，测试会通过真实初始化和文档分配流程验证中文输出。
+Skill 5.0.3 起，规范模板固定为中文，直接位于 `templates/` 的各模块目录；测试会通过真实初始化和文档分配流程验证中文输出。
 
 两个 v5 示例都接受了推荐的 `DEV`、`UAT`、`PROD` 预留结构。各 Dockerfile 仍是不可运行的待确认占位文件，用来证明“目录已初始化”不等于“打包或部署已验证”。
 
-两个 v5 示例也包含 `docs/help` 和 `docs/design` 的英文索引；它们声明目录职责，不伪造示例产品尚未确认的手册或详细设计。
+两个 v5 示例也包含 `docs/help` 和 `docs/design` 的中文索引；它们声明目录职责，不伪造示例产品尚未确认的手册或详细设计。
 
 新 FEAT/TASK 未显式指定 `--owner` 时，示例遵循全局 Git `user.name`、当前项目本地 Git `user.name`、操作系统用户名的自动解析顺序，不读取 developer `document_slug`。
 

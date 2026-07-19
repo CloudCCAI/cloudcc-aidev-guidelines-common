@@ -1,7 +1,7 @@
-# Product Help and Usage Manual
+# 产品帮助与使用手册
 
-This directory will contain customer-facing usage guidance after product behavior is implemented and verified.
+产品行为实现并验证后，此目录将保存面向客户的使用指引。
 
-## Manual Index
+## 手册索引
 
-- No product-specific help documents have been confirmed yet.
+- 暂无已确认的产品专项帮助文档。

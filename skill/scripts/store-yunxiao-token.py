@@ -4,16 +4,10 @@ from __future__ import annotations
 
 import argparse
 import getpass
-import os
-import shlex
-import stat
 import sys
 from pathlib import Path
 
-
-DEFAULT_ENV_FILE = Path(".claw-local/codeup.env")
-TOKEN_DOC_URL = "https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-token"
-
+from lib.codeup_config import DEFAULT_ENV_FILE, TOKEN_DOC_URL, merge_env_file
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -45,20 +39,7 @@ def read_token(use_stdin: bool) -> str:
 
 
 def write_env_file(path: Path, token: str) -> None:
-    parent_existed = path.parent.exists()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not parent_existed:
-        os.chmod(path.parent, stat.S_IRWXU)
-
-    content = "\n".join(
-        [
-            "# Local Codeup OpenAPI token. Do not commit this file.",
-            f"export YUNXIAO_TOKEN={shlex.quote(token)}",
-            "",
-        ]
-    )
-    path.write_text(content, encoding="utf-8")
-    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
+    merge_env_file(path, {"YUNXIAO_TOKEN": token})
 
 
 def main() -> int:

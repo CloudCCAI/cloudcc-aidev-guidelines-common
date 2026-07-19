@@ -16,4 +16,4 @@ allowed_scopes:
   - {{ALLOWED_SCOPE}}
 role_sharing_exception: none
 allowed_until: {{ALLOWED_UNTIL}}
-notes: "Repository identity records contain public identity material only. Never store private keys, passwords, bearer tokens, or reusable secrets."
+notes: "仓库身份记录只包含公开身份材料；禁止保存私钥、密码、Bearer Token 或可复用秘密。"

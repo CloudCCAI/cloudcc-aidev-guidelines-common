@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 5.0.2
+version: 5.0.3
 ---
 
 # State Model Reference
@@ -25,7 +25,7 @@ version: 5.0.2
 6. 热、温、冷表示加载策略，不强制对应物理目录。
 7. 旧文件不强制迁移；新文件必须遵守 policy 生效后的 v5 命名和字段规则。
 8. Git/OS 用户名只用于文档归属，不构成多人门禁授权。
-9. manifest 的 `language` 控制 Skill 新写入的人类可读内容；机器字段、枚举、ID、路径、命令和原始证据保持协议原值。
+9. Skill 新写入的人类可读内容固定使用简体中文；manifest 的 `language` 保留为写入策略与历史兼容标记，机器字段、枚举、ID、路径、命令和原始证据保持协议原值。
 10. `.claw/devops.md` 是运维事实源；根目录 `DevOps/` 是按客户环境拆分的可执行资产目录，两者必须引用一致。
 11. `docs/help` 保存用户手册，`docs/design` 保存详细功能与流转设计；所有规范文档统一使用小写 `docs` 根目录。
 
@@ -47,8 +47,8 @@ manifest 至少表达以下逻辑字段：
 
 ```yaml
 schema_version: 5
-skill_version: 5.0.2
-language: pending | en | zh-CN
+skill_version: 5.0.3
+language: zh-CN
 project_mode: pending | greenfield | brownfield | not_applicable
 initialization:
   status: in_progress | ready | needs_review
@@ -79,7 +79,7 @@ compatibility:
 
 manifest 的总体状态由文件状态聚合，不得反向覆盖文件状态。
 
-`language: pending` 只允许作为未完成初始化的可恢复检查点。新初始化必须先由用户选择 `en` 或 `zh-CN`，再创建依赖语言的人类可读核心文件。缺少该字段的早期 v5 manifest 按 `en` 兼容读取；v4 文件不补字段。修改已完成项目的语言只影响未来新建或明确重写的内容，不自动翻译历史文件。
+Skill 5.0.3 起，新 manifest 固定使用 `language: zh-CN`，不再提供语言选择或重配置。缺少该字段的早期 v5 manifest 按历史 `en` 读取；5.0.1/5.0.2 的 `en`、`zh-CN` 和未完成初始化中的 `pending` 继续可读，`pending` 在下一次明确的初始化写操作中归一为 `zh-CN`。v4 文件不补字段，既有项目文档不自动翻译或覆盖；以后新增或明确重写的人类可读内容统一使用中文。
 
 `project_mode: pending` 只允许在 `project_state=true` 且初始化尚未 ready 时作为可恢复检查点；`project_mode: not_applicable` 仅在 `project_state=false` 时合法，表示按用户选择跳过项目类型和项目状态基线问答。进入 ready 前，启用项目状态的模式必须由用户确认为 `greenfield` 或 `brownfield`。
 
@@ -157,7 +157,7 @@ updated_by: username | developer_id | ai
 - required fields 和状态枚举
 - 是否计入 ready
 - 可选的外部资产契约（根路径、环境字段、每环境必需文件和生效 Skill 版本）
-- 可选的 `project_assets`（普通项目文档路径、本地化模板、模块、模式和生效版本）
+- 可选的 `project_assets`（普通项目文档路径、规范中文模板、模块、模式和生效版本）
 - v4/v5 compatibility profile
 
 脚本不得再各自硬编码一套固定八文件清单。
@@ -171,7 +171,7 @@ Skill 5.0.2 起，启用 `project_state` 且模式为 Greenfield/Brownfield 的�
 - `docs/help/README.md`：产品帮助、使用手册和常见问题的职责说明与索引。
 - `docs/design/README.md`：功能、交互、业务流转、状态变化、异常路径、接口与数据设计的职责说明与索引。
 
-两个文件依据 manifest `language` 生成，只在缺失时创建，已有内容不得覆盖。它们是普通项目资产，不使用状态文件 frontmatter，也不单独计入核心文件初始化问答；catalog 的 `project_assets` 声明生效版本、模块、模式、路径和模板。较早 v5 与 legacy 项目不强制回填。
+两个文件依据规范中文模板生成，只在缺失时创建，已有内容不得覆盖。它们是普通项目资产，不使用状态文件 frontmatter，也不单独计入核心文件初始化问答；catalog 的 `project_assets` 声明生效版本、模块、模式、路径和模板。较早 v5 与 legacy 项目不强制回填。
 
 FEAT 是范围、关键设计决策、任务和验收事实源；`docs/design/` 承载需要长期展开的详细设计并由 FEAT 引用。`docs/help/` 只描述面向用户的确认行为，不应成为内部需求或未验证实现的事实源。
 
@@ -400,7 +400,7 @@ Codeup token 保存于 `.claw-local/codeup.env`；GitHub secret 使用平台 sec
 - 新式 ID、路径、作者和个人序号一致。
 - legacy index 与 policy 边界一致。
 - 禁用模块没有被初始化器意外创建或要求。
-- 新版 manifest 已确认受支持语言，ready 状态不保留 `language: pending`。
+- 5.0.3 及后续 manifest 固定使用 `language: zh-CN`；历史 ready 状态仍不得保留 `language: pending`。
 - repository 状态和 review config 不包含 secret。
 
 校验失败不得把 manifest 标为 ready。

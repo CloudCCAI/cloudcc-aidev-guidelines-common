@@ -4,10 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import shlex
-import stat
 import subprocess
 import sys
 from pathlib import Path
@@ -15,11 +12,15 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-
-DEFAULT_DOMAIN = "https://openapi-rdc.aliyuncs.com"
-DEFAULT_ENV_FILE = Path(".claw-local/codeup.env")
-TOKEN_DOC_URL = "https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-token"
-
+from lib.codeup_config import (
+    DEFAULT_DOMAIN,
+    DEFAULT_ENV_FILE,
+    TOKEN_DOC_URL,
+    config_value,
+    normalize_domain,
+    parse_env_file,
+    write_env_file,
+)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -41,38 +42,6 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--dry-run", action="store_true", help="Print resolved config without writing the env file.")
     return parser.parse_args()
-
-
-def parse_env_file(path: Path) -> dict[str, str]:
-    if not path.exists():
-        return {}
-
-    values: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[len("export ") :].strip()
-        if "=" not in line:
-            continue
-        key, raw_value = line.split("=", 1)
-        try:
-            parts = shlex.split(raw_value, posix=True)
-        except ValueError:
-            parts = [raw_value.strip().strip('"').strip("'")]
-        values[key.strip()] = parts[0] if parts else ""
-    return values
-
-
-def config_value(name: str, explicit: str | None, env_values: dict[str, str], default: str = "") -> str:
-    if explicit:
-        return explicit
-    if os.environ.get(name):
-        return os.environ[name]
-    if env_values.get(name):
-        return env_values[name]
-    return default
 
 
 def run_git(args: list[str], *, required: bool = True) -> str:
@@ -103,13 +72,6 @@ def parse_codeup_remote(remote_url: str) -> tuple[str, str, str]:
     organization_id = parts[0]
     repository_name = parts[-1]
     return organization_id, path, repository_name
-
-
-def normalize_domain(domain: str) -> str:
-    cleaned = domain.strip().rstrip("/")
-    if not cleaned.startswith(("http://", "https://")):
-        cleaned = f"https://{cleaned}"
-    return cleaned
 
 
 def remote_head_branch(remote: str) -> str:
@@ -179,34 +141,6 @@ def resolve_repository_id(
     if not re.fullmatch(r"\d+", repository_id):
         raise SystemExit(f"Resolved repository id is not numeric: {repository_id}")
     return repository_id
-
-
-def write_env_file(path: Path, values: dict[str, str]) -> None:
-    parent_existed = path.parent.exists()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if not parent_existed:
-        os.chmod(path.parent, stat.S_IRWXU)
-
-    ordered_keys = [
-        "YUNXIAO_DOMAIN",
-        "YUNXIAO_ORGANIZATION_ID",
-        "CODEUP_REPOSITORY_ID",
-        "CODEUP_SOURCE_PROJECT_ID",
-        "CODEUP_TARGET_PROJECT_ID",
-        "CODEUP_TARGET_BRANCH",
-        "CODEUP_CREATE_FROM",
-        "CODEUP_REVIEWER_USER_IDS",
-        "CODEUP_WORK_ITEM_IDS",
-        "CODEUP_TRIGGER_AI_REVIEW",
-        "YUNXIAO_TOKEN",
-    ]
-    lines = ["# Local Codeup OpenAPI config. Do not commit this file."]
-    for key in ordered_keys:
-        if values.get(key):
-            lines.append(f"export {key}={shlex.quote(values[key])}")
-    lines.append("")
-    path.write_text("\n".join(lines), encoding="utf-8")
-    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
 
 
 def main() -> int:

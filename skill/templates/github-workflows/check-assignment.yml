@@ -1,4 +1,4 @@
-name: Check task assignment
+name: 检查任务授权
 
 on:
   pull_request:
@@ -12,12 +12,12 @@ jobs:
   check-assignment:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 检出代码
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Resolve task, developer, branch, and changed files
+      - name: 解析任务、开发者、分支和变更文件
         id: context
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -29,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Use the same parser as local validation so legacy and v5 IDs cannot drift.
+          # 使用与本地校验相同的解析器，避免 legacy 与 v5 ID 规则漂移。
           task_id="$(python3 - <<'PY'
           import os
           import sys
@@ -49,7 +49,7 @@ jobs:
           PY
           )"
           if [ -z "$task_id" ]; then
-            echo "Could not resolve a legacy TASK-001 or v5 TASK-alice-001 ID from branch, PR title, or PR body" >&2
+            echo "无法从分支、PR 标题或 PR 正文中解析 legacy TASK-001 或 v5 TASK-alice-001 ID" >&2
             exit 1
           fi
 
@@ -76,13 +76,13 @@ jobs:
                   print(fields.get("developer_id") or path.stem)
                   raise SystemExit(0)
 
-          raise SystemExit(f"No active developer record maps git_username={author!r}")
+          raise SystemExit(f"没有活跃开发者记录映射 git_username={author!r}")
           PY
           )"
 
           git diff --name-only "$BASE_SHA" "$HEAD_SHA" > /tmp/changed-files.txt
           if [ ! -s /tmp/changed-files.txt ]; then
-            echo "No changed files detected" >&2
+            echo "未检测到变更文件" >&2
             exit 1
           fi
 
@@ -95,12 +95,12 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Check manager assignment scope
+      - name: 检查项目经理授权范围
         run: |
           set -euo pipefail
-          # This example validates author, branch, scope mode, write roots, protected paths, and changed-file scope.
-          # If your platform exposes commit signing fingerprints to CI,
-          # also pass --ssh-signing-key-fingerprint to check-assignment.py.
+          # 此示例校验作者、分支、范围模式、可写根目录、受保护路径和变更文件范围。
+          # 如果平台向 CI 暴露提交签名指纹，还应向 check-assignment.py
+          # 传入 --ssh-signing-key-fingerprint。
           mapfile -t changed_files <<< "${{ steps.context.outputs.changed_files }}"
           python3 scripts/check-assignment.py .claw \
             --developer "${{ steps.context.outputs.developer_id }}" \

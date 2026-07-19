@@ -1,7 +1,7 @@
-# Product and Feature Design Documents
+# 产品与功能设计文档
 
-This directory will contain detailed feature and flow designs after the existing system boundaries and behaviors are verified.
+验证既有系统边界和行为后，此目录将保存详细功能和流程设计。
 
-## Design Index
+## 设计索引
 
-- No product-specific design documents have been confirmed yet.
+- 暂无已确认的产品专项设计文档。

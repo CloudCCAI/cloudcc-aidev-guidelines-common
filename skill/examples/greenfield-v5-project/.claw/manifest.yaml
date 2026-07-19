@@ -1,6 +1,6 @@
 schema_version: 5
-skill_version: "5.0.2"
-language: en
+skill_version: "5.0.3"
+language: zh-CN
 project_mode: greenfield
 initialization:
   status: ready

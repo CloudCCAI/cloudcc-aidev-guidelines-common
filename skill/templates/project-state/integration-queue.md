@@ -8,11 +8,11 @@ status: collecting
 integration_owner: {{INTEGRATION_OWNER}}
 ---
 
-# Integration Queue
+# 集成队列
 
-Create `integration-queue.md` when real branches or parallel tasks require coordinated integration.
+`integration-queue.md` 在多个真实分支或并行任务需要协调合并时创建。
 
-## Active Integration Queues
+## 活跃集成队列
 
 ### {{QUEUE_ID}} - {{TITLE}}
 
@@ -26,10 +26,10 @@ Create `integration-queue.md` when real branches or parallel tasks require coord
 - validation_gates: `{{VALIDATION_GATES}}`
 - blocked_by: `none`
 
-#### Rollback Notes
+### 回滚说明
 
 - {{ROLLBACK_NOTES}}
 
-## Completed Integration Queues
+## 已完成集成队列
 
-- None.
+- 暂无。

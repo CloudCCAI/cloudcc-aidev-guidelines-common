@@ -1,6 +1,6 @@
 schema_version: 5
 skill_version: "{{SKILL_VERSION}}"
-language: "{{LANGUAGE}}"
+language: "zh-CN"
 project_mode: "{{PROJECT_MODE}}"
 initialization:
   status: in_progress

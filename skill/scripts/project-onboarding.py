@@ -15,12 +15,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
+from lib.atomic_io import atomic_write_text
+from lib.devops_assets import (
+    DevOpsAssetContract,
+    contract_from_catalog,
+    normalize_environment_names,
+)
 from lib.language import (
     PENDING_LANGUAGE,
-    SUPPORTED_LANGUAGES,
-    localized_template_path,
+    PRIMARY_LANGUAGE,
     manifest_language,
-    normalize_language,
 )
 from lib.state_io import clean_value, read_mapping_list_yaml
 
@@ -40,9 +44,7 @@ STATE_DIR_NAME = ".claw"
 MANIFEST_RELATIVE_PATH = Path(STATE_DIR_NAME) / "manifest.yaml"
 FRONT_MATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 ONBOARDING_INCOMPLETE_SENTINEL = "<!-- cc-aidev:onboarding-incomplete -->"
-DEVOPS_ASSETS_ROOT = "DevOps"
 RECOMMENDED_ENVIRONMENTS = ("DEV", "UAT", "PROD")
-ENVIRONMENT_NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z")
 DEVOPS_ASSETS_BEGIN = "<!-- cc-aidev:devops-assets:begin -->"
 DEVOPS_ASSETS_END = "<!-- cc-aidev:devops-assets:end -->"
 
@@ -83,6 +85,13 @@ def load_catalog() -> dict[str, Any]:
     return json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
 
 
+def devops_contract() -> DevOpsAssetContract:
+    try:
+        return contract_from_catalog(load_catalog())
+    except ValueError as exc:
+        raise OnboardingError("invalid_catalog", str(exc), EXIT_REPAIR_REQUIRED) from exc
+
+
 def read_skill_version() -> str:
     skill_path = SKILL_ROOT / "SKILL.md"
     if not skill_path.is_file():
@@ -116,18 +125,7 @@ def dump_simple_yaml(data: dict[str, Any], indent: int = 0) -> str:
 
 
 def atomic_write(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary_path = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary_path, path)
-    finally:
-        if temporary_path.exists():
-            temporary_path.unlink()
+    atomic_write_text(path, content)
 
 
 @contextmanager
@@ -183,7 +181,6 @@ def render_values(
         "TIMESTAMP": timestamp,
         "CALENDAR_DATE": calendar_date(timestamp),
         "SKILL_VERSION": read_skill_version(),
-        "LANGUAGE": manifest_language(manifest),
         "PROJECT_MODE": project_mode,
         "PROJECT_STATE": str(bool(modules.get("project_state", False))).lower(),
         "COLLABORATION_GATE": str(bool(modules.get("collaboration_gate", False))).lower(),
@@ -242,54 +239,39 @@ def scalar_items(value: object) -> list[str]:
 
 
 def validate_environment_names(names: list[str]) -> list[str]:
-    normalized: list[str] = []
-    seen: set[str] = set()
-    for raw_name in names:
-        name = raw_name.strip()
-        if not ENVIRONMENT_NAME_RE.fullmatch(name):
-            raise OnboardingError(
-                "invalid_environment_name",
-                (
-                    f"invalid environment name `{raw_name}`; use 1-64 letters, numbers, dots, "
-                    "underscores, or hyphens, beginning with a letter or number"
-                ),
-                EXIT_INVALID_INPUT,
-            )
-        folded = name.casefold()
-        if folded in seen:
-            raise OnboardingError(
-                "duplicate_environment_name",
-                f"environment names must be unique ignoring case: `{name}`",
-                EXIT_INVALID_INPUT,
-            )
-        seen.add(folded)
-        normalized.append(name)
-    return normalized
+    try:
+        return normalize_environment_names(names)
+    except ValueError as exc:
+        code = "duplicate_environment_name" if "unique" in str(exc) else "invalid_environment_name"
+        raise OnboardingError(code, str(exc), EXIT_INVALID_INPUT) from exc
 
 
 def devops_asset_errors(project_root: Path, devops_path: Path) -> list[str]:
+    contract = devops_contract()
     if not devops_path.is_file():
         return [f"missing initialization file: {devops_path}"]
     fields = read_top_level_fields(devops_path)
-    assets_root = str(fields.get("devops_assets_root", "")).strip()
-    environments = scalar_items(fields.get("environment_names"))
+    assets_root = str(fields.get(contract.root_field, "")).strip()
+    environments = scalar_items(fields.get(contract.environments_field))
     errors: list[str] = []
-    if assets_root != DEVOPS_ASSETS_ROOT:
-        errors.append(f"devops_assets_root must be `{DEVOPS_ASSETS_ROOT}`")
+    expected_root = contract.root_path.as_posix()
+    if assets_root != expected_root:
+        errors.append(f"{contract.root_field} must be `{expected_root}`")
     if not environments:
-        errors.append("environment_names must contain at least one confirmed environment")
+        errors.append(f"{contract.environments_field} must contain at least one confirmed environment")
         return errors
     try:
         environments = validate_environment_names(environments)
     except OnboardingError as exc:
         errors.append(str(exc))
         return errors
-    root = project_root / DEVOPS_ASSETS_ROOT
-    if not (root / "README.md").is_file():
-        errors.append(f"missing `{DEVOPS_ASSETS_ROOT}/README.md`")
+    root = project_root / contract.root_path
+    for asset in contract.root_files:
+        if not (root / asset.path).is_file():
+            errors.append(f"missing `{(contract.root_path / asset.path).as_posix()}`")
     for environment in environments:
-        for filename in ("Dockerfile", ".env.example"):
-            relative_path = Path(DEVOPS_ASSETS_ROOT) / environment / filename
+        for asset in contract.per_environment_files:
+            relative_path = contract.root_path / environment / asset.path
             if not (project_root / relative_path).is_file():
                 errors.append(f"missing `{relative_path.as_posix()}`")
     return errors
@@ -412,15 +394,6 @@ def create_descriptor_file(
     if destination.exists():
         return
     template_path = SKILL_ROOT / descriptor["template"]
-    if destination.suffix.lower() == ".md":
-        try:
-            template_path = localized_template_path(
-                SKILL_ROOT,
-                template_path,
-                manifest_language(manifest, allow_pending=False),
-            )
-        except (ValueError, FileNotFoundError) as exc:
-            raise OnboardingError("template_language_error", str(exc), EXIT_REPAIR_REQUIRED) from exc
     content = render(template_path, render_values(manifest, timestamp, project_root))
     content = ensure_rendered_init_fields(content, markdown=destination.suffix.lower() == ".md")
     atomic_write(destination, content)
@@ -470,7 +443,6 @@ def sync_project_assets(
     timestamp: str,
 ) -> list[str]:
     created: list[str] = []
-    language = manifest_language(manifest, allow_pending=False)
     for asset in enabled_project_assets(manifest, catalog):
         relative_path = Path(str(asset.get("path", "")))
         if not relative_path.parts or relative_path.is_absolute() or ".." in relative_path.parts:
@@ -489,10 +461,6 @@ def sync_project_assets(
                 )
             continue
         template_path = SKILL_ROOT / str(asset.get("template", ""))
-        try:
-            template_path = localized_template_path(SKILL_ROOT, template_path, language)
-        except (ValueError, FileNotFoundError) as exc:
-            raise OnboardingError("template_language_error", str(exc), EXIT_REPAIR_REQUIRED) from exc
         atomic_write(destination, render(template_path, render_values(manifest, timestamp, project_root)))
         created.append(relative_path.as_posix())
     return created
@@ -500,8 +468,7 @@ def sync_project_assets(
 
 def sync_files(project_root: Path, manifest: dict[str, Any], timestamp: str) -> list[str]:
     if manifest_language(manifest) == PENDING_LANGUAGE:
-        write_manifest(project_root, manifest)
-        return []
+        manifest["language"] = PRIMARY_LANGUAGE
     catalog = load_catalog()
     created: list[str] = []
     file_status = manifest.setdefault("file_status", {})
@@ -562,7 +529,6 @@ def update_top_level_fields(path: Path, updates: dict[str, Any]) -> None:
 def file_rows(project_root: Path, manifest: dict[str, Any]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     legacy_files = grandfathered_files(manifest)
-    language = manifest_language(manifest)
     for descriptor in required_descriptors(manifest, load_catalog()):
         path = project_root / descriptor["path"]
         is_grandfathered = descriptor["id"] in legacy_files and path.exists()
@@ -571,12 +537,7 @@ def file_rows(project_root: Path, manifest: dict[str, Any]) -> list[dict[str, An
                 "id": descriptor["id"],
                 "path": descriptor["path"],
                 "init_status": "complete" if is_grandfathered else read_init_status(path),
-                "prompt": (
-                    descriptor.get("prompt_en")
-                    if language == "en"
-                    else descriptor.get("prompt")
-                )
-                or "Complete this file and request confirmation.",
+                "prompt": descriptor.get("prompt") or "完成该文件并请求确认。",
                 "counts_toward_ready": bool(descriptor.get("counts_toward_ready", False)),
                 "legacy": is_grandfathered,
             }
@@ -595,14 +556,7 @@ def status_result(project_root: Path, manifest: dict[str, Any]) -> dict[str, Any
         if row["counts_toward_ready"] and row["init_status"] != "complete"
     ]
     language = manifest_language(manifest)
-    if language == PENDING_LANGUAGE:
-        next_item: dict[str, Any] | None = {
-            "id": "language",
-            "path": ".claw/manifest.yaml",
-            "init_status": "not_started",
-            "prompt": "Confirm the language for all newly written human-readable project files: zh-CN or en.",
-        }
-    elif manifest.get("modules", {}).get("project_state") and manifest.get("project_mode") not in {
+    if manifest.get("modules", {}).get("project_state") and manifest.get("project_mode") not in {
         "greenfield",
         "brownfield",
     }:
@@ -623,7 +577,7 @@ def status_result(project_root: Path, manifest: dict[str, Any]) -> dict[str, Any
         "modules": manifest.get("modules", {}),
         "files": rows,
         "pending_count": len(pending)
-        + (1 if next_item and next_item.get("id") in {"language", "project_mode"} else 0),
+        + (1 if next_item and next_item.get("id") == "project_mode" else 0),
         "next": next_item,
         "ready_to_finalize": next_item is None,
     }
@@ -680,7 +634,7 @@ def validate_manifest_language(manifest: dict[str, Any], *, allow_pending: bool)
     if not allow_pending and language == PENDING_LANGUAGE:
         raise OnboardingError(
             "language_not_confirmed",
-            "confirm --language zh-CN or --language en before finalization",
+            "resume onboarding once to normalize the legacy pending language marker to zh-CN",
             EXIT_NEEDS_INPUT,
         )
     return language
@@ -697,10 +651,10 @@ def ensure_project_root(path: str) -> Path:
     return project_root
 
 
-def ensure_guidance(project_root: Path, language: str) -> None:
+def ensure_guidance(project_root: Path) -> None:
     script = SCRIPT_DIR / "ensure-agent-guidance.sh"
     result = subprocess.run(
-        ["bash", str(script), str(project_root), language],
+        ["bash", str(script), str(project_root)],
         check=False,
         capture_output=True,
         text=True,
@@ -728,10 +682,10 @@ def ensure_local_ignore(project_root: Path) -> None:
     atomic_write(path, existing + separator + "".join(f"{entry}\n" for entry in required_entries))
 
 
-def ensure_devops_ignore(project_root: Path) -> bool:
+def ensure_devops_ignore(project_root: Path, contract: DevOpsAssetContract) -> bool:
     path = project_root / ".gitignore"
     existing = path.read_text(encoding="utf-8") if path.is_file() else ""
-    entry = f"{DEVOPS_ASSETS_ROOT}/**/.env"
+    entry = f"{contract.root_path.as_posix()}/**/.env"
     if entry in {line.strip() for line in existing.splitlines()}:
         return False
     separator = "" if not existing or existing.endswith("\n") else "\n"
@@ -743,13 +697,12 @@ def create_manifest_data(
     project_mode: str,
     modules: dict[str, bool],
     timestamp: str,
-    language: str,
 ) -> dict[str, Any]:
     template_path = SKILL_ROOT / "templates/core/manifest.yaml"
     draft = {
         "project_mode": project_mode,
         "modules": modules,
-        "language": language,
+        "language": PRIMARY_LANGUAGE,
     }
     rendered = render(template_path, render_values(draft, timestamp))
     temporary_dir = Path(tempfile.mkdtemp(prefix="cc-onboarding-manifest-"))
@@ -835,7 +788,6 @@ def command_adopt(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             EXIT_INVALID_INPUT,
         )
     requested_mode = args.mode or "pending" if requested_modules["project_state"] else "not_applicable"
-    requested_language = normalize_language(args.language or PENDING_LANGUAGE)
 
     with onboarding_lock(project_root):
         state_dir = project_root / STATE_DIR_NAME
@@ -854,18 +806,11 @@ def command_adopt(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
                 "none",
             }:
                 existing_language = manifest_language(manifest)
-                if args.language and existing_language == PENDING_LANGUAGE:
-                    manifest["language"] = requested_language
+                if existing_language == PENDING_LANGUAGE:
+                    manifest["language"] = PRIMARY_LANGUAGE
                     write_manifest(project_root, manifest)
-                elif args.language and existing_language != requested_language:
-                    raise OnboardingError(
-                        "language_conflict",
-                        f"manifest language is {existing_language}; use configure-modules.py set for an explicit change",
-                        EXIT_CONFLICT,
-                    )
-                language = validate_manifest_language(manifest, allow_pending=True)
-                if language != PENDING_LANGUAGE:
-                    ensure_guidance(project_root, language)
+                validate_manifest_language(manifest, allow_pending=False)
+                ensure_guidance(project_root)
                 ensure_local_ignore(project_root)
                 created_files = sync_files(project_root, manifest, timestamp)
                 result = status_result(project_root, manifest)
@@ -908,7 +853,7 @@ def command_adopt(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
 
         index_path = project_root / ".claw" / "legacy-document-index.yaml"
         legacy_paths, policy_effective_at = read_legacy_boundary(index_path)
-        manifest = create_manifest_data(requested_mode, requested_modules, timestamp, requested_language)
+        manifest = create_manifest_data(requested_mode, requested_modules, timestamp)
         compatibility = manifest.setdefault("compatibility", {})
         compatibility["legacy_documents_allowed"] = True
         compatibility["legacy_index_path"] = ".claw/legacy-document-index.yaml"
@@ -935,8 +880,7 @@ def command_adopt(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         manifest["grandfathered_files"] = legacy_files
         write_manifest(project_root, manifest)
 
-        if requested_language != PENDING_LANGUAGE:
-            ensure_guidance(project_root, requested_language)
+        ensure_guidance(project_root)
         ensure_local_ignore(project_root)
         created_files = sync_files(project_root, manifest, timestamp)
         result = status_result(project_root, manifest)
@@ -970,8 +914,6 @@ def command_start(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     requested_mode = (
         args.mode or "pending" if requested_modules["project_state"] else "not_applicable"
     )
-    requested_language = normalize_language(args.language or PENDING_LANGUAGE)
-
     with onboarding_lock(project_root):
         state_dir = project_root / STATE_DIR_NAME
         manifest_path = project_root / MANIFEST_RELATIVE_PATH
@@ -987,15 +929,8 @@ def command_start(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         created_manifest = False
         if manifest_path.exists():
             manifest = load_manifest(project_root)
-            existing_language = manifest_language(manifest)
-            if args.language and existing_language == PENDING_LANGUAGE:
-                manifest["language"] = requested_language
-            elif args.language and existing_language != requested_language:
-                raise OnboardingError(
-                    "language_conflict",
-                    f"manifest language is {existing_language}; use configure-modules.py set for an explicit change",
-                    EXIT_CONFLICT,
-                )
+            if manifest_language(manifest) == PENDING_LANGUAGE:
+                manifest["language"] = PRIMARY_LANGUAGE
             existing_mode = manifest.get("project_mode")
             if existing_mode == "pending" and args.mode:
                 manifest["project_mode"] = args.mode
@@ -1007,13 +942,12 @@ def command_start(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
                 )
         else:
             state_dir.mkdir(parents=False, exist_ok=False)
-            manifest = create_manifest_data(requested_mode, requested_modules, timestamp, requested_language)
+            manifest = create_manifest_data(requested_mode, requested_modules, timestamp)
             write_manifest(project_root, manifest)
             created_manifest = True
 
-        language = validate_manifest_language(manifest, allow_pending=True)
-        if language != PENDING_LANGUAGE:
-            ensure_guidance(project_root, language)
+        validate_manifest_language(manifest, allow_pending=False)
+        ensure_guidance(project_root)
         ensure_local_ignore(project_root)
         created_files = sync_files(project_root, manifest, timestamp)
         result = status_result(project_root, manifest)
@@ -1045,34 +979,29 @@ def find_descriptor(file_id: str, manifest: dict[str, Any]) -> dict[str, Any]:
     )
 
 
-def render_devops_inventory(environments: list[str], language: str) -> str:
-    if language == "zh-CN":
-        lines = [
-            "## 环境资产清单",
-            "",
-            "此清单由 `project-onboarding.py devops-assets` 维护。调整客户环境时再次运行该命令；已有文件不会被覆盖或删除。",
-            "",
-            "| 环境 | Dockerfile | 环境变量示例 |",
-            "| --- | --- | --- |",
-        ]
-    else:
-        lines = [
-            "## Environment Asset Inventory",
-            "",
-            "This inventory is maintained by `project-onboarding.py devops-assets`. Run the command again when customer environments change; existing files are never overwritten or deleted.",
-            "",
-            "| Environment | Dockerfile | Environment example |",
-            "| --- | --- | --- |",
-        ]
+def render_devops_inventory(environments: list[str], contract: DevOpsAssetContract) -> str:
+    asset_labels = [asset.path.as_posix() for asset in contract.per_environment_files]
+    lines = [
+        "## 环境资产清单",
+        "",
+        f"此清单由 `{contract.initialization_command}` 维护。调整客户环境时再次运行该命令；已有文件不会被覆盖或删除。",
+        "",
+        "| " + " | ".join(["环境", *asset_labels]) + " |",
+        "| " + " | ".join(["---"] * (len(asset_labels) + 1)) + " |",
+    ]
     for environment in environments:
-        base = f"{DEVOPS_ASSETS_ROOT}/{environment}"
-        lines.append(f"| `{environment}` | `{base}/Dockerfile` | `{base}/.env.example` |")
+        asset_paths = [
+            f"`{(contract.root_path / environment / asset.path).as_posix()}`"
+            for asset in contract.per_environment_files
+        ]
+        lines.append("| " + " | ".join([f"`{environment}`", *asset_paths]) + " |")
     return "\n".join(lines)
 
 
 def command_devops_assets(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     project_root = ensure_project_root(args.project_root)
     timestamp = utc_now(args.now)
+    contract = devops_contract()
     requested = list(RECOMMENDED_ENVIRONMENTS) if args.recommended_environments else list(args.environment or [])
     if not requested:
         raise OnboardingError(
@@ -1087,7 +1016,7 @@ def command_devops_assets(args: argparse.Namespace) -> tuple[dict[str, Any], int
 
     with onboarding_lock(project_root):
         manifest = load_manifest(project_root)
-        language = validate_manifest_language(manifest, allow_pending=False)
+        validate_manifest_language(manifest, allow_pending=False)
         descriptor = find_descriptor("devops", manifest)
         devops_path = project_root / descriptor["path"]
         if not devops_path.is_file():
@@ -1098,34 +1027,30 @@ def command_devops_assets(args: argparse.Namespace) -> tuple[dict[str, Any], int
             )
 
         fields = read_top_level_fields(devops_path)
-        existing_environments = validate_environment_names(scalar_items(fields.get("environment_names")))
+        existing_environments = validate_environment_names(
+            scalar_items(fields.get(contract.environments_field))
+        )
         environments = list(existing_environments)
         known = {name.casefold() for name in environments}
+        environment_added = False
         for environment in requested:
             if environment.casefold() not in known:
                 environments.append(environment)
                 known.add(environment.casefold())
+                environment_added = True
 
         created: list[str] = []
         preserved: list[str] = []
         values = render_values(manifest, timestamp, project_root)
-        values["DEVOPS_ASSETS_ROOT"] = DEVOPS_ASSETS_ROOT
+        values["DEVOPS_ASSETS_ROOT"] = contract.root_path.as_posix()
 
-        readme_template = SKILL_ROOT / "templates/devops-assets/README.md"
-        try:
-            readme_template = localized_template_path(SKILL_ROOT, readme_template, language)
-        except (ValueError, FileNotFoundError) as exc:
-            raise OnboardingError("template_language_error", str(exc), EXIT_REPAIR_REQUIRED) from exc
         asset_templates = {
-            Path(DEVOPS_ASSETS_ROOT) / "README.md": readme_template,
+            contract.root_path / asset.path: SKILL_ROOT / asset.template
+            for asset in contract.root_files
         }
         for environment in environments:
-            asset_templates[Path(DEVOPS_ASSETS_ROOT) / environment / "Dockerfile"] = (
-                SKILL_ROOT / "templates/devops-assets/Dockerfile"
-            )
-            asset_templates[Path(DEVOPS_ASSETS_ROOT) / environment / ".env.example"] = (
-                SKILL_ROOT / "templates/devops-assets/env.example"
-            )
+            for asset in contract.per_environment_files:
+                asset_templates[contract.root_path / environment / asset.path] = SKILL_ROOT / asset.template
 
         for relative_path, template_path in asset_templates.items():
             destination = project_root / relative_path
@@ -1143,57 +1068,72 @@ def command_devops_assets(args: argparse.Namespace) -> tuple[dict[str, Any], int
             atomic_write(destination, render(template_path, template_values))
             created.append(relative_path.as_posix())
 
-        if ensure_devops_ignore(project_root):
-            created.append(".gitignore entry: DevOps/**/.env")
+        ignore_entry = f"{contract.root_path.as_posix()}/**/.env"
+        if ensure_devops_ignore(project_root, contract):
+            created.append(f".gitignore entry: {ignore_entry}")
         else:
-            preserved.append(".gitignore entry: DevOps/**/.env")
+            preserved.append(f".gitignore entry: {ignore_entry}")
 
         previous_status = str(fields.get("init_status", "not_started"))
         next_status = "needs_review" if previous_status == "complete" else "in_progress"
-        update_top_level_fields(
-            devops_path,
-            {
-                "devops_assets_root": DEVOPS_ASSETS_ROOT,
-                "environment_names": ", ".join(environments),
-                "init_status": next_status,
-                "init_completed_at": "none",
-                "init_confirmed_by": "none",
-                "updated_at": timestamp,
-                "updated_by": "onboarding",
-            },
+        inventory = render_devops_inventory(environments, contract)
+        devops_text = devops_path.read_text(encoding="utf-8")
+        metadata_changed = (
+            str(fields.get(contract.root_field, "")).strip() != contract.root_path.as_posix()
+            or existing_environments != environments
         )
-        update_controlled_block(
-            devops_path,
-            DEVOPS_ASSETS_BEGIN,
-            DEVOPS_ASSETS_END,
-            render_devops_inventory(environments, language),
-        )
+        inventory_changed = inventory not in devops_text
+        state_changed = bool(created) or environment_added or metadata_changed or inventory_changed
+        if state_changed:
+            update_top_level_fields(
+                devops_path,
+                {
+                    contract.root_field: contract.root_path.as_posix(),
+                    contract.environments_field: ", ".join(environments),
+                    "init_status": next_status,
+                    "init_completed_at": "none",
+                    "init_confirmed_by": "none",
+                    "updated_at": timestamp,
+                    "updated_by": "onboarding",
+                },
+            )
+            update_controlled_block(
+                devops_path,
+                DEVOPS_ASSETS_BEGIN,
+                DEVOPS_ASSETS_END,
+                inventory,
+            )
 
-        file_status = manifest.setdefault("file_status", {})
-        if not isinstance(file_status, dict):
-            file_status = {}
-            manifest["file_status"] = file_status
-        file_status["devops"] = next_status
-        initialization = manifest.setdefault("initialization", {})
-        if not isinstance(initialization, dict):
-            initialization = {}
-            manifest["initialization"] = initialization
-        if initialization.get("status") == "ready":
-            initialization["status"] = "needs_review"
-            initialization["completed_at"] = "none"
-            initialization["confirmed_by"] = "none"
-        write_manifest(project_root, manifest)
+            file_status = manifest.setdefault("file_status", {})
+            if not isinstance(file_status, dict):
+                file_status = {}
+                manifest["file_status"] = file_status
+            file_status["devops"] = next_status
+            initialization = manifest.setdefault("initialization", {})
+            if not isinstance(initialization, dict):
+                initialization = {}
+                manifest["initialization"] = initialization
+            if initialization.get("status") == "ready":
+                initialization["status"] = "needs_review"
+                initialization["completed_at"] = "none"
+                initialization["confirmed_by"] = "none"
+            write_manifest(project_root, manifest)
 
         result = status_result(project_root, manifest)
         result.update(
             {
                 "status": "needs_input",
-                "devops_assets_root": DEVOPS_ASSETS_ROOT,
+                "devops_assets_root": contract.root_path.as_posix(),
                 "environments": environments,
                 "recommended_defaults_used": bool(args.recommended_environments),
                 "created": created,
                 "preserved": preserved,
-                "message": "DevOps environment assets are reserved; review and customize each environment before completing devops onboarding.",
+                "changed": state_changed,
+                "message": (
+                    "DevOps environment assets are reserved; review and customize each environment before completing devops onboarding."
+                    if state_changed
+                    else "DevOps environment assets are unchanged."
+                ),
             }
         )
         return result, EXIT_NEEDS_INPUT
@@ -1243,7 +1183,7 @@ def command_mark(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
         if (
             args.status == "complete"
             and descriptor["id"] == "devops"
-            and version_at_least(manifest.get("skill_version"), (5, 0, 2))
+            and version_at_least(manifest.get("skill_version"), devops_contract().since_skill_version)
         ):
             asset_errors = devops_asset_errors(project_root, path)
             if asset_errors:
@@ -1252,7 +1192,7 @@ def command_mark(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
                 result["error"] = "devops_assets_incomplete"
                 result["message"] = "DevOps environment assets are incomplete"
                 result["repair"] = {
-                    "command": "project-onboarding.py devops-assets",
+                    "command": devops_contract().initialization_command,
                     "errors": asset_errors,
                     "recommendation": "Use --recommended-environments to reserve DEV, UAT, and PROD when the customer has not decided.",
                 }
@@ -1449,7 +1389,6 @@ def build_parser() -> argparse.ArgumentParser:
     start.add_argument("--project-state", choices=("on", "off"))
     start.add_argument("--collaboration-gate", choices=("on", "off"))
     start.add_argument("--change-review", choices=("on", "off"))
-    start.add_argument("--language", choices=SUPPORTED_LANGUAGES)
 
     adopt = subparsers.add_parser("adopt", help="explicitly adopt an existing legacy .claw project")
     add_common(adopt, include_now=True)
@@ -1457,7 +1396,6 @@ def build_parser() -> argparse.ArgumentParser:
     adopt.add_argument("--project-state", choices=("on", "off"))
     adopt.add_argument("--collaboration-gate", choices=("on", "off"))
     adopt.add_argument("--change-review", choices=("on", "off"))
-    adopt.add_argument("--language", choices=SUPPORTED_LANGUAGES)
     adopt.add_argument("--confirmed-by", required=True)
 
     status = subparsers.add_parser("status", help="show aggregate and per-file initialization status")

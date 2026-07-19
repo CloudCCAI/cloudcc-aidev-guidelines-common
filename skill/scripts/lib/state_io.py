@@ -3,10 +3,6 @@ from __future__ import annotations
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Mapping
-
-
-EMPTY_VALUES = {"", "none", "n/a", "na", "not_applicable", "null", "~"}
 
 
 class SimpleYamlError(ValueError):
@@ -24,20 +20,6 @@ def clean_value(value: object) -> str:
     if cleaned.startswith("`") and cleaned.endswith("`") and len(cleaned) >= 2:
         cleaned = cleaned[1:-1].strip()
     return cleaned
-
-
-def is_empty(value: object) -> bool:
-    return clean_value(value).lower() in EMPTY_VALUES
-
-
-def as_list(value: object) -> list[str]:
-    if value is None:
-        return []
-    if isinstance(value, list):
-        return [clean_value(item) for item in value if not is_empty(item)]
-    if is_empty(value):
-        return []
-    return [item.strip() for item in clean_value(value).split(",") if item.strip()]
 
 
 def _strip_inline_comment(value: str) -> str:
@@ -210,40 +192,8 @@ def parse_mapping_list_yaml(text: str, *, list_key: str) -> dict[str, object]:
     return fields
 
 
-def read_simple_yaml(path: Path) -> dict[str, object]:
-    return parse_simple_yaml(Path(path).read_text(encoding="utf-8"))
-
-
 def read_mapping_list_yaml(path: Path, *, list_key: str) -> dict[str, object]:
     return parse_mapping_list_yaml(Path(path).read_text(encoding="utf-8"), list_key=list_key)
-
-
-def _render_scalar(value: object) -> str:
-    if value is None:
-        return "null"
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, (int, float)):
-        return str(value)
-    return json.dumps(str(value), ensure_ascii=False)
-
-
-def dump_simple_yaml(fields: Mapping[str, object], *, key_order: Iterable[str] | None = None) -> str:
-    ordered_keys: list[str] = []
-    if key_order:
-        ordered_keys.extend(key for key in key_order if key in fields)
-    ordered_keys.extend(key for key in fields if key not in ordered_keys)
-
-    lines: list[str] = []
-    for key in ordered_keys:
-        value = fields[key]
-        if isinstance(value, (list, tuple)):
-            lines.append(f"{key}:")
-            for item in value:
-                lines.append(f"  - {_render_scalar(item)}")
-        else:
-            lines.append(f"{key}: {_render_scalar(value)}")
-    return "\n".join(lines) + "\n"
 
 
 def split_front_matter(text: str) -> tuple[dict[str, object], str]:
@@ -263,8 +213,3 @@ def split_front_matter(text: str) -> tuple[dict[str, object], str]:
 
 def read_front_matter(path: Path) -> tuple[dict[str, object], str]:
     return split_front_matter(Path(path).read_text(encoding="utf-8"))
-
-
-def render_front_matter(fields: Mapping[str, object], body: str) -> str:
-    rendered_body = body.lstrip("\n")
-    return f"---\n{dump_simple_yaml(fields)}---\n\n{rendered_body}"

@@ -11,7 +11,7 @@ phase: onboarding
 active_task: "none"
 active_task_count: 0
 active_tasks: []
-next_action: "Complete guided project initialization"
+next_action: "完成引导式项目初始化"
 read_next:
   goals: true
   decisions: true
@@ -20,28 +20,28 @@ read_next:
   task_board: true
 ---
 
-# Project Current Status
+# 项目当前状态
 
-`current-status.md` is the compact hot index. It does not own task progress or design detail.
+`current-status.md` 是紧凑热索引，不保存任务进度或设计详情。
 
-## Snapshot
+## 快照
 
-- Project mode: `{{PROJECT_MODE}}`
-- Phase: `onboarding`
-- Active workflows: `0`
-- Next action: complete the first unfinished core file
+- 项目模式：`{{PROJECT_MODE}}`
+- 阶段：`onboarding`
+- 活跃工作流：`0`
+- 下一步：完成第一个尚未初始化的核心文件
 
-## Active Workflows
+## 活跃工作流
 
-No active workflow has been created.
+尚未创建活跃工作流。
 
-## Read Next
+## 按需读取
 
-- Read only the first unfinished core file reported by `project-onboarding.py resume`.
-- After initialization, load task and feature details only when an active workflow references them.
+- 只读取 `project-onboarding.py resume` 返回的第一个未完成核心文件。
+- 初始化完成后，仅在活跃工作流引用时加载任务和功能详情。
 
-## Maintenance Rules
+## 维护规则
 
-- Keep this file under 60 lines.
-- Do not create a placeholder task during initialization.
-- Rebuild this index from authoritative task and board state.
+- 本文件保持在 60 行以内。
+- 初始化时不得创建占位任务。
+- 根据权威任务和看板状态重新生成本索引。

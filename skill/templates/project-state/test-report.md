@@ -7,29 +7,29 @@ last_run_at: {{TIMESTAMP}}
 last_run_status: {{TEST_STATUS}}
 ---
 
-# Test Report
+# 测试报告
 
-Create `test-report.md` only after a real command, CI job, or equivalent validation runs.
+`test-report.md` 仅在真实命令、CI job 或等价验证运行后创建。
 
-## Latest Run Summary
+## 最新运行摘要
 
-- Status: `{{TEST_STATUS}}`
-- Scope: {{TEST_SCOPE}}
-- Command: `{{TEST_COMMAND}}`
-- Environment: {{TEST_ENVIRONMENT}}
-- Evidence: {{TEST_EVIDENCE}}
+- 状态：`{{TEST_STATUS}}`
+- 范围：{{TEST_SCOPE}}
+- 命令：`{{TEST_COMMAND}}`
+- 环境：{{TEST_ENVIRONMENT}}
+- 证据：{{TEST_EVIDENCE}}
 
-## Result Summary
+## 结果汇总
 
-- Passed: {{PASSED_COUNT}}
-- Failed: {{FAILED_COUNT}}
-- Skipped: {{SKIPPED_COUNT}}
+- 通过：{{PASSED_COUNT}}
+- 失败：{{FAILED_COUNT}}
+- 跳过：{{SKIPPED_COUNT}}
 
-## Failures
+## 失败项
 
 - {{FAILURE_SUMMARY}}
 
-## Maintenance Rules
+## 维护规则
 
-- Never report an unexecuted validation as passed.
-- Current status references only the latest summary and does not copy full evidence.
+- 不得把未执行的验证写成通过。
+- current status 只引用最新摘要，不复制完整证据。

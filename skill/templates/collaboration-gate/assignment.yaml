@@ -24,10 +24,10 @@ touch_policy: exclusive
 shared_contracts:
   - {{SPEC_PATH}}
 task_boundary:
-  - "Work must serve {{TASK_ID}} and its linked acceptance criteria."
+  - "工作必须服务于 {{TASK_ID}} 及其关联的验收标准。"
 change_manifest_required: true
 signature: "{{SIGNATURE_OR_EXTERNAL_REFERENCE}}"
 preflight_required: true
 local_login_required: true
 identity_policy: "ssh_challenge_response + git_platform_account + ssh_commit_signing"
-notes: "Only a project manager may create, expand, pause, revoke, or extend this assignment. No secrets belong here."
+notes: "只有项目经理可以创建、扩大、暂停、撤销或延长此授权；禁止在此保存秘密。"

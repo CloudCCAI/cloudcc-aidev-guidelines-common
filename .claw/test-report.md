@@ -1,9 +1,9 @@
 ---
 kind: test-report
 version: 5
-updated_at: 2026-07-19T01:26:47Z
-updated_by: ai
-last_run_at: 2026-07-19T01:26:47Z
+updated_at: 2026-07-19T02:06:38Z
+updated_by: Bimo
+last_run_at: 2026-07-19T02:06:38Z
 last_run_status: passed
 ---
 
@@ -14,18 +14,19 @@ last_run_status: passed
 ## Latest Run Summary
 
 - 状态：`passed`
-- Scope: `project help/design and DevOps asset onboarding, document owner precedence, and v4/v5 compatibility`
-- Commands: 79-test unittest suite; Python compile; shell syntax; strict Greenfield/Brownfield v5 and legacy v4 fixture validation
-- Environment: `local workspace`
+- 范围：`Skill 5.0.3 中文规范模板、历史语言兼容、DevOps/Codeup 合并与两轮清理`
+- 命令：86 项 unittest；Python AST、Shell、JSON、diff 检查；Greenfield/Brownfield v5 严格校验；legacy v4 与本仓库状态校验；Skill 标准快速校验
+- 环境：`local workspace`
 
 ## Result Summary
 
 | Type | Total | Passed | Failed | Skipped | Coverage |
 |------|-------|--------|--------|---------|----------|
-| Python unit tests | 79 | 79 | 0 | 0 | n/a |
-| Project state fixtures | 3 | 3 | 0 | 0 | n/a |
-| Syntax/compile checks | 2 | 2 | 0 | 0 | n/a |
-| Total | 84 | 84 | 0 | 0 | n/a |
+| Python unit tests | 86 | 86 | 0 | 0 | n/a |
+| Project state fixtures | 4 | 4 | 0 | 0 | n/a |
+| Syntax and diff checks | 4 | 4 | 0 | 0 | n/a |
+| Skill standard validation | 1 | 1 | 0 | 0 | n/a |
+| Total | 95 | 95 | 0 | 0 | n/a |
 
 ## Failures
 
@@ -33,15 +34,17 @@ last_run_status: passed
 
 ## Notes
 
-- English/Chinese help and design indexes, project-state gating, missing-file recovery, non-overwrite behavior, DevOps environments, global/project/OS document owner precedence, and v4/v5 state profiles were exercised.
-- Release version and all feature activation gates were verified at `5.0.2`, incremented from the previous committed `5.0.1`.
-- Commit/push authorization is release state, not test evidence; no change request or deployment was exercised by this test run.
+- 两轮扫描确认运行时代码不再引用已删除模板，规范模板不存在精确重复，locale 镜像、空旧目录与 Python 缓存均已移除。
+- 独立 Greenfield 前向测试验证了固定中文初始化、DEV/UAT/PROD 资产和严格确认门槛；同时验证重复执行 DevOps 初始化不会改写状态时间戳。
+- 最终状态回写验证覆盖 legacy 热索引格式，并补充检查 TASK 默认下一步与公开命令均不再残留语言选择行为。
+- 版本与新语言门槛按 `5.0.3` 验证；旧 `en`、`pending` 和 v4 状态仍可读取，既有文档不会被自动翻译。
+- 上述验证命令不包含提交、推送、变更请求或部署；发布证据以 Git 历史和实际推送输出为准。
 
 ## Common Commands
 
 - `python3 skill/scripts/validate-state.py .claw`
-- `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s skill/tests -p 'test_*.py' -v`
-- `PYTHONPYCACHEPREFIX=/private/tmp/cc-aidev-final-pycache python3 -m compileall -q skill/scripts skill/tests`
+- `PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s skill/tests -p 'test_*.py'`
+- `python3 -c 'import ast, pathlib; ...'`
 - `python3 skill/scripts/dev-login.py .claw --ssh-key ~/.ssh/id_ed25519_cc_dev --developer DEV-xxx --task TASK-xxx --files path/to/file`
 - `python3 skill/scripts/check-assignment.py .claw --developer DEV-xxx --task TASK-xxx --files path/to/file`
 

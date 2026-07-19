@@ -27,45 +27,45 @@ updated_by: "{{CREATED_BY}}"
 
 # {{FEATURE_ID}} - {{TITLE}}
 
-## Background and Goal
+## 背景与目标
 
-- Describe the user problem, current project state, and desired outcome.
+- 说明用户问题、项目现状和期望结果。
 
-## Scope
+## 范围
 
-### In Scope
+### 范围内
 
-- List behavior that must be delivered.
+- 列出本次必须完成的行为。
 
-### Out Of Scope
+### 范围外
 
-- List behavior explicitly excluded from this delivery.
+- 列出明确不在本次交付内的行为。
 
-## Current and Target Behavior
+## 当前行为与目标行为
 
-- Current: record verified existing behavior.
-- Target: record user-confirmed target behavior.
+- 当前：记录已验证的当前行为。
+- 目标：记录用户确认的目标行为。
 
-## Design
+## 方案设计
 
-- Record the design overview, key flow, and rationale.
+- 记录设计概览、关键流程和方案选择理由。
 
-## Interface and Data Impact
+## 接口与数据影响
 
-- Record API, event, message, data structure, migration, and compatibility impact.
+- 记录 API、事件、消息、数据结构、迁移和兼容影响。
 
-## Task Breakdown
+## 任务拆分
 
-- Create and link real TASK documents only after the user confirms this FEAT.
+- 用户确认本 FEAT 后再创建并链接真实 TASK，不预建占位任务。
 
-## Acceptance Criteria
+## 验收标准
 
-- Record verifiable user behavior and technical conditions.
+- 记录可验证的用户行为和技术条件。
 
-## Risks and Rollback
+## 风险与回滚
 
-- Record known risks, monitoring points, and rollback steps.
+- 记录已知风险、监控点和失败后的回滚方案。
 
-## Handoff
+## 交接说明
 
-- Record the source files and open questions the next contributor must read first.
+- 记录下一位接手者需要先读的事实源和未决问题。

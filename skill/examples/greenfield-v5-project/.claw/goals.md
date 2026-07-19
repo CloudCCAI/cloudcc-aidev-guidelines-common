@@ -9,23 +9,23 @@ updated_by: sample-owner
 project_mode: greenfield
 ---
 
-# Project Goals
+# 项目目标
 
-## Vision and Users
+## 愿景与用户
 
-Build a small team-notes API for product teams that need searchable shared notes.
+为需要搜索共享笔记的产品团队构建一个小型团队笔记 API。
 
-## Scope
+## 范围
 
-- In: create, edit, list, and search text notes.
-- Out: billing, mobile clients, and rich-text collaboration.
+- 范围内：创建、编辑、列出和搜索文本笔记。
+- 范围外：计费、移动客户端和富文本协作。
 
-## Success Criteria
+## 成功标准
 
-- The planned API contract covers the four in-scope actions.
-- Local development and verification commands are documented before implementation starts.
+- 计划的 API 契约覆盖四项范围内操作。
+- 实现开始前，记录本地开发和验证命令。
 
-## Constraints and Non-goals
+## 约束与非目标
 
-- Start as one deployable service backed by PostgreSQL.
-- Do not create a task until the first real delivery request is confirmed.
+- 从一个由 PostgreSQL 支持的可部署服务开始。
+- 第一个真实交付需求确认前，不创建任务。

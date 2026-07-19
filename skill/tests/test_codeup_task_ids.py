@@ -45,6 +45,13 @@ class CodeupTaskIdTests(unittest.TestCase):
         self.assertEqual(MODULE.extract_task_id("feat/TASK-alice-000-login"), "")
         self.assertEqual(MODULE.extract_task_id("feat/TASK-123-000-login"), "")
 
+    def test_default_change_request_description_is_chinese(self) -> None:
+        args = argparse.Namespace(description_file=None, description=None)
+        rendered = MODULE.read_description(args, "TASK-alice-001", "feat/login", "main")
+        self.assertIn("任务：TASK-alice-001", rendered)
+        self.assertIn("源分支：feat/login", rendered)
+        self.assertIn("验证：", rendered)
+
 
 if __name__ == "__main__":
     unittest.main()

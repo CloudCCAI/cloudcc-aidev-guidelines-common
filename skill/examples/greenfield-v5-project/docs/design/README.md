@@ -1,7 +1,7 @@
-# Product and Feature Design Documents
+# 产品与功能设计文档
 
-This directory will contain detailed feature, interaction, business-flow, state-transition, and exception-path designs linked from future FEAT records.
+此目录将保存未来 FEAT 记录所关联的详细功能、交互、业务流转、状态变化和异常路径设计。
 
-## Design Index
+## 设计索引
 
-- No product-specific design documents have been confirmed yet.
+- 暂无已确认的产品专项设计文档。

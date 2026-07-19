@@ -186,7 +186,7 @@ custom:
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         allocation = json.loads(result.stdout)
-        fields, _body = read_front_matter(root / str(allocation["path"]))
+        fields, task_body = read_front_matter(root / str(allocation["path"]))
 
         self.assertEqual(fields["schema_version"], "5")
         self.assertEqual(fields["policy_version"], "3")
@@ -195,6 +195,12 @@ custom:
         self.assertEqual(fields["created_by_slug"], "alice-smith")
         self.assertEqual(fields["created_by_source"], "user_confirmed")
         self.assertEqual(fields["created_by_developer_id"], "none")
+        self.assertEqual(fields["next_action"], "定义下一项可执行步骤")
+        self.assertIn("## 当前状态", task_body)
+        self.assertIn("## 验证", task_body)
+        self.assertIn("- 下一步：定义下一项可执行步骤", task_body)
+        self.assertNotIn("define the next executable step", task_body)
+        self.assertNotIn("## Current State", task_body)
 
         feature_result = subprocess.run(
             [
@@ -227,8 +233,9 @@ custom:
         self.assertIn("related_decisions", feature_fields)
         self.assertIn("related_issues", feature_fields)
         feature_body = (root / str(feature_allocation["path"])).read_text(encoding="utf-8")
-        self.assertIn("## Current and Target Behavior", feature_body)
-        self.assertIn("## Risks and Rollback", feature_body)
+        self.assertIn("## 当前行为与目标行为", feature_body)
+        self.assertIn("## 风险与回滚", feature_body)
+        self.assertNotIn("## Current and Target Behavior", feature_body)
 
     def test_cli_prefers_global_git_name_over_project_local_name(self) -> None:
         root = self.make_project()
@@ -343,10 +350,10 @@ custom:
         self.assertEqual(fields["owner_slug"], "system-user")
         self.assertEqual(fields["created_by_source"], "os_user")
 
-    def test_cli_uses_manifest_language_for_new_documents(self) -> None:
+    def test_cli_ignores_historical_english_manifest_for_new_document_language(self) -> None:
         root = self.make_project()
         (root / ".claw" / "manifest.yaml").write_text(
-            "schema_version: 5\nskill_version: 5.0.1\nlanguage: zh-CN\n",
+            "schema_version: 5\nskill_version: 5.0.1\nlanguage: en\n",
             encoding="utf-8",
         )
         script = SCRIPTS_DIR / "allocate-document-id.py"

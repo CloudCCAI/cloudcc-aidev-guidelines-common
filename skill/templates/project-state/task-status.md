@@ -26,27 +26,27 @@ updated_by: "{{CREATED_BY}}"
 
 # {{TASK_ID}} - {{TITLE}}
 
-## Current State
+## 当前状态
 
-- Status: `ready`
-- Next action: {{NEXT_ACTION}}
-- Blocked: none
-- Feature: `{{FEATURE_ID}}`
-- Assignment: none
+- 状态：`ready`
+- 下一步：{{NEXT_ACTION}}
+- 阻塞：none
+- 功能：`{{FEATURE_ID}}`
+- 授权：none
 
-## Progress
+## 进度
 
-- No durable progress recorded yet.
+- 尚未记录持久化进度。
 
-## Changed Files
+## 变更文件
 
-- None.
+- 暂无。
 
-## Verification
+## 验证
 
-- Status: `not_run`
-- Evidence: none
+- 状态：`not_run`
+- 证据：none
 
-## Handoff
+## 交接
 
-- Continue from the next action above.
+- 从上述下一步继续。

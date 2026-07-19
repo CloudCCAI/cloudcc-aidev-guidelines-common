@@ -5,12 +5,15 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
-from lib.language import PENDING_LANGUAGE, SUPPORTED_LANGUAGES
+from lib.devops_assets import (
+    DevOpsAssetContract,
+    contract_from_catalog,
+    normalize_environment_names,
+)
+from lib.language import PENDING_LANGUAGE, PRIMARY_LANGUAGE, READABLE_LANGUAGES
 
 
 EXPECTED_KINDS = {
@@ -150,7 +153,7 @@ V5_INITIALIZATION_STATUSES = {"in_progress", "ready", "needs_review"}
 V5_PROJECT_STATE_MODES = {"greenfield", "brownfield"}
 V5_PROJECT_MODES = {*V5_PROJECT_STATE_MODES, "not_applicable", "pending"}
 V5_MODULES = {"project_state", "collaboration_gate", "change_review"}
-V5_LANGUAGES = {*SUPPORTED_LANGUAGES, PENDING_LANGUAGE}
+V5_LANGUAGES = set(READABLE_LANGUAGES)
 ACTIVE_TASK_SECTIONS = {"Active Tasks", "活跃任务"}
 COMPLETED_TASK_SECTIONS = {"Completed Tasks", "已完成任务"}
 ARCHIVED_TASK_SECTIONS = {"Archived Tasks", "已归档任务"}
@@ -1157,42 +1160,43 @@ def validate_project_assets(
     return errors
 
 
-def validate_devops_environment_assets(project_root: Path, devops_path: Path) -> list[str]:
+def validate_devops_environment_assets(
+    project_root: Path,
+    devops_path: Path,
+    contract: DevOpsAssetContract,
+) -> list[str]:
     errors: list[str] = []
     data, _body, front_matter_errors = read_front_matter_yaml(devops_path)
     errors.extend(front_matter_errors)
     if not data:
         return errors
 
-    assets_root = clean_value(data.get("devops_assets_root", ""))
-    if assets_root != "DevOps":
-        errors.append(f"{devops_path}: devops_assets_root must be `DevOps`")
+    assets_root = clean_value(data.get(contract.root_field, ""))
+    expected_root = contract.root_path.as_posix()
+    if assets_root != expected_root:
+        errors.append(f"{devops_path}: {contract.root_field} must be `{expected_root}`")
 
-    environments = scalar_list(data.get("environment_names"))
+    environments = scalar_list(data.get(contract.environments_field))
     if not environments:
-        errors.append(f"{devops_path}: environment_names must contain at least one confirmed environment")
+        errors.append(
+            f"{devops_path}: {contract.environments_field} must contain at least one confirmed environment"
+        )
         return errors
 
-    safe_name = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z")
-    seen: set[str] = set()
-    for environment in environments:
-        if not safe_name.fullmatch(environment):
-            errors.append(f"{devops_path}: invalid environment name `{environment}`")
-            continue
-        folded = environment.casefold()
-        if folded in seen:
-            errors.append(f"{devops_path}: duplicate environment name ignoring case `{environment}`")
-            continue
-        seen.add(folded)
+    try:
+        environments = normalize_environment_names(environments)
+    except ValueError as exc:
+        errors.append(f"{devops_path}: {exc}")
+        return errors
 
-    assets_dir = project_root / "DevOps"
-    if not (assets_dir / "README.md").is_file():
-        errors.append(f"{devops_path}: missing DevOps/README.md")
+    assets_dir = project_root / contract.root_path
+    for asset in contract.root_files:
+        asset_path = assets_dir / asset.path
+        if not asset_path.is_file():
+            errors.append(f"{devops_path}: missing {(contract.root_path / asset.path).as_posix()}")
     for environment in environments:
-        if not safe_name.fullmatch(environment):
-            continue
-        for filename in ("Dockerfile", ".env.example"):
-            asset_path = assets_dir / environment / filename
+        for asset in contract.per_environment_files:
+            asset_path = assets_dir / environment / asset.path
             if not asset_path.is_file():
                 errors.append(
                     f"{devops_path}: missing DevOps environment asset "
@@ -1242,6 +1246,8 @@ def validate_manifest_data(path: Path, manifest: dict[str, object]) -> list[str]
         language = clean_value(manifest.get("language", ""))
         if language not in V5_LANGUAGES:
             errors.append(f"{path}: invalid language `{language}`; expected pending, en, or zh-CN")
+    if version_parts >= (5, 0, 3) and language != PRIMARY_LANGUAGE:
+        errors.append(f"{path}: skill_version 5.0.3 or newer requires language `{PRIMARY_LANGUAGE}`")
 
     project_mode = clean_value(manifest.get("project_mode", ""))
     if project_mode not in V5_PROJECT_MODES:
@@ -2036,20 +2042,34 @@ def validate_v5_state(state_dir: Path, catalog_path: Path, *, strict_v5: bool = 
     if catalog:
         errors.extend(validate_project_assets(project_root, manifest, catalog))
 
+    devops_contract: DevOpsAssetContract | None = None
+    has_devops_contract = any(
+        isinstance(entry, dict) and entry.get("id") == "devops" and "external_assets" in entry
+        for entry in entries
+    )
+    if catalog and has_devops_contract:
+        try:
+            devops_contract = contract_from_catalog(catalog)
+        except ValueError as exc:
+            errors.append(f"state catalog: {exc}")
+
     project_state_enabled = isinstance(modules, dict) and modules.get("project_state") is True
-    devops_path = state_dir / "devops.md"
+    devops_path = project_root / devops_contract.state_path if devops_contract else state_dir / "devops.md"
     devops_assets_configured = False
-    if devops_path.is_file():
+    if devops_contract and devops_path.is_file():
         devops_data, _devops_body, _devops_errors = read_front_matter_yaml(devops_path)
-        devops_assets_configured = bool(scalar_list(devops_data.get("environment_names")))
+        devops_assets_configured = bool(
+            scalar_list(devops_data.get(devops_contract.environments_field))
+        )
     if (
-        project_state_enabled
-        and version_tuple(manifest.get("skill_version")) >= (5, 0, 2)
-        and ".claw/devops.md" not in legacy_paths
+        devops_contract is not None
+        and project_state_enabled
+        and version_tuple(manifest.get("skill_version")) >= devops_contract.since_skill_version
+        and devops_contract.state_path.as_posix() not in legacy_paths
         and devops_path.is_file()
         and (manifest_ready or strict_v5 or devops_assets_configured)
     ):
-        errors.extend(validate_devops_environment_assets(project_root, devops_path))
+        errors.extend(validate_devops_environment_assets(project_root, devops_path, devops_contract))
 
     current_status = state_dir / "current-status.md"
     if project_state_enabled and current_status.exists():

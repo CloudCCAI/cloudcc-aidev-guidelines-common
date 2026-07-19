@@ -4,7 +4,6 @@ set -euo pipefail
 
 TARGET_DIR="${1:-.}"
 TARGET_DIR="${TARGET_DIR%/}"
-LANGUAGE="${2:-en}"
 
 README_PATH="${TARGET_DIR}/README.md"
 AGENTS_PATH="${TARGET_DIR}/AGENTS.md"
@@ -12,7 +11,6 @@ MARKER_BEGIN="<!-- cc-aidev-guidelines-common:begin -->"
 MARKER_END="<!-- cc-aidev-guidelines-common:end -->"
 SKILL_REPO_URL="https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
 
-if [[ "${LANGUAGE}" == "zh-CN" ]]; then
 README_BLOCK=$(cat <<EOF
 ${MARKER_BEGIN}
 ## AI 开发协议
@@ -35,35 +33,6 @@ ${MARKER_BEGIN}
 ${MARKER_END}
 EOF
 )
-elif [[ "${LANGUAGE}" == "en" ]]; then
-README_BLOCK=$(cat <<EOF
-${MARKER_BEGIN}
-## AI Development Protocol
-
-This project follows the \`cc-aidev-guidelines-common\` skill.
-
-- All AI agents must automatically use this skill before project analysis, planning, implementation, testing, or maintenance.
-- If the current agent does not have this skill installed, install it first from GitHub: ${SKILL_REPO_URL}
-- When the environment supports \`AGENTS.md\`, treat both this README section and \`AGENTS.md\` as mandatory project instructions.
-${MARKER_END}
-EOF
-)
-
-AGENTS_BLOCK=$(cat <<EOF
-${MARKER_BEGIN}
-## Required Skill
-
-- This project follows the \`cc-aidev-guidelines-common\` skill.
-- Every AI agent must automatically load and use this skill before any project work.
-- If the skill is not installed in the current environment, install it first from GitHub: ${SKILL_REPO_URL}
-- After the skill is available, follow its Greenfield or Brownfield workflow to maintain \`README.md\`, \`AGENTS.md\`, \`.claw/\`, and \`docs/specs/\`.
-${MARKER_END}
-EOF
-)
-else
-  echo "Unsupported language: ${LANGUAGE}" >&2
-  exit 6
-fi
 
 strip_managed_block() {
   local path="$1"
@@ -81,6 +50,12 @@ write_with_block() {
   local block="$3"
   local tmp_path
   tmp_path="$(mktemp)"
+
+  if [[ -f "${path}" ]] && grep -Fq "${MARKER_BEGIN}" "${path}" && grep -Fq "${MARKER_END}" "${path}"; then
+    rm -f "${tmp_path}"
+    echo "Preserved existing managed block: ${path}"
+    return
+  fi
 
   if [[ -f "${path}" ]]; then
     strip_managed_block "${path}" > "${tmp_path}"

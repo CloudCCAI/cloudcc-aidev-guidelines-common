@@ -9,15 +9,15 @@ updated_by: sample-owner
 project_mode: greenfield
 ---
 
-# Directory Map
+# 目录地图
 
-| Path | Responsibility | Entry points | Evidence |
+| 路径 | 职责 | 入口 | 证据 |
 |---|---|---|---|
-| `src/api/` | HTTP transport and request validation | `src/api/main.py` | planned |
-| `src/application/` | use cases and transaction boundaries | service modules | planned |
-| `src/persistence/` | PostgreSQL adapters and migrations | repository modules | planned |
-| `tests/` | unit and API verification | pytest | planned |
-| `docs/help/` | customer-facing product help and usage manuals | `README.md` | verified |
-| `docs/design/` | detailed feature and flow designs | `README.md` | verified |
+| `src/api/` | HTTP 传输和请求验证 | `src/api/main.py` | planned |
+| `src/application/` | 用例和事务边界 | 服务模块 | planned |
+| `src/persistence/` | PostgreSQL 适配器和迁移 | 仓储模块 | planned |
+| `tests/` | 单元和 API 验证 | pytest | planned |
+| `docs/help/` | 面向客户的产品帮助和使用手册 | `README.md` | verified |
+| `docs/design/` | 详细功能和流程设计 | `README.md` | verified |
 
-Allowed dependencies flow from API to application interfaces and from adapters toward those interfaces. Application code must not import the HTTP framework or concrete database adapters.
+允许的依赖从 API 流向应用接口，并从适配器流向这些接口。应用代码不得导入 HTTP 框架或具体数据库适配器。

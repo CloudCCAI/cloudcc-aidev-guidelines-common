@@ -118,8 +118,14 @@ updated_by: test
         self.assertEqual(new.feature_id, "FEAT-bimo-001")
         self.assertEqual(new.user, "bimo")
         rendered = current_status.render_current_status(workflows, updated_by="test", limit=10)
+        self.assertIn("version: 5", rendered)
+        self.assertIn('active_task: "TASK-001"', rendered)
         self.assertIn("active_task_count: 2", rendered)
-        self.assertIn("TASK-bimo-001", rendered)
+        self.assertIn("active_tasks: [TASK-001, TASK-bimo-001]", rendered)
+        self.assertNotIn("\n  - TASK-", rendered)
+        self.assertIn("# 项目当前状态", rendered)
+        self.assertIn("## 活跃工作流", rendered)
+        self.assertNotIn("# Project Current Status", rendered)
         self.assertLessEqual(len(rendered.splitlines()), 60)
 
     def test_empty_board_does_not_create_placeholder_task(self) -> None:
@@ -129,15 +135,18 @@ updated_by: test
         rendered = current_status.render_current_status(workflows, updated_by="test")
         self.assertEqual(workflows, [])
         self.assertIn("schema_version: 5", rendered)
+        self.assertIn("version: 5", rendered)
+        self.assertIn('active_task: "none"', rendered)
         self.assertIn("active_task_count: 0", rendered)
         self.assertIn("active_tasks: []", rendered)
-        self.assertIn("No active task", rendered)
+        self.assertIn("当前没有活跃任务", rendered)
+        self.assertNotIn("No active task", rendered)
         self.assertNotIn("TASK-001", rendered)
 
-    def test_chinese_task_board_and_generated_hot_index_are_supported(self) -> None:
+    def test_historical_english_manifest_still_generates_chinese_hot_index(self) -> None:
         _root, state_dir = self.make_project()
         (state_dir / "manifest.yaml").write_text(
-            "schema_version: 5\nskill_version: 5.0.1\nlanguage: zh-CN\n",
+            "schema_version: 5\nskill_version: 5.0.1\nlanguage: en\n",
             encoding="utf-8",
         )
         (state_dir / "task-board.md").write_text(
@@ -155,7 +164,7 @@ updated_by: test
         rendered = current_status.render_current_status(
             workflows,
             updated_by="test",
-            language="zh-CN",
+            language="en",
         )
         self.assertIn("# 项目当前状态", rendered)
         self.assertIn("## 活跃工作流", rendered)
@@ -240,8 +249,8 @@ status: done
 
         rendered = current_status.render_current_status(workflows, updated_by="test", limit=10)
 
-        self.assertIn("  - TASK-user-011", rendered)
-        self.assertNotIn("  - TASK-user-010", rendered)
+        self.assertIn("active_tasks: [TASK-user-011", rendered)
+        self.assertNotIn("TASK-user-010", rendered)
         self.assertIn('next_action: "continue implementation"', rendered)
 
     def test_team_status_parser_recognizes_new_ids_and_description_filename(self) -> None:
@@ -262,6 +271,10 @@ status: done
             team_status.parse_integration_queue(queue),
             {"TASK-001": "ready", "TASK-bimo-001": "ready"},
         )
+        rendered = team_status.render_team_status(state_dir, language="en")
+        self.assertIn("# 团队状态汇总", rendered)
+        self.assertIn("## 团队概览", rendered)
+        self.assertNotIn("# Team Status Summary", rendered)
 
     def test_team_status_cli_rejects_a_non_claw_state_directory(self) -> None:
         root = Path(tempfile.mkdtemp())

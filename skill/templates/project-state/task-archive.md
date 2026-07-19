@@ -6,11 +6,11 @@ updated_by: "{{UPDATED_BY}}"
 archive_status: active
 ---
 
-# Task Archive
+# 任务归档
 
-Create `task-archive.md` when the first real task leaves the board for the archive.
+`task-archive.md` 在第一个真实任务从看板归档时创建。
 
-## Archived Tasks
+## 已归档任务
 
 ### {{TASK_ID}} - {{TITLE}}
 
@@ -22,7 +22,7 @@ Create `task-archive.md` when the first real task leaves the board for the archi
 - archived_at: `{{TIMESTAMP}}`
 - completion_context: {{COMPLETION_CONTEXT}}
 
-## Maintenance Rules
+## 维护规则
 
-- Archive only `done` or `canceled` tasks.
-- Archiving moves the index card from the task board and does not delete the task fact file.
+- 只归档 `done` 或 `canceled` 任务。
+- 归档是从 task board 移动索引卡，不删除任务事实文件。

@@ -1,1 +1,1 @@
-# Reserved DEV Dockerfile; confirm the owning deployment repository before use.
+# 预留的 DEV Dockerfile；使用前确认负责部署的仓库。

@@ -12,19 +12,19 @@ devops_assets_root: DevOps
 environment_names: "DEV, UAT, PROD"
 ---
 
-# Build, Run, Test, and Operations
+# 构建、运行、测试与运维
 
-- Build: `pending verification`; confirm after the application skeleton exists.
-- Run: `pending verification`; planned entry point is `src/api/main.py`.
-- Test: `pending verification`; planned runner is pytest.
-- Deploy: containerized service and managed PostgreSQL, pending platform selection.
-- Environment: record variable names only; never put secret values in this file.
-- Next verification action: the first implementation task must run and record the actual commands.
+- 构建：`pending verification`；应用骨架建立后再确认。
+- 运行：`pending verification`；计划入口为 `src/api/main.py`。
+- 测试：`pending verification`；计划使用 pytest 运行。
+- 部署：容器化服务和托管 PostgreSQL，平台尚待选择。
+- 环境：只记录变量名，绝不在本文件中写入密钥值。
+- 下一项验证动作：第一个实现任务必须运行并记录实际命令。
 
 <!-- cc-aidev:devops-assets:begin -->
-## Environment Asset Inventory
+## 环境资产清单
 
-| Environment | Dockerfile | Environment example |
+| 环境 | Dockerfile | 环境变量示例 |
 | --- | --- | --- |
 | `DEV` | `DevOps/DEV/Dockerfile` | `DevOps/DEV/.env.example` |
 | `UAT` | `DevOps/UAT/Dockerfile` | `DevOps/UAT/.env.example` |

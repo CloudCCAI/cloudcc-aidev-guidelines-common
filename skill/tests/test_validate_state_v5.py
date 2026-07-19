@@ -11,6 +11,7 @@ from pathlib import Path
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = SKILL_ROOT / "scripts" / "validate-state.py"
+PREFLIGHT = SKILL_ROOT / "scripts" / "project-preflight.py"
 CHECK_ASSIGNMENT = SKILL_ROOT / "scripts" / "check-assignment.py"
 SKILL_REPO_URL = "https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
 TIMESTAMP = "2026-07-18T03:00:00Z"
@@ -380,7 +381,7 @@ class ValidateStateV5Tests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("(v5)", result.stdout)
 
-    def test_v501_manifest_requires_confirmed_language_and_policy_v3(self) -> None:
+    def test_v501_manifest_keeps_historical_language_compatibility(self) -> None:
         self.add_minimal_v5()
         write(
             self.state_dir / "manifest.yaml",
@@ -390,13 +391,34 @@ class ValidateStateV5Tests(unittest.TestCase):
         self.assertNotEqual(missing.returncode, 0)
         self.assertIn("missing manifest field `language`", missing.stdout)
 
+        for language in ("en", "zh-CN"):
+            with self.subTest(language=language):
+                write(
+                    self.state_dir / "manifest.yaml",
+                    manifest_text(skill_version="5.0.1", language=language, policy_version=3),
+                )
+                confirmed = self.run_validator("--strict-v5")
+                self.assertEqual(confirmed.returncode, 0, confirmed.stdout + confirmed.stderr)
+
+        write(
+            self.state_dir / "manifest.yaml",
+            manifest_text(
+                skill_version="5.0.1",
+                language="pending",
+                policy_version=3,
+                initialization_status="in_progress",
+            ),
+        )
+        pending = self.run_validator("--strict-v5")
+        self.assertEqual(pending.returncode, 0, pending.stdout + pending.stderr)
+
         write(
             self.state_dir / "manifest.yaml",
             manifest_text(skill_version="5.0.1", language="pending", policy_version=3),
         )
-        pending = self.run_validator("--strict-v5")
-        self.assertNotEqual(pending.returncode, 0)
-        self.assertIn("ready initialization cannot keep language pending", pending.stdout)
+        ready_pending = self.run_validator("--strict-v5")
+        self.assertNotEqual(ready_pending.returncode, 0)
+        self.assertIn("ready initialization cannot keep language pending", ready_pending.stdout)
 
         write(
             self.state_dir / "manifest.yaml",
@@ -406,12 +428,52 @@ class ValidateStateV5Tests(unittest.TestCase):
         self.assertNotEqual(old_policy.returncode, 0)
         self.assertIn("requires compatibility.new_document_policy_version >= 3", old_policy.stdout)
 
+    def test_v503_manifest_requires_zh_cn_language(self) -> None:
+        self.add_minimal_v5()
+
+        for language in (None, "en", "pending"):
+            with self.subTest(language=language):
+                write(
+                    self.state_dir / "manifest.yaml",
+                    manifest_text(skill_version="5.0.3", language=language, policy_version=3),
+                )
+                invalid = self.run_validator("--strict-v5")
+                self.assertNotEqual(invalid.returncode, 0)
+                self.assertIn(
+                    "skill_version 5.0.3 or newer requires language `zh-CN`",
+                    invalid.stdout,
+                )
+                if language is None:
+                    self.assertIn("missing manifest field `language`", invalid.stdout)
+
         write(
             self.state_dir / "manifest.yaml",
-            manifest_text(skill_version="5.0.1", language="zh-CN", policy_version=3),
+            manifest_text(skill_version="5.0.3", language="zh-CN", policy_version=3),
         )
-        confirmed = self.run_validator("--strict-v5")
-        self.assertEqual(confirmed.returncode, 0, confirmed.stdout + confirmed.stderr)
+        valid = self.run_validator("--strict-v5")
+        self.assertEqual(valid.returncode, 0, valid.stdout + valid.stderr)
+
+    def test_preflight_routes_v503_english_manifest_to_review(self) -> None:
+        self.add_minimal_v5()
+        write(
+            self.state_dir / "manifest.yaml",
+            manifest_text(skill_version="5.0.3", language="en", policy_version=3),
+        )
+
+        result = subprocess.run(
+            [sys.executable, str(PREFLIGHT), str(self.project_root), "--json"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["status"], "needs_review")
+        self.assertFalse(payload["ready"])
+        self.assertEqual(payload["language"], "en")
+        self.assertIn("language: zh-CN", payload["finding"])
+        self.assertEqual(payload["next_action"], "repair manifest language to zh-CN")
 
     def test_strict_v5_allows_prefinalize_manifest_when_core_is_complete(self) -> None:
         write(

@@ -14,24 +14,24 @@ project_mode: brownfield
 
 # PROJECT-BASELINE
 
-## Verified Facts
+## 已验证事实
 
-- `src/inventory.py` computes available stock as non-negative on-hand minus reserved stock.
-- Existing callers depend on the function name and its two positional parameters.
+- `src/inventory.py` 将可用库存计算为现有库存减去预留库存，并保证结果非负。
+- 既有调用方依赖函数名及其两个位置参数。
 
-## Inferred Facts
+## 推断事实
 
-- The single module suggests a library boundary, but no packaging metadata is present.
+- 单一模块表明可能存在库边界，但没有打包元数据。
 
-## Pending Verification
+## 待验证事项
 
-- Production callers, supported Python versions, and deployment ownership are not represented in this fixture.
-- Before changing behavior, ask the maintainer for caller evidence and run the real downstream suite.
+- 此示例未体现生产调用方、支持的 Python 版本和部署归属。
+- 修改行为前，向维护者索取调用方证据，并运行真实下游测试套件。
 
-## Legacy Hotspots
+## 历史风险热点
 
-- The availability rule is compatibility-sensitive because callers may rely on clamping negative values to zero.
+- 可用量规则对兼容性敏感，因为调用方可能依赖将负值归零的行为。
 
-## Adoption Plan
+## 接管计划
 
-- Preserve the public function contract and document only facts needed by the next real change.
+- 保留公开函数契约，只记录下一项真实变更所需的事实。

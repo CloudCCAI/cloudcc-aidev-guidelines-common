@@ -12,37 +12,37 @@ project_mode: {{PROJECT_MODE}}
 
 <!-- cc-aidev:onboarding-incomplete -->
 
-> Onboarding reference: this marker means the required answers below are not yet confirmed. Write the real project answers, obtain user confirmation, and only then remove the marker before setting `init_status: complete`.
+> 此标记表示必需答案尚未确认。填写真实项目答案并取得用户确认后，才能删除标记并将 `init_status` 设为 `complete`。
 
-# Directory Map
+# 目录地图
 
-`directory-map.md` is the source of truth for repository directory responsibilities and dependency boundaries.
+`directory-map.md` 是仓库目录职责和依赖边界的事实源。
 
-## Directory Responsibilities
+## 目录职责
 
-| Path | Responsibility | Entry Points | Evidence Status |
+| 路径 | 职责 | 入口 | 证据状态 |
 |---|---|---|---|
-| `.` | Pending user confirmation | Pending user confirmation | `{{EVIDENCE_STATUS}}` |
-| `docs/help/` | Customer-facing product help and usage manuals | `README.md` | initialized |
-| `docs/design/` | Detailed feature, interaction, business-flow, state, and exception-path designs | `README.md` | initialized |
+| `.` | 等待用户确认 | 等待用户确认 | `{{EVIDENCE_STATUS}}` |
+| `docs/help/` | 面向用户的产品帮助和使用手册 | `README.md` | 已初始化 |
+| `docs/design/` | 功能、交互、业务流转、状态和异常路径等详细设计 | `README.md` | 已初始化 |
 
-## Allowed Dependencies
+## 允许的依赖
 
-- Pending user confirmation.
+- 等待用户确认。
 
-## Forbidden Dependencies
+## 禁止的依赖
 
-- Pending user confirmation.
+- 等待用户确认。
 
-## Generated and External Content
+## 生成内容与外部内容
 
-- Record generated, vendored, cache, build-output, and externally managed paths that agents should not edit.
+- 记录智能体不应编辑的生成目录、依赖副本、缓存、构建产物和外部管理路径。
 
-## Pending Verification
+## 待验证事项
 
-- Record ambiguous directories and the smallest action needed to confirm each responsibility.
+- 记录职责不明确的目录，以及确认它所需的最小动作。
 
-## Maintenance Rules
+## 维护规则
 
-- Describe meaningful project directories rather than every generated subdirectory.
-- Do not mark an inferred Brownfield responsibility as verified without evidence.
+- 描述有意义的项目目录，不要罗列每个生成子目录。
+- 没有证据时，不要把 Brownfield 推断标记为已验证。

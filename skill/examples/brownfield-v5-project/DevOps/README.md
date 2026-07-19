@@ -1,3 +1,3 @@
-# DevOps Environment Assets
+# DevOps 环境资产
 
-This fixture reserves separate DEV, UAT, and PROD assets. Its Dockerfiles remain non-runnable until the owning deployment repository is confirmed.
+此示例分别预留 DEV、UAT 和 PROD 资产。在确认负责部署的仓库前，这些 Dockerfile 保持不可运行。

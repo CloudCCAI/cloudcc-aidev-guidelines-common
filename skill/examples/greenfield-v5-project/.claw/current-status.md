@@ -15,14 +15,14 @@ next_action: "confirm the first real project action"
 task_board: .claw/task-board.md
 ---
 
-# Project Current Status
+# 项目当前状态
 
-`current-status.md` is a generated hot index.
+`current-status.md` 是生成的热索引。
 
-## Active Workflows
+## 活跃工作流
 
-- No active task. Do not create a placeholder task.
+- 当前没有活跃任务。不要创建占位任务。
 
-## Read Next
+## 后续读取
 
-- Read `.claw/task-board.md` only when a real task is created or prioritized.
+- 只有创建真实任务或确定其优先级后，才读取 `.claw/task-board.md`。

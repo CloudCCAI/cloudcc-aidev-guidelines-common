@@ -1,12 +1,12 @@
-# DevOps Environment Assets
+# DevOps 环境资产
 
-This directory stores customer-environment-specific build and configuration examples.
+此目录保存按客户环境区分的打包文件和配置变量示例。
 
-Each environment directory owns its own `Dockerfile` and `.env.example`. The generated files are reservations only: customize and verify them against the application before using them to build or deploy.
+每个环境目录分别拥有自己的 `Dockerfile` 和 `.env.example`。初始化生成的文件仅用于预留结构；实际打包或部署前，必须结合应用完成修改和验证。
 
-Rules:
+规则：
 
-- Never commit real secret values. Copy `.env.example` to an ignored `.env` only in an appropriate local or deployment system.
-- Keep one independently reviewed `Dockerfile` per customer environment.
-- Add new environments with `project-onboarding.py devops-assets`; existing files are preserved.
-- Do not treat a generated placeholder as evidence of a successful build or deployment.
+- 禁止提交真实密钥值；只在合适的本地环境或部署系统中，将 `.env.example` 复制为已忽略的 `.env`。
+- 每个客户环境维护并独立评审自己的 `Dockerfile`。
+- 使用 `project-onboarding.py devops-assets` 增加环境；已有文件会被保留。
+- 生成的占位文件不能作为打包或部署成功的证据。

@@ -18,6 +18,8 @@
 python3 scripts/project-preflight.py /path/to/project --json
 ```
 
+目标项目根目录必须已经存在；全新项目先运行 `mkdir -p /path/to/project`，再执行预检和初始化。初始化器不会替用户猜测或创建项目根路径。
+
 预检只读取目录、代码入口、构建清单、Git 历史和现有 `.claw/`，不得运行构建、安装、测试或部署命令。
 
 判定规则：
@@ -33,7 +35,6 @@ legacy 项目可以无限期继续使用 v4 profile。只有用户明确要求�
 ```bash
 python3 scripts/project-onboarding.py adopt /path/to/project \
   --mode brownfield \
-  --language zh-CN \
   --project-state on \
   --collaboration-gate off \
   --change-review off \
@@ -42,16 +43,9 @@ python3 scripts/project-onboarding.py adopt /path/to/project \
 
 `adopt` 先建立不可覆盖的 legacy index，再创建 manifest 和缺失的新核心文件；index 中的既有文件保持原样并按旧 schema 读取。不得用 `start` 代替显式采用。
 
-## 确认语言与模块
+## 确认模块
 
-先询问项目管理文件使用哪种语言：
-
-- `zh-CN`：新建的人类可读内容使用简体中文。
-- `en`：新建的人类可读内容使用英文。
-
-未确认时 manifest 使用 `language: pending`，初始化器只保存可恢复控制面，不创建默认英文核心文件。语言不改变 frontmatter 字段名、状态枚举、FEAT/TASK ID、路径、命令、代码标识符和原始验证输出。早期 v5 缺少 language 时按 `en` 兼容读取；既有文件不自动翻译。
-
-然后询问三个开关：
+新建或明确重写的人类可读项目管理内容固定使用简体中文，不再询问语言。新 manifest 记录 `language: zh-CN`；机器字段、枚举、FEAT/TASK ID、路径、命令、代码标识符和原始验证输出保持协议值。早期 v5 缺少 language 或记录 `en` 时继续兼容读取；未完成初始化中的 `pending` 会在恢复写操作时归一为 `zh-CN`，既有文件不自动翻译。
 
 询问三个开关：
 
@@ -79,7 +73,6 @@ python3 scripts/project-onboarding.py adopt /path/to/project \
 ```bash
 python3 scripts/project-onboarding.py start /path/to/project \
   --mode greenfield \
-  --language zh-CN \
   --project-state on \
   --collaboration-gate off \
   --change-review off
@@ -94,13 +87,13 @@ python3 scripts/project-onboarding.py status /path/to/project --json
 
 旧入口 `scripts/init-state.sh` 只是该初始化器的 `.claw` 包装器。
 
-初始化器还会通过受控声明块幂等创建或更新项目根 `README.md`、`AGENTS.md`，让后续 Agent 在工作前加载本 Skill，并确保 `.gitignore` 包含 `.claw-local/`；已有块外内容保持不变。
+初始化器还会通过中文受控声明块幂等创建项目根 `README.md`、`AGENTS.md`，让后续 Agent 在工作前加载本 Skill，并确保 `.gitignore` 包含 `.claw-local/`；历史项目已有的完整受控块和所有块外内容保持不变。
 
-文档语言和 Greenfield/Brownfield 模式确认后，初始化器还会幂等创建：
+Greenfield/Brownfield 模式确认后，初始化器还会幂等创建：
 
 ```text
 docs/
-  specs/     # FEAT 与 Brownfield baseline
+  specs/     # Brownfield baseline 或首次真实 FEAT 出现时创建
   help/      # 面向用户的产品帮助和使用手册
     README.md
   design/    # 功能、交互、业务流转、状态和异常流程设计
@@ -117,13 +110,12 @@ docs/
 
 ```bash
 python3 scripts/configure-modules.py set /path/to/project \
-  --language en \
   --project-state on \
   --collaboration-gate off \
   --change-review on
 ```
 
-启用模块会创建缺失的模块配置并把已 ready 的 manifest 置为 `needs_review`，从该配置继续问答；关闭模块只停止加载和执行。显式修改语言只影响未来新建或明确重写的内容，不批量翻译既有文件。配置代码评审平台时使用：
+启用模块会创建缺失的模块配置并把已 ready 的 manifest 置为 `needs_review`，从该配置继续问答；关闭模块只停止加载和执行。语言不可通过模块配置修改。配置代码评审平台时使用：
 
 ```bash
 python3 scripts/configure-modules.py review /path/to/project \

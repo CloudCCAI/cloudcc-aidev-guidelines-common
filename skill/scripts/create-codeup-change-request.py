@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -21,11 +19,13 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from lib.document_ids import TASK_ID_RE as CANONICAL_TASK_ID_RE, extract_task_ids
-
-
-DEFAULT_ENV_FILE = Path(".claw-local/codeup.env")
-TOKEN_DOC_URL = "https://help.aliyun.com/zh/yunxiao/developer-reference/obtain-personal-access-token"
-
+from lib.codeup_config import (
+    DEFAULT_ENV_FILE,
+    TOKEN_DOC_URL,
+    config_value,
+    normalize_domain,
+    parse_env_file,
+)
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -62,40 +62,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trigger-ai-review", action="store_true", help="Ask Codeup to trigger AI review if enabled.")
     parser.add_argument("--dry-run", action="store_true", help="Print the request without sending it.")
     return parser.parse_args()
-
-
-def parse_env_file(path: Path) -> dict[str, str]:
-    if not path.exists():
-        return {}
-
-    values: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[len("export ") :].strip()
-        if "=" not in line:
-            continue
-        key, raw_value = line.split("=", 1)
-        key = key.strip()
-        try:
-            parts = shlex.split(raw_value, posix=True)
-        except ValueError:
-            parts = [raw_value.strip().strip('"').strip("'")]
-        if key:
-            values[key] = parts[0] if parts else ""
-    return values
-
-
-def config_value(name: str, explicit: str | None, env_values: dict[str, str], default: str = "") -> str:
-    if explicit:
-        return explicit
-    if os.environ.get(name):
-        return os.environ[name]
-    if env_values.get(name):
-        return env_values[name]
-    return default
 
 
 def current_git_branch() -> str:
@@ -140,23 +106,14 @@ def read_description(args: argparse.Namespace, task_id: str, source_branch: str,
         return args.description
 
     lines = [
-        f"Task: {task_id or 'n/a'}",
-        f"Source branch: {source_branch}",
-        f"Target branch: {target_branch}",
+        f"任务：{task_id or 'n/a'}",
+        f"源分支：{source_branch}",
+        f"目标分支：{target_branch}",
         "",
-        "Verification:",
+        "验证：",
         "- not_run",
     ]
     return "\n".join(lines)
-
-
-def normalize_domain(domain: str) -> str:
-    if not domain:
-        return ""
-    cleaned = domain.strip().rstrip("/")
-    if not cleaned.startswith(("http://", "https://")):
-        cleaned = f"https://{cleaned}"
-    return cleaned
 
 
 def build_endpoint(domain: str, organization_id: str, repository_id: str) -> str:
@@ -241,7 +198,7 @@ def build_payload(args: argparse.Namespace, config: dict[str, str]) -> dict[str,
     elif task_id:
         title = f"[{task_id}] {source_branch}"
     else:
-        title = f"Change request from {source_branch}"
+        title = f"来自 {source_branch} 的变更请求"
     description = read_description(args, task_id, source_branch, target_branch)
     if not source_branch:
         raise SystemExit("sourceBranch is required.")

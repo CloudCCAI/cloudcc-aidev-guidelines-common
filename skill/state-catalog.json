@@ -20,12 +20,6 @@
     "brownfield",
     "not_applicable"
   ],
-  "document_languages": {
-    "supported": ["en", "zh-CN"],
-    "initialization_value": "pending",
-    "legacy_default": "en",
-    "localized_template_root": "templates/locales"
-  },
   "modules": {
     "project_state": {
       "default": true,
@@ -77,8 +71,7 @@
       "required_when": "always",
       "initialization_required": false,
       "counts_toward_ready": false,
-      "prompt": "确认项目类型、模块开关和兼容策略。",
-      "prompt_en": "Confirm project mode, module switches, and compatibility policy."
+      "prompt": "确认项目类型、模块开关和兼容策略。"
     },
     {
       "id": "project_baseline",
@@ -99,8 +92,7 @@
       },
       "initialization_required": true,
       "counts_toward_ready": true,
-      "prompt": "确认存量系统的 verified、inferred 与 pending verification 基线。",
-      "prompt_en": "Confirm the verified, inferred, and pending-verification baseline for the existing system."
+      "prompt": "确认存量系统的 verified、inferred 与 pending verification 基线。"
     },
     {
       "id": "goals",
@@ -121,8 +113,7 @@
       },
       "initialization_required": true,
       "counts_toward_ready": true,
-      "prompt": "确认项目目标、用户、范围、成功标准、约束和非目标。",
-      "prompt_en": "Confirm project goals, users, scope, success criteria, constraints, and non-goals."
+      "prompt": "确认项目目标、用户、范围、成功标准、约束和非目标。"
     },
     {
       "id": "decisions",
@@ -148,8 +139,7 @@
       ],
       "initialization_required": true,
       "counts_toward_ready": true,
-      "prompt": "确认 ARCHITECTURE 当前快照；ADR 历史可以为空。",
-      "prompt_en": "Confirm the current ARCHITECTURE snapshot; ADR history may be empty."
+      "prompt": "确认 ARCHITECTURE 当前快照；ADR 历史可以为空。"
     },
     {
       "id": "directory_map",
@@ -170,8 +160,7 @@
       },
       "initialization_required": true,
       "counts_toward_ready": true,
-      "prompt": "确认主要目录的职责、入口、边界和禁止依赖。",
-      "prompt_en": "Confirm responsibilities, entry points, boundaries, and forbidden dependencies for major directories."
+      "prompt": "确认主要目录的职责、入口、边界和禁止依赖。"
     },
     {
       "id": "devops",
@@ -197,12 +186,16 @@
         "root_field": "devops_assets_root",
         "root_path": "DevOps",
         "environments_field": "environment_names",
-        "required_root_files": ["README.md"],
-        "required_per_environment_files": ["Dockerfile", ".env.example"],
+        "root_files": [
+          {"path": "README.md", "template": "templates/devops-assets/README.md"}
+        ],
+        "per_environment_files": [
+          {"path": "Dockerfile", "template": "templates/devops-assets/Dockerfile"},
+          {"path": ".env.example", "template": "templates/devops-assets/env.example"}
+        ],
         "initialization_command": "project-onboarding.py devops-assets"
       },
-      "prompt": "确认已验证或明确待验证的构建、运行、测试和部署入口。",
-      "prompt_en": "Confirm verified or explicitly pending build, run, test, and deployment entry points."
+      "prompt": "确认已验证或明确待验证的构建、运行、测试和部署入口。"
     },
     {
       "id": "collaboration_config",
@@ -218,8 +211,7 @@
       "required_when": "collaboration_gate",
       "initialization_required": true,
       "counts_toward_ready": true,
-      "prompt": "确认管理者、身份绑定、assignment 边界和本地登录策略；成员与授权目录仍由真实事件创建。",
-      "prompt_en": "Confirm manager, identity binding, assignment boundaries, and local login policy; member and assignment directories remain event-created."
+      "prompt": "确认管理者、身份绑定、assignment 边界和本地登录策略；成员与授权目录仍由真实事件创建。"
     },
     {
       "id": "review_config",
@@ -235,8 +227,7 @@
       "required_when": "change_review",
       "initialization_required": true,
       "counts_toward_ready": true,
-      "prompt": "确认代码托管平台、目标分支、评审人、必需检查和创建策略。",
-      "prompt_en": "Confirm code-hosting platform, target branch, reviewers, required checks, and creation policy."
+      "prompt": "确认代码托管平台、目标分支、评审人、必需检查和创建策略。"
     },
     {
       "id": "task_board",
@@ -260,8 +251,7 @@
       ],
       "initialization_required": true,
       "counts_toward_ready": true,
-      "prompt": "确认空看板已经可用；初始化不得制造占位任务。",
-      "prompt_en": "Confirm the empty task board is usable; initialization must not create placeholder tasks."
+      "prompt": "确认空看板已经可用；初始化不得制造占位任务。"
     },
     {
       "id": "current_status",
@@ -287,8 +277,7 @@
       ],
       "initialization_required": true,
       "counts_toward_ready": true,
-      "prompt": "确认当前阶段、活跃工作流索引、下一步和按需读取提示。",
-      "prompt_en": "Confirm the current phase, active-workflow index, next action, and progressive-reading guidance."
+      "prompt": "确认当前阶段、活跃工作流索引、下一步和按需读取提示。"
     },
     {
       "id": "feature_spec",
@@ -407,7 +396,6 @@
       "kind": "team-status",
       "schema_version": 5,
       "path": ".claw/team-status.md",
-      "template": "templates/collaboration-gate/team-status.md",
       "module": "collaboration_gate",
       "category": "derived",
       "lifecycle": "derived",

@@ -1,8 +1,8 @@
 ---
 kind: task-board
 version: 4
-updated_at: 2026-07-19T01:20:11Z
-updated_by: ai
+updated_at: 2026-07-19T02:06:38Z
+updated_by: Bimo
 board_status: active
 ---
 
@@ -166,6 +166,7 @@ board_status: active
 - `TASK-bimo-006` — done — configurable English/Chinese document language.
 - `TASK-bimo-007` — done — customer-specific DevOps environment assets.
 - `TASK-bimo-008` — done — project help and detailed design documentation directories.
+- `TASK-bimo-009` — done — canonical Chinese templates and two-pass Skill cleanup.
 
 ## Maintenance Rules
 

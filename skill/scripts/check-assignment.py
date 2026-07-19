@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import json
-import sys
 from pathlib import PurePosixPath, Path
 
 from lib.document_ids import TASK_ID_RE
@@ -14,7 +13,6 @@ from lib.document_ids import TASK_ID_RE
 EMPTY_VALUES = {"", "none", "n/a", "na", "not_applicable"}
 ACTIVE_STATUSES = {"active"}
 MANAGER_PREFIX = "MANAGER-"
-DEVELOPER_PREFIXES = ("DEV-", MANAGER_PREFIX)
 SCOPE_MODE_EXACT = "exact_files"
 SCOPE_MODE_BROAD = "task_bounded_broad_code"
 SCOPE_MODES = {SCOPE_MODE_EXACT, SCOPE_MODE_BROAD}

@@ -9,14 +9,14 @@ updated_by: sample-maintainer
 board_status: active
 ---
 
-# Task Board
+# 任务看板
 
-## Active Tasks
+## 活跃任务
 
-No active tasks.
+当前没有活跃任务。
 
-## Completed Tasks
+## 已完成任务
 
-No completed tasks.
+当前没有已完成任务。
 
-The baseline exists without manufacturing an adoption task.
+基线已经存在，且没有制造接管占位任务。

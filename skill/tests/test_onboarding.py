@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import hashlib
-import re
 import subprocess
 import sys
 import tempfile
@@ -39,8 +38,6 @@ class OnboardingCliTests(unittest.TestCase):
         return completed.returncode, payload, completed.stderr
 
     def start(self, project: Path, *arguments: str) -> tuple[int, dict[str, object], str]:
-        if "--language" not in arguments:
-            arguments = (*arguments, "--language", "en")
         return self.run_python(
             ONBOARDING,
             "start",
@@ -51,38 +48,16 @@ class OnboardingCliTests(unittest.TestCase):
             "--json",
         )
 
-    def test_language_is_the_first_resumable_question_when_omitted(self) -> None:
+    def test_new_project_uses_chinese_without_a_language_question(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
-            code, payload, _ = self.run_python(
-                ONBOARDING,
-                "start",
-                str(project),
-                "--mode",
-                "greenfield",
-                "--now",
-                FIXED_NOW,
-                "--json",
-            )
+            code, payload, _ = self.start(project, "--mode", "greenfield")
             self.assertEqual(code, 2, payload)
-            self.assertEqual(payload["language"], "pending")
-            self.assertEqual(payload["next"]["id"], "language")
-            self.assertEqual(
-                {path.name for path in (project / ".claw").iterdir()},
-                {"manifest.yaml"},
-            )
-            self.assertFalse((project / "README.md").exists())
-
-            code, localized, _ = self.start(
-                project,
-                "--mode",
-                "greenfield",
-                "--language",
-                "zh-CN",
-            )
-            self.assertEqual(code, 2, localized)
-            self.assertEqual(localized["language"], "zh-CN")
-            self.assertEqual(localized["next"]["id"], "goals")
+            self.assertEqual(payload["language"], "zh-CN")
+            self.assertEqual(payload["next"]["id"], "goals")
+            self.assertNotEqual(payload["next"]["id"], "language")
+            manifest = (project / ".claw" / "manifest.yaml").read_text(encoding="utf-8")
+            self.assertIn('language: "zh-CN"', manifest)
             self.assertIn("# 项目目标", (project / ".claw" / "goals.md").read_text(encoding="utf-8"))
             self.assertIn("## AI 开发协议", (project / "README.md").read_text(encoding="utf-8"))
             self.assertIn(
@@ -117,8 +92,8 @@ class OnboardingCliTests(unittest.TestCase):
             return
         content = content.replace(ONBOARDING_INCOMPLETE_SENTINEL, "", 1)
         content = content.rstrip() + (
-            "\n\n## Confirmed Onboarding Answer (test fixture)\n\n"
-            f"- `{file_id}` was answered with representative project facts and confirmed by Bimo.\n"
+            "\n\n## 已确认的初始化答案（测试夹具）\n\n"
+            f"- `{file_id}` 已填写代表性的项目事实，并由 Bimo 确认。\n"
         )
         path.write_text(content, encoding="utf-8")
         self.assertNotIn(ONBOARDING_INCOMPLETE_SENTINEL, path.read_text(encoding="utf-8"))
@@ -162,7 +137,7 @@ class OnboardingCliTests(unittest.TestCase):
     def test_devops_assets_require_confirmation_and_recommend_three_reserved_environments(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
-            code, payload, _ = self.start(project, "--mode", "greenfield", "--language", "zh-CN")
+            code, payload, _ = self.start(project, "--mode", "greenfield")
             self.assertEqual(code, 2, payload)
             code, validation, _ = self.run_python(
                 VALIDATE_STATE,
@@ -241,6 +216,22 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertEqual(dockerfile.read_text(encoding="utf-8"), "FROM scratch\n")
             self.assertTrue((project / "DevOps" / "Production-CustomerA" / "Dockerfile").is_file())
 
+            devops_path = project / ".claw" / "devops.md"
+            before_repeat = devops_path.read_bytes()
+            code, repeated, _ = self.run_python(
+                ONBOARDING,
+                "devops-assets",
+                str(project),
+                "--environment",
+                "Production-CustomerA",
+                "--now",
+                "2026-07-18T03:00:00Z",
+                "--json",
+            )
+            self.assertEqual(code, 2, repeated)
+            self.assertFalse(repeated["changed"])
+            self.assertEqual(devops_path.read_bytes(), before_repeat)
+
     def test_devops_cannot_complete_without_confirmed_environment_assets(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
@@ -288,7 +279,8 @@ class OnboardingCliTests(unittest.TestCase):
             code, payload, _ = self.run_python(PREFLIGHT, str(project), "--json")
             self.assertEqual(code, 0)
             self.assertEqual(payload["status"], "uninitialized")
-            self.assertIn("confirm document language and module switches", payload["next_action"])
+            self.assertIn("confirm module switches", payload["next_action"])
+            self.assertNotIn("language", payload["next_action"])
             recommendation = payload["mode_recommendation"]
             self.assertEqual(recommendation["candidate"], "greenfield")
             self.assertTrue(recommendation["requires_user_confirmation"])
@@ -320,8 +312,8 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertFalse((project / "docs" / "specs" / "PROJECT-BASELINE.md").exists())
             help_index = project / "docs" / "help" / "README.md"
             design_index = project / "docs" / "design" / "README.md"
-            self.assertIn("# Product Help and Usage Manual", help_index.read_text(encoding="utf-8"))
-            self.assertIn("# Product and Feature Design Documents", design_index.read_text(encoding="utf-8"))
+            self.assertIn("# 产品帮助与使用手册", help_index.read_text(encoding="utf-8"))
+            self.assertIn("# 产品与功能设计文档", design_index.read_text(encoding="utf-8"))
             for event_path in (
                 ".claw/issue-list.md",
                 ".claw/test-report.md",
@@ -354,7 +346,7 @@ class OnboardingCliTests(unittest.TestCase):
             current_status = project / ".claw" / "current-status.md"
             finalized_current_status = current_status.read_text(encoding="utf-8")
             self.assertIn("phase: idle", finalized_current_status)
-            self.assertIn('next_action: "confirm the next project action"', finalized_current_status)
+            self.assertIn('next_action: "确认下一项项目工作"', finalized_current_status)
 
             code, ready, _ = self.run_python(PREFLIGHT, str(project), "--require-ready", "--json")
             self.assertEqual(code, 0, ready)
@@ -459,13 +451,13 @@ class OnboardingCliTests(unittest.TestCase):
 
             self.mark_all_required_complete(project)
             answered_goals = goals_path.read_text(encoding="utf-8")
-            self.assertIn("Confirmed Onboarding Answer (test fixture)", answered_goals)
+            self.assertIn("已确认的初始化答案（测试夹具）", answered_goals)
             self.assertNotIn(ONBOARDING_INCOMPLETE_SENTINEL, answered_goals)
 
             goals_path.write_text(
                 answered_goals.replace(
-                    "# Project Goals",
-                    f"{ONBOARDING_INCOMPLETE_SENTINEL}\n\n# Project Goals",
+                    "# 项目目标",
+                    f"{ONBOARDING_INCOMPLETE_SENTINEL}\n\n# 项目目标",
                     1,
                 ),
                 encoding="utf-8",
@@ -740,8 +732,6 @@ class OnboardingCliTests(unittest.TestCase):
                 str(project),
                 "--mode",
                 "brownfield",
-                "--language",
-                "en",
                 "--confirmed-by",
                 "Bimo",
                 "--now",
@@ -780,8 +770,6 @@ class OnboardingCliTests(unittest.TestCase):
                 str(project),
                 "--mode",
                 "brownfield",
-                "--language",
-                "en",
                 "--confirmed-by",
                 "Bimo",
                 "--now",
@@ -820,8 +808,6 @@ class OnboardingCliTests(unittest.TestCase):
                 str(project),
                 "--mode",
                 "brownfield",
-                "--language",
-                "en",
                 "--confirmed-by",
                 "Bimo",
                 "--now",
@@ -840,24 +826,22 @@ class OnboardingCliTests(unittest.TestCase):
 
     def test_catalog_covers_module_configs_and_event_artifacts(self) -> None:
         catalog = json.loads((SKILL_ROOT / "state-catalog.json").read_text(encoding="utf-8"))
+        locales_root = SKILL_ROOT / "templates" / "locales"
+        self.assertFalse(
+            any(path.is_file() for path in locales_root.rglob("*")) if locales_root.exists() else False,
+            "templates/locales must not contain language-specific template mirrors",
+        )
         entries = {entry["id"]: entry for entry in catalog["files"]}
         for entry in entries.values():
             template = entry.get("template")
             if template:
                 self.assertTrue((SKILL_ROOT / template).is_file(), template)
-                if template.endswith(".md"):
-                    localized = SKILL_ROOT / "templates" / "locales" / "zh-CN" / Path(template).relative_to("templates")
-                    self.assertTrue(localized.is_file(), localized)
-                    canonical_tokens = set(
-                        re.findall(r"\{\{([A-Z0-9_]+)\}\}", (SKILL_ROOT / template).read_text(encoding="utf-8"))
-                    )
-                    localized_tokens = set(
-                        re.findall(r"\{\{([A-Z0-9_]+)\}\}", localized.read_text(encoding="utf-8"))
-                    )
-                    self.assertEqual(localized_tokens, canonical_tokens, localized)
         self.assertEqual(entries["project_baseline"]["template"], "templates/project-state/project-baseline.md")
         self.assertTrue(entries["project_baseline"]["initialization_required"])
         self.assertEqual(entries["collaboration_config"]["path"], ".claw/collaboration-config.yaml")
+        external_assets = entries["devops"]["external_assets"]
+        for asset in external_assets["root_files"] + external_assets["per_environment_files"]:
+            self.assertTrue((SKILL_ROOT / asset["template"]).is_file(), asset["template"])
         for entry_id in (
             "feature_spec",
             "task_status",
@@ -872,7 +856,10 @@ class OnboardingCliTests(unittest.TestCase):
             entry = entries[entry_id]
             self.assertEqual(entry["schema_version"], 5)
             self.assertFalse(entry["initialization_required"])
-            self.assertTrue(entry.get("template"), entry_id)
+            if entry.get("lifecycle") == "derived":
+                self.assertFalse(entry.get("template"), entry_id)
+            else:
+                self.assertTrue(entry.get("template"), entry_id)
 
     def test_module_reconfiguration_preserves_disabled_files(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -908,28 +895,57 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertTrue(config_path.exists())
             self.assertFalse(disabled["modules"]["change_review"])
 
-    def test_language_reconfiguration_preserves_existing_documents(self) -> None:
+    def test_historical_language_markers_preserve_documents_and_pending_normalizes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             project = Path(temporary)
-            code, payload, _ = self.start(project, "--mode", "greenfield", "--language", "en")
+            code, payload, _ = self.start(project, "--mode", "greenfield")
             self.assertEqual(code, 2, payload)
             goals_path = project / ".claw" / "goals.md"
-            original_hash = hashlib.sha256(goals_path.read_bytes()).hexdigest()
-
-            code, changed, _ = self.run_python(
-                CONFIGURE_MODULES,
-                "set",
-                str(project),
-                "--language",
-                "zh-CN",
-                "--now",
-                FIXED_NOW,
-                "--json",
+            goals_path.write_text(
+                goals_path.read_text(encoding="utf-8").replace(
+                    "# 项目目标",
+                    "# Existing English Project Goals",
+                    1,
+                ),
+                encoding="utf-8",
             )
-            self.assertEqual(code, 2, changed)
-            self.assertTrue(changed["language_changed"])
-            self.assertEqual(changed["language"], "zh-CN")
+            original_hash = hashlib.sha256(goals_path.read_bytes()).hexdigest()
+            manifest_path = project / ".claw" / "manifest.yaml"
+            historical_manifest = manifest_path.read_text(encoding="utf-8").replace(
+                'skill_version: "5.0.3"',
+                'skill_version: "5.0.2"',
+                1,
+            ).replace(
+                'language: "zh-CN"',
+                'language: "en"',
+                1,
+            )
+            manifest_path.write_text(historical_manifest, encoding="utf-8")
+            design_index = project / "docs" / "design" / "README.md"
+            design_index.unlink()
+
+            code, compatible, _ = self.start(project, "--mode", "greenfield")
+            self.assertEqual(code, 2, compatible)
+            self.assertEqual(compatible["language"], "en")
             self.assertEqual(hashlib.sha256(goals_path.read_bytes()).hexdigest(), original_hash)
+            self.assertIn("# 产品与功能设计文档", design_index.read_text(encoding="utf-8"))
+
+            manifest_path.write_text(
+                manifest_path.read_text(encoding="utf-8").replace(
+                    'language: "en"',
+                    'language: "pending"',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            help_index = project / "docs" / "help" / "README.md"
+            help_index.unlink()
+            code, normalized, _ = self.start(project, "--mode", "greenfield")
+            self.assertEqual(code, 2, normalized)
+            self.assertEqual(normalized["language"], "zh-CN")
+            self.assertIn('language: "zh-CN"', manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(hashlib.sha256(goals_path.read_bytes()).hexdigest(), original_hash)
+            self.assertIn("# 产品帮助与使用手册", help_index.read_text(encoding="utf-8"))
             self.assertIn("## AI 开发协议", (project / "README.md").read_text(encoding="utf-8"))
 
     def test_project_state_reconfiguration_updates_project_mode(self) -> None:

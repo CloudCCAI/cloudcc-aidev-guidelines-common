@@ -1,23 +1,23 @@
-# Product Help and Usage Manual
+# 产品帮助与使用手册
 
-This directory is the canonical home for customer-facing product help and usage manuals for **{{PROJECT_NAME}}**.
+此目录是 **{{PROJECT_NAME}}** 面向用户的产品帮助文档和使用手册的统一入口。
 
-## What belongs here
+## 适合存放的内容
 
-- Product overview and intended users.
-- Getting started, access, and setup instructions.
-- Task-oriented operating procedures.
-- Page, field, action, and permission explanations.
-- Examples, expected outcomes, limitations, and troubleshooting.
-- Version-specific behavior and release-related user guidance.
+- 产品简介与适用用户。
+- 快速开始、访问方式和初始化配置。
+- 按用户任务组织的操作步骤。
+- 页面、字段、操作和权限说明。
+- 示例、预期结果、限制条件与常见问题排查。
+- 与版本相关的行为和发布使用说明。
 
-## Authoring rules
+## 编写规则
 
-- Write from the user's perspective and use confirmed product behavior only.
-- Organize documents by product area or user task; keep this README as the index.
-- Never include passwords, tokens, private customer data, or internal-only operational secrets.
-- Mark behavior that has not been verified as `pending verification`.
+- 从用户视角编写，只记录已经确认的产品行为。
+- 按产品模块或用户任务拆分文档，并在本 README 中维护索引。
+- 禁止写入密码、令牌、客户隐私数据或仅限内部的运维密钥。
+- 未验证的行为必须标记为 `pending verification`。
 
-## Manual Index
+## 手册索引
 
-- No product-specific help documents have been confirmed yet.
+- 暂无已确认的产品专项帮助文档。
