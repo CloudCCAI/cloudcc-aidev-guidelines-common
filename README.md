@@ -2,7 +2,7 @@
 
 用于开发和发布 AI 软件项目初始化、状态管理、多人协作门禁与代码评审管理 Skill。
 
-当前 Skill 版本：`5.0.1`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
+当前 Skill 版本：`5.0.2`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
 
 ## 核心能力
 
@@ -10,6 +10,8 @@
 - 初始化时选择 `zh-CN` 或 `en`，统一所有新写入的人类可读项目管理内容。
 - 基于仓库证据建议 Greenfield/Brownfield，并由用户确认。
 - 逐文件问答初始化 goals、ARCHITECTURE、目录职责、DevOps、空 task board 和多任务 current status。
+- 客户环境确认后，按环境初始化根目录 `DevOps/`；客户未定时可明确接受 `DEV/UAT/PROD` 三套预留文件。
+- 初始化 `docs/help` 产品使用手册目录和 `docs/design` 功能/流转设计目录，并按项目语言生成索引。
 - 通过开关独立控制项目状态、多人协作门禁和代码合并申请。
 - 新 FEAT/TASK 带用户名，并按用户分别从 `001` 递增。
 - 同时管理多个用户、多个聊天窗口和多个活跃任务。
@@ -27,6 +29,8 @@
 | `skill/state-catalog.json` | 初始化器与校验器共享的机器清单 |
 | `skill/references/` | 按初始化、模块和平台加载的详细流程 |
 | `skill/templates/core/` | 初始化核心模板 |
+| `skill/templates/devops-assets/` | 每环境 Dockerfile、变量示例和 DevOps 目录说明模板 |
+| `skill/templates/project-docs/` | 产品帮助和详细设计文档目录索引模板 |
 | `skill/templates/project-state/` | FEAT、TASK 和事件模板 |
 | `skill/templates/collaboration-gate/` | 身份、assignment 和团队视图模板 |
 | `skill/templates/change-review/` | 评审配置和平台资源 |
@@ -63,6 +67,7 @@ python3 /path/to/skill/scripts/project-onboarding.py start /path/to/project \
 ```bash
 python3 /path/to/skill/scripts/project-onboarding.py resume /path/to/project --json
 python3 /path/to/skill/scripts/project-onboarding.py status /path/to/project --json
+python3 /path/to/skill/scripts/project-onboarding.py devops-assets /path/to/project --recommended-environments
 python3 /path/to/skill/scripts/project-onboarding.py finalize /path/to/project --confirmed-by user
 ```
 
@@ -118,6 +123,8 @@ python3 /path/to/skill/scripts/allocate-document-id.py feature \
   --project-root /path/to/project \
   --description user-login
 ```
+
+未显式传入 `--owner` 时，命名空间依次使用全局 Git 配置的 `user.name`、当前项目本地 Git 配置的 `user.name`、操作系统用户名。
 
 聚合多个活跃任务：
 

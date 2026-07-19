@@ -8,6 +8,8 @@ updated_at: 2026-01-02T00:09:00Z
 updated_by: sample-maintainer
 project_mode: brownfield
 verification_status: pending
+devops_assets_root: DevOps
+environment_names: "DEV, UAT, PROD"
 ---
 
 # Build, Run, Test, and Operations
@@ -17,3 +19,13 @@ verification_status: pending
 - Test: pending verification because no historical test command is present.
 - Deploy: owned outside this fixture and requires maintainer confirmation.
 - Next verification action: discover the real consumer repository and its regression command before implementation.
+
+<!-- cc-aidev:devops-assets:begin -->
+## Environment Asset Inventory
+
+| Environment | Dockerfile | Environment example |
+| --- | --- | --- |
+| `DEV` | `DevOps/DEV/Dockerfile` | `DevOps/DEV/.env.example` |
+| `UAT` | `DevOps/UAT/Dockerfile` | `DevOps/UAT/.env.example` |
+| `PROD` | `DevOps/PROD/Dockerfile` | `DevOps/PROD/.env.example` |
+<!-- cc-aidev:devops-assets:end -->

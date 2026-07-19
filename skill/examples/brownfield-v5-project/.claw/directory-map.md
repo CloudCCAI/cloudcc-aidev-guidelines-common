@@ -16,5 +16,7 @@ project_mode: brownfield
 | `src/` | existing inventory domain behavior | `src/inventory.py` | verified |
 | `.claw/` | project-management state | `manifest.yaml`, `current-status.md` | verified |
 | `docs/specs/` | baseline and future feature designs | `PROJECT-BASELINE.md` | verified |
+| `docs/help/` | customer-facing product help and usage manuals | `README.md` | verified |
+| `docs/design/` | detailed feature and flow designs | `README.md` | verified |
 
 Do not infer missing production or deployment directories from this small fixture.

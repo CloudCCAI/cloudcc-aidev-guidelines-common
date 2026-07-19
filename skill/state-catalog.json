@@ -42,6 +42,26 @@
       "depends_on": []
     }
   },
+  "project_assets": [
+    {
+      "id": "help_docs_index",
+      "path": "docs/help/README.md",
+      "template": "templates/project-docs/help/README.md",
+      "module": "project_state",
+      "project_modes": ["greenfield", "brownfield"],
+      "since_skill_version": "5.0.2",
+      "purpose": "product help and usage manual index"
+    },
+    {
+      "id": "design_docs_index",
+      "path": "docs/design/README.md",
+      "template": "templates/project-docs/design/README.md",
+      "module": "project_state",
+      "project_modes": ["greenfield", "brownfield"],
+      "since_skill_version": "5.0.2",
+      "purpose": "feature, interaction, state-transition, and business-flow design index"
+    }
+  ],
   "files": [
     {
       "id": "manifest",
@@ -172,6 +192,15 @@
       },
       "initialization_required": true,
       "counts_toward_ready": true,
+      "external_assets": {
+        "since_skill_version": "5.0.2",
+        "root_field": "devops_assets_root",
+        "root_path": "DevOps",
+        "environments_field": "environment_names",
+        "required_root_files": ["README.md"],
+        "required_per_environment_files": ["Dockerfile", ".env.example"],
+        "initialization_command": "project-onboarding.py devops-assets"
+      },
       "prompt": "确认已验证或明确待验证的构建、运行、测试和部署入口。",
       "prompt_en": "Confirm verified or explicitly pending build, run, test, and deployment entry points."
     },

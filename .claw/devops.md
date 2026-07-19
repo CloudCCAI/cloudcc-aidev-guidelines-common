@@ -1,8 +1,8 @@
 ---
 kind: devops
 version: 4
-updated_at: 2026-07-18T12:41:57Z
-updated_by: Bimo
+updated_at: 2026-07-19T01:26:47Z
+updated_by: ai
 verification_status: verified
 ---
 
@@ -18,7 +18,7 @@ verification_status: verified
 
 ## 运行与测试
 
-- 单元测试：`PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s skill/tests -p 'test_*.py' -v`（72 项通过）。
+- 单元测试：`PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s skill/tests -p 'test_*.py' -v`（79 项通过）。
 - 本仓库状态：`python3 skill/scripts/validate-state.py .claw`（legacy v4 通过）。
 - v5 fixtures：对 Greenfield/Brownfield 示例运行 `validate-state.py --strict-v5`（均通过）。
 - legacy fixture：对 `skill/examples/sample-project/.claw` 运行普通校验（通过）。
@@ -31,7 +31,7 @@ verification_status: verified
 
 ## 部署与发布
 
-- 版本权威：`skill/SKILL.md` 的 `metadata.skill_version`，当前为 `5.0.1`。
+- 版本权威：`skill/SKILL.md` 的 `metadata.skill_version`，当前为 `5.0.2`。
 - 用户已授权将 `5.0.1` 提交并推送到 Codeup `origin/main`；远程结果以实际 `git push` 输出为准。
 
 ## 排障

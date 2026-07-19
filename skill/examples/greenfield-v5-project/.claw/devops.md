@@ -8,6 +8,8 @@ updated_at: 2026-01-01T00:07:00Z
 updated_by: sample-owner
 project_mode: greenfield
 verification_status: pending
+devops_assets_root: DevOps
+environment_names: "DEV, UAT, PROD"
 ---
 
 # Build, Run, Test, and Operations
@@ -18,3 +20,13 @@ verification_status: pending
 - Deploy: containerized service and managed PostgreSQL, pending platform selection.
 - Environment: record variable names only; never put secret values in this file.
 - Next verification action: the first implementation task must run and record the actual commands.
+
+<!-- cc-aidev:devops-assets:begin -->
+## Environment Asset Inventory
+
+| Environment | Dockerfile | Environment example |
+| --- | --- | --- |
+| `DEV` | `DevOps/DEV/Dockerfile` | `DevOps/DEV/.env.example` |
+| `UAT` | `DevOps/UAT/Dockerfile` | `DevOps/UAT/.env.example` |
+| `PROD` | `DevOps/PROD/Dockerfile` | `DevOps/PROD/.env.example` |
+<!-- cc-aidev:devops-assets:end -->

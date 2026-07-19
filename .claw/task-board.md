@@ -1,8 +1,8 @@
 ---
 kind: task-board
 version: 4
-updated_at: 2026-07-18T12:35:09Z
-updated_by: Bimo
+updated_at: 2026-07-19T01:20:11Z
+updated_by: ai
 board_status: active
 ---
 
@@ -164,6 +164,8 @@ board_status: active
 - `TASK-bimo-004` — done — dynamic v4/v5 validation.
 - `TASK-bimo-005` — done — protocol integration and release readiness.
 - `TASK-bimo-006` — done — configurable English/Chinese document language.
+- `TASK-bimo-007` — done — customer-specific DevOps environment assets.
+- `TASK-bimo-008` — done — project help and detailed design documentation directories.
 
 ## Maintenance Rules
 

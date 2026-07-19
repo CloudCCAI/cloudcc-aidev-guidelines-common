@@ -9,6 +9,8 @@ updated_at: {{TIMESTAMP}}
 updated_by: onboarding
 project_mode: {{PROJECT_MODE}}
 verification_status: pending
+devops_assets_root: DevOps
+environment_names: none
 ---
 
 <!-- cc-aidev:onboarding-incomplete -->
@@ -45,6 +47,9 @@ verification_status: pending
 
 - 只记录环境变量名，绝不记录密钥值。
 - 必需服务：`pending verification`
+- 确认客户环境名称后，运行 `project-onboarding.py devops-assets`。
+- 如果客户尚未决定，建议先预留 `DEV`、`UAT`、`PROD`，客户可稍后调整。
+- 每个环境必须分别维护 `DevOps/<environment>/Dockerfile` 和 `DevOps/<environment>/.env.example`。
 
 ## 运维边界
 

@@ -23,6 +23,8 @@ project_mode: {{PROJECT_MODE}}
 | 路径 | 职责 | 入口 | 证据状态 |
 |---|---|---|---|
 | `.` | 等待用户确认 | 等待用户确认 | `{{EVIDENCE_STATUS}}` |
+| `docs/help/` | 面向用户的产品帮助和使用手册 | `README.md` | 已初始化 |
+| `docs/design/` | 功能、交互、业务流转、状态和异常路径等详细设计 | `README.md` | 已初始化 |
 
 ## 允许的依赖
 

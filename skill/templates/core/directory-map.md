@@ -23,6 +23,8 @@ project_mode: {{PROJECT_MODE}}
 | Path | Responsibility | Entry Points | Evidence Status |
 |---|---|---|---|
 | `.` | Pending user confirmation | Pending user confirmation | `{{EVIDENCE_STATUS}}` |
+| `docs/help/` | Customer-facing product help and usage manuals | `README.md` | initialized |
+| `docs/design/` | Detailed feature, interaction, business-flow, state, and exception-path designs | `README.md` | initialized |
 
 ## Allowed Dependencies
 

@@ -85,6 +85,14 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertEqual(localized["next"]["id"], "goals")
             self.assertIn("# 项目目标", (project / ".claw" / "goals.md").read_text(encoding="utf-8"))
             self.assertIn("## AI 开发协议", (project / "README.md").read_text(encoding="utf-8"))
+            self.assertIn(
+                "# 产品帮助与使用手册",
+                (project / "docs" / "help" / "README.md").read_text(encoding="utf-8"),
+            )
+            self.assertIn(
+                "# 产品与功能设计文档",
+                (project / "docs" / "design" / "README.md").read_text(encoding="utf-8"),
+            )
 
             self.mark_all_required_complete(project)
             code, finalized, _ = self.run_python(
@@ -123,6 +131,18 @@ class OnboardingCliTests(unittest.TestCase):
         for row in file_rows:
             self.assertIsInstance(row, dict)
             file_id = str(row["id"])
+            if file_id == "devops":
+                code, assets, _ = self.run_python(
+                    ONBOARDING,
+                    "devops-assets",
+                    str(project),
+                    "--recommended-environments",
+                    "--now",
+                    FIXED_NOW,
+                    "--json",
+                )
+                self.assertEqual(code, 2, assets)
+                self.assertEqual(assets["environments"], ["DEV", "UAT", "PROD"])
             self.write_example_answer_and_remove_sentinel(project / str(row["path"]), file_id)
             code, marked, _ = self.run_python(
                 ONBOARDING,
@@ -138,6 +158,129 @@ class OnboardingCliTests(unittest.TestCase):
                 "--json",
             )
             self.assertIn(code, {0, 2}, marked)
+
+    def test_devops_assets_require_confirmation_and_recommend_three_reserved_environments(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            code, payload, _ = self.start(project, "--mode", "greenfield", "--language", "zh-CN")
+            self.assertEqual(code, 2, payload)
+            code, validation, _ = self.run_python(
+                VALIDATE_STATE,
+                str(project / ".claw"),
+                "--catalog",
+                str(SKILL_ROOT / "state-catalog.json"),
+                "--json",
+            )
+            self.assertEqual(code, 0, validation)
+
+            code, needs_input, _ = self.run_python(
+                ONBOARDING,
+                "devops-assets",
+                str(project),
+                "--now",
+                FIXED_NOW,
+                "--json",
+            )
+            self.assertEqual(code, 2, needs_input)
+            self.assertEqual(needs_input["error"], "environment_confirmation_required")
+            self.assertFalse((project / "DevOps").exists())
+
+            code, reserved, _ = self.run_python(
+                ONBOARDING,
+                "devops-assets",
+                str(project),
+                "--recommended-environments",
+                "--now",
+                FIXED_NOW,
+                "--json",
+            )
+            self.assertEqual(code, 2, reserved)
+            self.assertEqual(reserved["environments"], ["DEV", "UAT", "PROD"])
+            self.assertTrue(reserved["recommended_defaults_used"])
+            self.assertIn("# DevOps 环境资产", (project / "DevOps" / "README.md").read_text(encoding="utf-8"))
+            for environment in ("DEV", "UAT", "PROD"):
+                dockerfile = project / "DevOps" / environment / "Dockerfile"
+                self.assertTrue(dockerfile.is_file())
+                self.assertNotIn("\nFROM ", "\n" + dockerfile.read_text(encoding="utf-8"))
+                self.assertTrue((project / "DevOps" / environment / ".env.example").is_file())
+            self.assertIn("DevOps/**/.env\n", (project / ".gitignore").read_text(encoding="utf-8"))
+            devops = (project / ".claw" / "devops.md").read_text(encoding="utf-8")
+            self.assertIn('environment_names: "DEV, UAT, PROD"', devops)
+            self.assertIn("`DevOps/PROD/Dockerfile`", devops)
+
+    def test_devops_assets_are_additive_and_do_not_overwrite_existing_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            self.start(project, "--mode", "greenfield")
+            code, first, _ = self.run_python(
+                ONBOARDING,
+                "devops-assets",
+                str(project),
+                "--environment",
+                "QA",
+                "--now",
+                FIXED_NOW,
+                "--json",
+            )
+            self.assertEqual(code, 2, first)
+            dockerfile = project / "DevOps" / "QA" / "Dockerfile"
+            dockerfile.write_text("FROM scratch\n", encoding="utf-8")
+
+            code, second, _ = self.run_python(
+                ONBOARDING,
+                "devops-assets",
+                str(project),
+                "--environment",
+                "Production-CustomerA",
+                "--now",
+                FIXED_NOW,
+                "--json",
+            )
+            self.assertEqual(code, 2, second)
+            self.assertEqual(second["environments"], ["QA", "Production-CustomerA"])
+            self.assertEqual(dockerfile.read_text(encoding="utf-8"), "FROM scratch\n")
+            self.assertTrue((project / "DevOps" / "Production-CustomerA" / "Dockerfile").is_file())
+
+    def test_devops_cannot_complete_without_confirmed_environment_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            self.start(project, "--mode", "greenfield")
+            devops = project / ".claw" / "devops.md"
+            self.write_example_answer_and_remove_sentinel(devops, "devops")
+            code, rejected, _ = self.run_python(
+                ONBOARDING,
+                "mark",
+                str(project),
+                "devops",
+                "--status",
+                "complete",
+                "--confirmed-by",
+                "Bimo",
+                "--now",
+                FIXED_NOW,
+                "--json",
+            )
+            self.assertEqual(code, 2, rejected)
+            self.assertEqual(rejected["error"], "devops_assets_incomplete")
+            self.assertIn("environment_names", " ".join(rejected["repair"]["errors"]))
+
+    def test_devops_assets_reject_unsafe_names_before_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            self.start(project, "--mode", "greenfield")
+            code, rejected, _ = self.run_python(
+                ONBOARDING,
+                "devops-assets",
+                str(project),
+                "--environment",
+                "../PROD",
+                "--now",
+                FIXED_NOW,
+                "--json",
+            )
+            self.assertEqual(code, 6, rejected)
+            self.assertEqual(rejected["error"], "invalid_environment_name")
+            self.assertFalse((project / "DevOps").exists())
 
     def test_read_only_preflight_recommends_greenfield_for_empty_project(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -175,6 +318,10 @@ class OnboardingCliTests(unittest.TestCase):
                 ".claw-local/\n.claw/.locks/\n",
             )
             self.assertFalse((project / "docs" / "specs" / "PROJECT-BASELINE.md").exists())
+            help_index = project / "docs" / "help" / "README.md"
+            design_index = project / "docs" / "design" / "README.md"
+            self.assertIn("# Product Help and Usage Manual", help_index.read_text(encoding="utf-8"))
+            self.assertIn("# Product and Feature Design Documents", design_index.read_text(encoding="utf-8"))
             for event_path in (
                 ".claw/issue-list.md",
                 ".claw/test-report.md",
@@ -242,11 +389,29 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertEqual(hashlib.sha256(manifest_path.read_bytes()).hexdigest(), manifest_hash)
             self.assertEqual(hashlib.sha256(current_status.read_bytes()).hexdigest(), current_status_hash)
 
+            help_index.write_text("# Customer-authored manual index\n", encoding="utf-8")
+            design_index.unlink()
+            code, missing_asset, _ = self.run_python(
+                VALIDATE_STATE,
+                str(project / ".claw"),
+                "--catalog",
+                str(SKILL_ROOT / "state-catalog.json"),
+                "--json",
+            )
+            self.assertNotEqual(code, 0, missing_asset)
+            self.assertIn("docs/design/README.md", " ".join(missing_asset["errors"]))
+
             before = current_status.read_text(encoding="utf-8")
             code, restarted, _ = self.start(project, "--mode", "greenfield")
             self.assertEqual(code, 0, restarted)
-            self.assertEqual(restarted["created"], [])
+            self.assertEqual(restarted["created"], ["docs/design/README.md"])
+            self.assertEqual(help_index.read_text(encoding="utf-8"), "# Customer-authored manual index\n")
+            self.assertTrue(design_index.is_file())
             self.assertEqual(current_status.read_text(encoding="utf-8"), before)
+
+            code, idempotent, _ = self.start(project, "--mode", "greenfield")
+            self.assertEqual(code, 0, idempotent)
+            self.assertEqual(idempotent["created"], [])
 
     def test_onboarding_sentinel_blocks_completion_until_answers_are_confirmed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -421,6 +586,7 @@ class OnboardingCliTests(unittest.TestCase):
                 {path.name for path in (project / ".claw").iterdir()},
                 {"manifest.yaml"},
             )
+            self.assertFalse((project / "docs").exists())
             code, finalized, _ = self.run_python(
                 ONBOARDING,
                 "finalize",

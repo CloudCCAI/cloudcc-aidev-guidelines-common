@@ -96,6 +96,19 @@ python3 scripts/project-onboarding.py status /path/to/project --json
 
 初始化器还会通过受控声明块幂等创建或更新项目根 `README.md`、`AGENTS.md`，让后续 Agent 在工作前加载本 Skill，并确保 `.gitignore` 包含 `.claw-local/`；已有块外内容保持不变。
 
+文档语言和 Greenfield/Brownfield 模式确认后，初始化器还会幂等创建：
+
+```text
+docs/
+  specs/     # FEAT 与 Brownfield baseline
+  help/      # 面向用户的产品帮助和使用手册
+    README.md
+  design/    # 功能、交互、业务流转、状态和异常流程设计
+    README.md
+```
+
+`help` 与 `design` 使用小写路径，以避免 `Docs`/`docs` 在不同文件系统上的大小写冲突。README 是目录职责和索引，不代表已经存在经确认的产品文档。重复 start/adopt/sync 只恢复缺失文件，绝不覆盖用户已经编写的 README。
+
 初始化相关 CLI 使用以下退出约定：`0` 表示当前步骤完成且无需继续输入，`2` 表示本次创建/更新已经成功但仍需继续问答，`4` 表示需要修复后再完成，`5` 表示内容冲突，`6` 表示参数或模块组合非法。自动化脚本不得把 `2` 当成写入失败。
 
 ## 初始化后调整模块
@@ -131,7 +144,41 @@ python3 scripts/configure-modules.py review /path/to/project \
 6. 已启用模块配置。
 7. 空 `task-board.md` 和多任务 `current-status.md`。
 
+详细功能设计需要长期独立维护时写入 `docs/design/`，并由 FEAT 引用；FEAT 仍负责范围、关键决策、任务拆分和验收，不在两处重复维护同一事实。功能经过验证并需要用户说明时更新 `docs/help/`，不得在实现前臆造产品行为。
+
 事件文件不在初始化时创建：issue、test report、archive、integration queue、team status、FEAT 和 TASK 都由真实事件触发。
+
+### DevOps 环境资产
+
+`DevOps/` 不随 `start` 空骨架提前创建。完成 `devops.md` 问答时，先确认客户实际环境名称；每个环境使用不同的 `Dockerfile`，并配套只含变量名或非密钥示例值的 `.env.example`：
+
+```text
+DevOps/
+  README.md
+  <environment>/
+    Dockerfile
+    .env.example
+```
+
+客户暂未确定时，建议预留 `DEV`、`UAT`、`PROD`。只有用户接受建议后才执行：
+
+```bash
+python3 scripts/project-onboarding.py devops-assets /path/to/project \
+  --recommended-environments
+```
+
+客户已确认自定义环境时，重复传入 `--environment`：
+
+```bash
+python3 scripts/project-onboarding.py devops-assets /path/to/project \
+  --environment DEV \
+  --environment Customer-UAT \
+  --environment PROD
+```
+
+命令幂等且只做增量创建：已有 `Dockerfile`、`.env.example` 和 README 保持原样，不自动删除已记录环境；环境清单变化后由用户复核 `.claw/devops.md`。生成的 Dockerfile 是明确不可运行的占位文件，确认基础镜像、构建阶段、制品、端口、健康检查和启动命令后才可使用。`.gitignore` 必须忽略 `DevOps/**/.env`，但不得忽略 `.env.example`。
+
+从 Skill 5.0.2 起，非 legacy 的 v5 项目必须具备已确认的 `environment_names` 及对应资产，才能把 `devops` 标为 `complete` 并最终进入 ready。
 
 ## 文件初始化状态
 

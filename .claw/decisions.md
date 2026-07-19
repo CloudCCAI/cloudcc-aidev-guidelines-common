@@ -4,8 +4,8 @@ version: 4
 architecture_init_status: complete
 architecture_reviewed_at: 2026-07-18T02:36:33Z
 architecture_confirmed_by: Bimo
-updated_at: 2026-07-18T12:39:25Z
-updated_by: Bimo
+updated_at: 2026-07-19T01:26:47Z
+updated_by: ai
 ---
 
 # 技术决策记录
@@ -228,6 +228,39 @@ updated_by: Bimo
 - 为什么这个方案胜出：manifest 是所有会话共享的控制面，能让初始化、FEAT/TASK 分配和派生视图使用同一个稳定事实源；确定性模板避免不同 Agent 临时翻译造成结构漂移。
 - 后续影响：规范英文模板与 `templates/locales/zh-CN/` 必须镜像维护；解析器接受关键中英文 section；早期 v5 缺字段按英文兼容，已有文件不自动翻译。
 - 验证方式：运行 72 项单元测试、严格 v5 示例校验，并实际创建 pending、`zh-CN`、`en` 三种前向项目验证模板、FEAT 和派生视图。
+
+## ADR-014 - Resolve document owner from stable machine Git settings
+
+- 状态：`accepted`
+- 日期：`2026-07-19`
+- 背景：FEAT/TASK 命名曾混用 developer `document_slug`、Git 配置和系统用户名，同一台计算机可能生成 `bimo`、`xuhm` 等不同命名空间。
+- 备选方案：继续优先使用已登录 developer；只读取当前项目解析后的 Git name；固定使用全局 Git name，并在缺失时依次回退项目本地 Git name 和计算机用户名。
+- 最终结论：未显式传入 `--owner` 时，依次读取全局 Git `user.name`、当前项目本地 Git `user.name`、操作系统用户名。developer `document_slug` 不参与自动文档命名；显式 `--owner` 仍可作为用户确认的覆盖值。
+- 为什么这个方案胜出：全局配置优先保证同一用户跨项目稳定，项目配置提供明确回退，计算机用户名提供最终确定性来源，同时让文档署名与强身份门禁保持解耦。
+- 后续影响：新来源分别记录为 `global_git_config_user_name`、`project_git_config_user_name` 和 `os_user`；既有 ID 不重命名，历史 `git_config_user_name` 继续兼容。
+- 验证方式：覆盖全局优先、项目本地回退和系统用户名回退的单元测试，并运行完整测试套件与 v4/v5 状态校验。
+
+## ADR-015 - Initialize additive per-environment DevOps assets after environment confirmation
+
+- 状态：`accepted`
+- 日期：`2026-07-19`
+- 背景：`.claw/devops.md` 能记录打包、部署和运维事实，但目标项目根目录没有与客户环境对应的 Dockerfile 和变量示例；客户的环境清单又可能在初始化早期尚未确定。
+- 备选方案：在 `start` 时固定创建一套 Dockerfile；只维护单个通用 Dockerfile；确认客户环境后按环境初始化，未确定时建议并经客户接受后预留 `DEV/UAT/PROD`。
+- 最终结论：采用确认后初始化。新增 `project-onboarding.py devops-assets`；每个客户环境独立保存 `DevOps/<environment>/Dockerfile` 和 `.env.example`。客户未决定时建议 `DEV/UAT/PROD`，但必须明确接受后才创建。命令只增补缺失文件，不覆盖或删除已有资产。
+- 为什么这个方案胜出：它既避免在客户事实未知时臆造可运行部署配置，又能提前建立稳定目录契约；每环境独立 Dockerfile 支持真实差异，增量写入保护客户后续修改。
+- 后续影响：Skill 5.0.2 的新 v5 项目在完成 devops 初始化前必须配置环境清单并通过资产校验；占位 Dockerfile 保持注释态且不可运行，真实 `.env` 必须被忽略，legacy 项目不强制回填。
+- 验证方式：覆盖推荐/自定义环境、幂等不覆盖、非法路径阻断和完成门槛的单元测试，并执行 79 项完整测试、Python/Shell 语法检查及 Greenfield/Brownfield/legacy 状态校验。
+
+## ADR-016 - Use lowercase catalog-managed help and design documentation directories
+
+- 状态：`accepted`
+- 日期：`2026-07-19`
+- 背景：项目需要固定位置保存面向用户的产品使用手册，以及功能、交互、业务流转、状态和异常路径等详细设计；现有协议只固定了 `docs/specs`。
+- 备选方案：新增大小写混合的 `Docs/help` 与 `Docs/Design`；把所有内容继续写入 `docs/specs`；在现有小写 `docs` 根下新增 `help` 和 `design`。
+- 最终结论：使用 `docs/help/README.md` 和 `docs/design/README.md`。两者在语言和项目模式确认后的 start/adopt/sync 中由 catalog 驱动创建，按 manifest 语言本地化，只补缺且不覆盖已有内容。
+- 为什么这个方案胜出：与 `docs/specs` 共用小写根目录可以避免 macOS/Windows 与 Linux 的大小写路径差异；README 既能让 Git 持久化目录，也能明确帮助文档和详细设计的边界，而不会伪造具体产品内容。
+- 后续影响：Skill 5.0.2 的新 Greenfield/Brownfield 项目必须包含这两个索引；FEAT 继续负责范围、关键决策和验收，详细流转设计由 FEAT 引用 `docs/design`，已确认的用户操作说明进入 `docs/help`。早期 v5 与 legacy 项目不强制回填。
+- 验证方式：覆盖中英文创建、project-state 关闭、缺失文件恢复和已有内容不覆盖，并执行 79 项单元测试、Python/Shell 语法检查及 Greenfield/Brownfield/legacy/本仓库状态校验。
 
 ## 维护规则
 

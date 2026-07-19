@@ -1,9 +1,9 @@
 ---
 kind: test-report
 version: 5
-updated_at: 2026-07-18T12:41:57Z
-updated_by: Bimo
-last_run_at: 2026-07-18T12:39:25Z
+updated_at: 2026-07-19T01:26:47Z
+updated_by: ai
+last_run_at: 2026-07-19T01:26:47Z
 last_run_status: passed
 ---
 
@@ -14,19 +14,18 @@ last_run_status: passed
 ## Latest Run Summary
 
 - 状态：`passed`
-- Scope: `manifest language selection, bilingual templates and generators, v5 lifecycle, and legacy compatibility`
-- Commands: 72-test unittest suite; four state fixture validations; pending/zh-CN/en forward projects; Python/Shell/JSON/YAML/frontmatter checks
+- Scope: `project help/design and DevOps asset onboarding, document owner precedence, and v4/v5 compatibility`
+- Commands: 79-test unittest suite; Python compile; shell syntax; strict Greenfield/Brownfield v5 and legacy v4 fixture validation
 - Environment: `local workspace`
 
 ## Result Summary
 
 | Type | Total | Passed | Failed | Skipped | Coverage |
 |------|-------|--------|--------|---------|----------|
-| Python unit tests | 72 | 72 | 0 | 0 | n/a |
-| Project state fixtures | 4 | 4 | 0 | 0 | n/a |
-| Syntax/format checks | 6 | 6 | 0 | 0 | n/a |
-| Independent forward-test tracks | 4 | 4 | 0 | 0 | n/a |
-| Total | 86 | 86 | 0 | 0 | n/a |
+| Python unit tests | 79 | 79 | 0 | 0 | n/a |
+| Project state fixtures | 3 | 3 | 0 | 0 | n/a |
+| Syntax/compile checks | 2 | 2 | 0 | 0 | n/a |
+| Total | 84 | 84 | 0 | 0 | n/a |
 
 ## Failures
 
@@ -34,8 +33,8 @@ last_run_status: passed
 
 ## Notes
 
-- Greenfield, Brownfield, legacy adoption, language pending/resume, English/Chinese generation, module combinations, per-user ID allocation, FEAT confirmation, and multi-workflow aggregation were exercised.
-- Standard `quick_validate.py` could not import PyYAML in this environment; the same frontmatter constraints were checked with Ruby YAML and passed.
+- English/Chinese help and design indexes, project-state gating, missing-file recovery, non-overwrite behavior, DevOps environments, global/project/OS document owner precedence, and v4/v5 state profiles were exercised.
+- Release version and all feature activation gates were verified at `5.0.2`, incremented from the previous committed `5.0.1`.
 - Commit/push authorization is release state, not test evidence; no change request or deployment was exercised by this test run.
 
 ## Common Commands

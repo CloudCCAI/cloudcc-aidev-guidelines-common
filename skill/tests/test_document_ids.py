@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -228,6 +229,119 @@ custom:
         feature_body = (root / str(feature_allocation["path"])).read_text(encoding="utf-8")
         self.assertIn("## Current and Target Behavior", feature_body)
         self.assertIn("## Risks and Rollback", feature_body)
+
+    def test_cli_prefers_global_git_name_over_project_local_name(self) -> None:
+        root = self.make_project()
+        subprocess.run(["git", "init", str(root)], capture_output=True, text=True, check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.name", "Repository Local"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        global_config = root / "global.gitconfig"
+        global_config.write_text("[user]\n\tname = Global Alice\n", encoding="utf-8")
+        env = os.environ.copy()
+        env["GIT_CONFIG_GLOBAL"] = str(global_config)
+        env["LOGNAME"] = "system-user"
+        env["USER"] = "system-user"
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS_DIR / "allocate-document-id.py"),
+                "task",
+                "--project-root",
+                str(root),
+                "--description",
+                "global identity",
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        allocation = json.loads(result.stdout)
+        self.assertEqual(allocation["document_id"], "TASK-global-alice-001")
+        fields, _body = read_front_matter(root / str(allocation["path"]))
+        self.assertEqual(fields["owner_slug"], "global-alice")
+        self.assertEqual(fields["created_by_source"], "global_git_config_user_name")
+
+    def test_cli_uses_project_local_git_name_when_global_name_is_missing(self) -> None:
+        root = self.make_project()
+        subprocess.run(["git", "init", str(root)], capture_output=True, text=True, check=True)
+        subprocess.run(
+            ["git", "-C", str(root), "config", "user.name", "Project Alice"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        empty_global_config = root / "empty-global.gitconfig"
+        empty_global_config.write_text("", encoding="utf-8")
+        env = os.environ.copy()
+        env["GIT_CONFIG_GLOBAL"] = str(empty_global_config)
+        env["LOGNAME"] = "system-user"
+        env["USER"] = "system-user"
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS_DIR / "allocate-document-id.py"),
+                "task",
+                "--project-root",
+                str(root),
+                "--description",
+                "project identity",
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        allocation = json.loads(result.stdout)
+        self.assertEqual(allocation["document_id"], "TASK-project-alice-001")
+        fields, _body = read_front_matter(root / str(allocation["path"]))
+        self.assertEqual(fields["owner_slug"], "project-alice")
+        self.assertEqual(fields["created_by_source"], "project_git_config_user_name")
+
+    def test_cli_falls_back_to_os_user_when_global_git_name_is_missing(self) -> None:
+        root = self.make_project()
+        empty_global_config = root / "empty-global.gitconfig"
+        empty_global_config.write_text("", encoding="utf-8")
+        env = os.environ.copy()
+        env["GIT_CONFIG_GLOBAL"] = str(empty_global_config)
+        env["LOGNAME"] = "system-user"
+        env["USER"] = "system-user"
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPTS_DIR / "allocate-document-id.py"),
+                "feature",
+                "--project-root",
+                str(root),
+                "--description",
+                "os identity",
+                "--json",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        allocation = json.loads(result.stdout)
+        self.assertEqual(allocation["document_id"], "FEAT-system-user-001")
+        fields, _body = read_front_matter(root / str(allocation["path"]))
+        self.assertEqual(fields["owner_slug"], "system-user")
+        self.assertEqual(fields["created_by_source"], "os_user")
 
     def test_cli_uses_manifest_language_for_new_documents(self) -> None:
         root = self.make_project()

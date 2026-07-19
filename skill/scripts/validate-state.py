@@ -1114,6 +1114,93 @@ def scalar_list(value: object) -> list[str]:
     return [item.strip() for item in cleaned.split(",") if item.strip()]
 
 
+def version_tuple(value: object) -> tuple[int, int, int]:
+    cleaned = clean_value(value)
+    if not re.fullmatch(r"[0-9]\.[0-9]\.[0-9]", cleaned):
+        return (0, 0, 0)
+    return tuple(int(part) for part in cleaned.split("."))
+
+
+def validate_project_assets(
+    project_root: Path,
+    manifest: dict[str, object],
+    catalog: dict[str, object],
+) -> list[str]:
+    errors: list[str] = []
+    raw_assets = catalog.get("project_assets", [])
+    if not isinstance(raw_assets, list):
+        return ["state catalog: project_assets must be a list"]
+    manifest_version = version_tuple(manifest.get("skill_version"))
+    modules = manifest.get("modules") if isinstance(manifest.get("modules"), dict) else {}
+    project_mode = clean_value(manifest.get("project_mode", ""))
+    for index, asset in enumerate(raw_assets):
+        if not isinstance(asset, dict):
+            errors.append(f"state catalog: project_assets[{index}] must be an object")
+            continue
+        since_version = version_tuple(asset.get("since_skill_version"))
+        if manifest_version < since_version:
+            continue
+        module = clean_value(asset.get("module", "control_plane"))
+        if module != "control_plane" and modules.get(module) is not True:
+            continue
+        modes = asset.get("project_modes")
+        if isinstance(modes, list) and project_mode not in {clean_value(mode) for mode in modes}:
+            continue
+        raw_path = clean_value(asset.get("path", ""))
+        relative_path = Path(raw_path)
+        if not raw_path or relative_path.is_absolute() or ".." in relative_path.parts:
+            errors.append(f"state catalog: invalid project asset path `{raw_path}`")
+            continue
+        asset_path = project_root / relative_path
+        if not asset_path.is_file():
+            errors.append(f"manifest: missing required project asset `{relative_path.as_posix()}`")
+    return errors
+
+
+def validate_devops_environment_assets(project_root: Path, devops_path: Path) -> list[str]:
+    errors: list[str] = []
+    data, _body, front_matter_errors = read_front_matter_yaml(devops_path)
+    errors.extend(front_matter_errors)
+    if not data:
+        return errors
+
+    assets_root = clean_value(data.get("devops_assets_root", ""))
+    if assets_root != "DevOps":
+        errors.append(f"{devops_path}: devops_assets_root must be `DevOps`")
+
+    environments = scalar_list(data.get("environment_names"))
+    if not environments:
+        errors.append(f"{devops_path}: environment_names must contain at least one confirmed environment")
+        return errors
+
+    safe_name = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z")
+    seen: set[str] = set()
+    for environment in environments:
+        if not safe_name.fullmatch(environment):
+            errors.append(f"{devops_path}: invalid environment name `{environment}`")
+            continue
+        folded = environment.casefold()
+        if folded in seen:
+            errors.append(f"{devops_path}: duplicate environment name ignoring case `{environment}`")
+            continue
+        seen.add(folded)
+
+    assets_dir = project_root / "DevOps"
+    if not (assets_dir / "README.md").is_file():
+        errors.append(f"{devops_path}: missing DevOps/README.md")
+    for environment in environments:
+        if not safe_name.fullmatch(environment):
+            continue
+        for filename in ("Dockerfile", ".env.example"):
+            asset_path = assets_dir / environment / filename
+            if not asset_path.is_file():
+                errors.append(
+                    f"{devops_path}: missing DevOps environment asset "
+                    f"`{asset_path.relative_to(project_root).as_posix()}`"
+                )
+    return errors
+
+
 def valid_timestamp_or_none(value: object) -> bool:
     if value is None:
         return True
@@ -1931,7 +2018,7 @@ def validate_v5_state(state_dir: Path, catalog_path: Path, *, strict_v5: bool = 
                         )
                     )
 
-    _catalog, entries, catalog_errors = load_catalog(catalog_path)
+    catalog, entries, catalog_errors = load_catalog(catalog_path)
     errors.extend(catalog_errors)
     legacy_paths, legacy_errors = load_v5_legacy_paths(manifest, state_dir, project_root)
     errors.extend(legacy_errors)
@@ -1946,9 +2033,25 @@ def validate_v5_state(state_dir: Path, catalog_path: Path, *, strict_v5: bool = 
                 strict_v5=strict_v5,
             )
         )
+    if catalog:
+        errors.extend(validate_project_assets(project_root, manifest, catalog))
+
+    project_state_enabled = isinstance(modules, dict) and modules.get("project_state") is True
+    devops_path = state_dir / "devops.md"
+    devops_assets_configured = False
+    if devops_path.is_file():
+        devops_data, _devops_body, _devops_errors = read_front_matter_yaml(devops_path)
+        devops_assets_configured = bool(scalar_list(devops_data.get("environment_names")))
+    if (
+        project_state_enabled
+        and version_tuple(manifest.get("skill_version")) >= (5, 0, 2)
+        and ".claw/devops.md" not in legacy_paths
+        and devops_path.is_file()
+        and (manifest_ready or strict_v5 or devops_assets_configured)
+    ):
+        errors.extend(validate_devops_environment_assets(project_root, devops_path))
 
     current_status = state_dir / "current-status.md"
-    project_state_enabled = isinstance(modules, dict) and modules.get("project_state") is True
     if project_state_enabled and current_status.exists():
         errors.extend(validate_v5_current_status(current_status, state_dir, legacy_paths, project_root))
 

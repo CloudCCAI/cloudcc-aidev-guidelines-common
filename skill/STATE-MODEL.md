@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 5.0.1
+version: 5.0.2
 ---
 
 # State Model Reference
@@ -26,6 +26,8 @@ version: 5.0.1
 7. 旧文件不强制迁移；新文件必须遵守 policy 生效后的 v5 命名和字段规则。
 8. Git/OS 用户名只用于文档归属，不构成多人门禁授权。
 9. manifest 的 `language` 控制 Skill 新写入的人类可读内容；机器字段、枚举、ID、路径、命令和原始证据保持协议原值。
+10. `.claw/devops.md` 是运维事实源；根目录 `DevOps/` 是按客户环境拆分的可执行资产目录，两者必须引用一致。
+11. `docs/help` 保存用户手册，`docs/design` 保存详细功能与流转设计；所有规范文档统一使用小写 `docs` 根目录。
 
 ## 2. 协议 profile
 
@@ -45,7 +47,7 @@ manifest 至少表达以下逻辑字段：
 
 ```yaml
 schema_version: 5
-skill_version: 5.0.1
+skill_version: 5.0.2
 language: pending | en | zh-CN
 project_mode: pending | greenfield | brownfield | not_applicable
 initialization:
@@ -154,11 +156,24 @@ updated_by: username | developer_id | ai
 - init order 与依赖
 - required fields 和状态枚举
 - 是否计入 ready
+- 可选的外部资产契约（根路径、环境字段、每环境必需文件和生效 Skill 版本）
+- 可选的 `project_assets`（普通项目文档路径、本地化模板、模块、模式和生效版本）
 - v4/v5 compatibility profile
 
 脚本不得再各自硬编码一套固定八文件清单。
 
 ## 8. 核心文件
+
+### 项目文档资产
+
+Skill 5.0.2 起，启用 `project_state` 且模式为 Greenfield/Brownfield 的新项目必须包含：
+
+- `docs/help/README.md`：产品帮助、使用手册和常见问题的职责说明与索引。
+- `docs/design/README.md`：功能、交互、业务流转、状态变化、异常路径、接口与数据设计的职责说明与索引。
+
+两个文件依据 manifest `language` 生成，只在缺失时创建，已有内容不得覆盖。它们是普通项目资产，不使用状态文件 frontmatter，也不单独计入核心文件初始化问答；catalog 的 `project_assets` 声明生效版本、模块、模式、路径和模板。较早 v5 与 legacy 项目不强制回填。
+
+FEAT 是范围、关键设计决策、任务和验收事实源；`docs/design/` 承载需要长期展开的详细设计并由 FEAT 引用。`docs/help/` 只描述面向用户的确认行为，不应成为内部需求或未验证实现的事实源。
 
 ### `.claw/current-status.md`
 
@@ -204,6 +219,17 @@ ARCHITECTURE 表示当前有效快照；ADR 表示为什么选择以及历史如
 ### `.claw/devops.md`
 
 构建、运行、测试、部署、环境、依赖服务和运维知识的事实源。命令必须已验证，或明确标记 `pending verification`。
+
+Skill 5.0.2 起增加：
+
+```yaml
+devops_assets_root: DevOps
+environment_names: DEV, UAT, PROD
+```
+
+客户环境清单确认后、`devops` 首次完成前，初始化根目录 `DevOps/`。每个 `environment_names` 条目必须存在 `DevOps/<environment>/Dockerfile` 和 `DevOps/<environment>/.env.example`，并由 `DevOps/README.md` 说明密钥与维护边界。客户未决定时只能建议 `DEV`、`UAT`、`PROD`；用户接受后才预留。环境名称可由客户自定义，须为安全的单路径段并忽略大小写唯一。
+
+环境资产初始化只增补缺失文件，不覆盖、不删除已有资产。占位 Dockerfile 必须明确不可运行且不得包含臆造的构建成功证据；`.env.example` 不得包含真实密钥。环境清单或资产变化会把已完成的 devops/总体初始化置为 `needs_review`，复核后才能恢复 complete/ready。legacy index 中的既有 devops 文件不被强制补齐。
 
 ### `.claw/task-board.md`
 
@@ -276,12 +302,13 @@ docs/specs/FEAT-<author-slug>-<nnn>-<description>.md
 
 ## 12. 作者与个人序号
 
-作者 slug 解析顺序：
+自动作者 slug 解析顺序：
 
-1. 已验证 developer 的 `document_slug`。
-2. Git `user.name`。
+1. 全局 Git 配置的 `user.name`。
+2. 当前项目本地 Git 配置的 `user.name`。
 3. 操作系统用户名。
-4. 用户确认。
+
+已验证 developer 的 `document_slug` 不参与自动文档命名。显式 `--owner` 是用户确认的覆盖值。自动来源分别记录为 `global_git_config_user_name`、`project_git_config_user_name` 和 `os_user`；历史 `git_config_user_name` 值继续兼容。
 
 FEAT 和 TASK 分别维护每位用户的最高已分配序号。分配器必须：
 

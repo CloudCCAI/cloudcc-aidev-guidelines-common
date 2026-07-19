@@ -32,6 +32,8 @@
 
 讨论完成至少要明确当前/目标行为、In/Out Scope、验收、约束、风险和未决项。确认 FEAT 前可以只读分析，不得先实现后补设计。
 
+需要展开页面、交互、业务流转、状态机、异常路径、接口或数据交互时，把详细设计写入 `docs/design/`，并在 FEAT 中保存引用和影响摘要。面向最终用户的操作说明写入 `docs/help/`，应以已确认或已验证的产品行为为依据。不要让 FEAT、design 和 help 重复维护同一事实。
+
 ## FEAT 命名
 
 新文件使用：
@@ -42,7 +44,7 @@ FEAT-<author-slug>-<personal-sequence>-<description>.md
 
 规范 ID 是 `FEAT-<author-slug>-<personal-sequence>`。序号按作者独立递增，从 `001` 开始且不复用。description 只属于路径。
 
-作者解析顺序：已登录 developer 的 `document_slug`、Git `user.name`、操作系统用户名、用户确认。Git/OS 身份只用于署名，不构成授权。
+自动作者解析顺序：全局 Git 配置的 `user.name`、当前项目本地 Git 配置的 `user.name`、操作系统用户名。已登录 developer 的 `document_slug` 不参与自动文档命名；显式 `--owner` 作为用户确认的覆盖值。Git/OS 身份只用于署名，不构成授权。
 
 ## TASK 命名
 

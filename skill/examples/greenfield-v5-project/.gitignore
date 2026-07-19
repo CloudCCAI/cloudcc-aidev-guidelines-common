@@ -1,0 +1,3 @@
+.claw-local/
+.claw/.locks/
+DevOps/**/.env

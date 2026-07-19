@@ -17,5 +17,7 @@ project_mode: greenfield
 | `src/application/` | use cases and transaction boundaries | service modules | planned |
 | `src/persistence/` | PostgreSQL adapters and migrations | repository modules | planned |
 | `tests/` | unit and API verification | pytest | planned |
+| `docs/help/` | customer-facing product help and usage manuals | `README.md` | verified |
+| `docs/design/` | detailed feature and flow designs | `README.md` | verified |
 
 Allowed dependencies flow from API to application interfaces and from adapters toward those interfaces. Application code must not import the HTTP framework or concrete database adapters.

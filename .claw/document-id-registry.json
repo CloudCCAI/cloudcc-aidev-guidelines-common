@@ -16,6 +16,38 @@
       "number": 6,
       "path": ".claw/tasks/TASK-bimo-006-document-language.md",
       "allocated_at": "2026-07-18T12:16:52Z"
+    },
+    {
+      "kind": "feature",
+      "document_id": "FEAT-bimo-003",
+      "owner_slug": "bimo",
+      "number": 3,
+      "path": "docs/specs/FEAT-bimo-003-devops-environment-assets.md",
+      "allocated_at": "2026-07-19T00:59:10Z"
+    },
+    {
+      "kind": "task",
+      "document_id": "TASK-bimo-007",
+      "owner_slug": "bimo",
+      "number": 7,
+      "path": ".claw/tasks/TASK-bimo-007-devops-environment-assets.md",
+      "allocated_at": "2026-07-19T01:01:05Z"
+    },
+    {
+      "kind": "feature",
+      "document_id": "FEAT-bimo-004",
+      "owner_slug": "bimo",
+      "number": 4,
+      "path": "docs/specs/FEAT-bimo-004-project-documentation-directories.md",
+      "allocated_at": "2026-07-19T01:15:16Z"
+    },
+    {
+      "kind": "task",
+      "document_id": "TASK-bimo-008",
+      "owner_slug": "bimo",
+      "number": 8,
+      "path": ".claw/tasks/TASK-bimo-008-project-documentation-directories.md",
+      "allocated_at": "2026-07-19T01:15:45Z"
     }
   ]
 }

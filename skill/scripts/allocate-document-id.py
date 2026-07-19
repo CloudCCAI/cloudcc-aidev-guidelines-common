@@ -18,9 +18,20 @@ SKILL_ROOT = Path(__file__).resolve().parent.parent
 CONFIRMED_FEATURE_STATUSES = {"approved", "in_implementation", "implemented", "verified"}
 
 
-def git_user_name(project_root: Path) -> str:
+def global_git_user_name() -> str:
     result = subprocess.run(
-        ["git", "-C", str(project_root), "config", "--get", "user.name"],
+        ["git", "config", "--global", "--get", "user.name"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        check=False,
+    )
+    return result.stdout.strip() if result.returncode == 0 else ""
+
+
+def project_git_user_name(project_root: Path) -> str:
+    result = subprocess.run(
+        ["git", "-C", str(project_root), "config", "--local", "--get", "user.name"],
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
         text=True,
@@ -112,7 +123,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("kind", choices=("feature", "task"))
     parser.add_argument("--project-root", default=".", help="Project root containing .claw. Defaults to cwd.")
-    parser.add_argument("--owner", help="Stable owner namespace. Defaults to Git user.name, then the OS user.")
+    parser.add_argument(
+        "--owner",
+        help=(
+            "Explicit stable owner namespace. Defaults to global Git user.name, "
+            "then project-local Git user.name, then the OS user."
+        ),
+    )
     parser.add_argument("--description", required=True, help="Short description used in the filename.")
     parser.add_argument("--title", help="Human-readable document title.")
     parser.add_argument("--created-by", help="Display name for document attribution.")
@@ -129,13 +146,17 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     project_root = Path(args.project_root).resolve()
-    git_owner = git_user_name(project_root) if not args.owner else ""
+    global_git_owner = global_git_user_name() if not args.owner else ""
+    project_git_owner = project_git_user_name(project_root) if not args.owner and not global_git_owner else ""
     if args.owner:
         owner = args.owner
         created_by_source = "user_confirmed"
-    elif git_owner:
-        owner = git_owner
-        created_by_source = "git_config_user_name"
+    elif global_git_owner:
+        owner = global_git_owner
+        created_by_source = "global_git_config_user_name"
+    elif project_git_owner:
+        owner = project_git_owner
+        created_by_source = "project_git_config_user_name"
     else:
         owner = getpass.getuser()
         created_by_source = "os_user"

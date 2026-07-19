@@ -9,6 +9,8 @@ updated_at: {{TIMESTAMP}}
 updated_by: onboarding
 project_mode: {{PROJECT_MODE}}
 verification_status: pending
+devops_assets_root: DevOps
+environment_names: none
 ---
 
 <!-- cc-aidev:onboarding-incomplete -->
@@ -45,6 +47,9 @@ verification_status: pending
 
 - Record environment variable names only; never record secret values.
 - Required services: `pending verification`
+- Confirm customer environment names, then run `project-onboarding.py devops-assets`.
+- If the customer has not decided, recommend reserving `DEV`, `UAT`, and `PROD`; the customer may revise them later.
+- Each environment must keep its own `DevOps/<environment>/Dockerfile` and `DevOps/<environment>/.env.example`.
 
 ## Operational Boundaries
 
