@@ -60,6 +60,9 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertIn('language: "zh-CN"', manifest)
             self.assertIn("# 项目目标", (project / ".claw" / "goals.md").read_text(encoding="utf-8"))
             self.assertIn("## AI 开发协议", (project / "README.md").read_text(encoding="utf-8"))
+            agents = (project / "AGENTS.md").read_text(encoding="utf-8")
+            self.assertIn("metadata.skill_version", agents)
+            self.assertIn("有新版本时自动更新后重新加载本技能", agents)
             self.assertIn(
                 "# 产品帮助与使用手册",
                 (project / "docs" / "help" / "README.md").read_text(encoding="utf-8"),

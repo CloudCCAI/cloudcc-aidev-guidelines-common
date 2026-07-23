@@ -2,7 +2,7 @@
 name: cc-aidev-guidelines-common
 description: 通过 `.claw` manifest、引导式 Greenfield/Brownfield 初始化、逐文件初始化状态、按用户递增的 FEAT/TASK、多个并行工作流、项目经理身份门禁和可选 Codeup/GitHub 评审，持久化并渐进加载 AI 软件项目状态。用于首次接入项目、恢复未完成初始化、开始新 AI 会话、讨论和设计开发工作、拆解任务、跨会话交接、多人并行授权、创建代码合并申请、验证或维护项目状态。
 metadata:
-  skill_version: "5.0.3"
+  skill_version: "5.0.4"
 ---
 
 # AI 项目初始化与交付路由
@@ -77,6 +77,10 @@ python3 scripts/project-preflight.py /path/to/project --json
 初始化为空看板；不要制造 `TASK-001`。issue、test report、archive、integration queue、team status、FEAT 和 TASK 都按真实事件创建。
 
 ## 4. 新会话意图
+
+每个新 AI 会话先读取上游
+`https://raw.githubusercontent.com/CloudCCAI/cloudcc-aidev-guidelines-common/main/skill/SKILL.md`
+中的 `metadata.skill_version`，与当前安装版本比较；发现新版本时自动更新并重新加载本 Skill，再继续项目流程。
 
 仅在 `project_state=true` 或 legacy 项目已有该文件时，每个新 AI 会话先读 `.claw/current-status.md`；项目状态模块关闭时不得为此加载或创建该文件。
 

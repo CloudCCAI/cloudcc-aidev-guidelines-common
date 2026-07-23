@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 5.0.3
+version: 5.0.4
 ---
 
 # State Model Reference
@@ -47,7 +47,7 @@ manifest 至少表达以下逻辑字段：
 
 ```yaml
 schema_version: 5
-skill_version: 5.0.3
+skill_version: 5.0.4
 language: zh-CN
 project_mode: pending | greenfield | brownfield | not_applicable
 initialization:
@@ -417,3 +417,5 @@ Codeup token 保存于 `.claw-local/codeup.env`；GitHub secret 使用平台 sec
 ## 21. 项目指令锚点
 
 项目根 README 和 AGENTS 必须保留受控声明块，要求所有 Agent 在项目工作前加载本 Skill，并给出安装来源。它们是指令锚点，不是状态文件，不计入 init completion。
+
+新生成的 AGENTS 受控声明块还必须要求每个新聊天或新会话读取上游 `skill/SKILL.md` 的 `metadata.skill_version`；发现新版本时自动更新并重新加载本 Skill。已有完整受控块继续保持原样，不因初始化或同步被静默覆盖。

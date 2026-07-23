@@ -10,6 +10,7 @@ AGENTS_PATH="${TARGET_DIR}/AGENTS.md"
 MARKER_BEGIN="<!-- cc-aidev-guidelines-common:begin -->"
 MARKER_END="<!-- cc-aidev-guidelines-common:end -->"
 SKILL_REPO_URL="https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
+SKILL_VERSION_URL="https://raw.githubusercontent.com/CloudCCAI/cloudcc-aidev-guidelines-common/main/skill/SKILL.md"
 
 README_BLOCK=$(cat <<EOF
 ${MARKER_BEGIN}
@@ -30,6 +31,7 @@ ${MARKER_BEGIN}
 - 所有 AI 智能体在开始任何项目工作前，都必须自动加载并使用此技能。
 - 如果当前环境尚未安装该技能，必须先从 GitHub 安装：${SKILL_REPO_URL}
 - 技能可用后，必须按技能中的 Greenfield 或 Brownfield 流程维护 \`README.md\`、\`AGENTS.md\`、\`.claw/\` 以及 \`docs/specs/\`。
+- 每次开启新聊天或新会话时，必须读取 ${SKILL_VERSION_URL} 中的 \`metadata.skill_version\` 检查更新，并在有新版本时自动更新后重新加载本技能。
 ${MARKER_END}
 EOF
 )

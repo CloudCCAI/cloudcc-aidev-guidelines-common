@@ -2,7 +2,7 @@
 
 用于开发和发布 AI 软件项目初始化、状态管理、多人协作门禁与代码评审管理 Skill。
 
-当前 Skill 版本：`5.0.3`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
+当前 Skill 版本：`5.0.4`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
 
 ## 核心能力
 

@@ -9,6 +9,7 @@
 - 所有 AI 智能体在进行项目分析、规划、编码、测试或维护前，必须先读取并遵守本仓库的 `skill/SKILL.md`。
 - 修改协议时，必须检查 `skill/SKILL.md`、`skill/STATE-MODEL.md`、`skill/templates/`、`skill/scripts/`、`skill/examples/` 和项目状态之间的一致性。
 - 优先直接使用本仓库的 `skill/SKILL.md`；如果当前环境无法从本仓库加载该技能，再从 GitHub 安装：https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill
+- 每次开启新聊天或新会话时，必须读取上游 `SKILL.md` 的 `metadata.skill_version` 检查更新；发现新版本时自动更新并重新加载本技能。
 <!-- cc-aidev-guidelines-common:end -->
 
 ## 技能发布版本管理
