@@ -2,7 +2,7 @@
 name: cc-aidev-guidelines-common
 description: 通过 `.claw` manifest、引导式 Greenfield/Brownfield 初始化、逐文件初始化状态、按用户递增的 FEAT/TASK、多个并行工作流、项目经理身份门禁和可选 Codeup/GitHub 评审，持久化并渐进加载 AI 软件项目状态。用于首次接入项目、恢复未完成初始化、开始新 AI 会话、讨论和设计开发工作、拆解任务、跨会话交接、多人并行授权、创建代码合并申请、验证或维护项目状态。
 metadata:
-  skill_version: "5.0.4"
+  skill_version: "5.0.5"
 ---
 
 # AI 项目初始化与交付路由
@@ -72,6 +72,8 @@ python3 scripts/project-preflight.py /path/to/project --json
 
 项目模式确认后，`project_state=true` 的新项目必须初始化 `docs/help/README.md` 和 `docs/design/README.md`。`help` 保存面向用户的产品帮助和使用手册；`design` 保存功能、交互、业务流转、状态变化和异常流程等设计。路径统一小写，与 `docs/specs` 保持同一根目录；初始化只补缺，不覆盖已有内容。
 
+`docs/design/**/*.md` 和 `docs/specs/**/*.md` 中的每份 Markdown 都必须拥有同目录、同 basename 的 HTML，例如 `FEAT-user-001-login.md` 对应 `FEAT-user-001-login.html`。Markdown 是 AI、Git 和协议校验使用的唯一事实源；HTML 是可删除、可重建且不得手工维护的人类阅读视图。初始化器和 FEAT 分配器会自动生成配对 HTML。
+
 新 manifest 固定记录 `language: zh-CN`，该字段是写入策略标记而不是用户选项。早期 v5 manifest 缺少字段时按历史 `en` 读取；5.0.1/5.0.2 的 `en` 或 `pending` 继续用于兼容，恢复中的 `pending` 会在下一次初始化写操作归一为 `zh-CN`。legacy 文件和既有内容不自动翻译。
 
 初始化为空看板；不要制造 `TASK-001`。issue、test report、archive、integration queue、team status、FEAT 和 TASK 都按真实事件创建。
@@ -128,7 +130,23 @@ docs/specs/FEAT-<author-slug>-<personal-sequence>-<description>.md
 
 使用确定性分配器处理并发和持久计数，不手工猜下一个编号。
 
-## 7. 最小状态读取
+## 7. 人类阅读 HTML
+
+任何工作流创建或修改 `docs/design/**/*.md`、`docs/specs/**/*.md` 后，必须在结束本次写入前刷新对应 HTML：
+
+```bash
+python3 scripts/generate-project-docs-html.py /path/to/project/docs/specs/FEAT-user-001-login.md --write
+```
+
+批量补齐或同步整个项目：
+
+```bash
+python3 scripts/generate-project-docs-html.py /path/to/project --write
+```
+
+不带 `--write` 时只检查配对文件是否存在且源内容摘要一致。不得直接编辑 HTML；HTML 有误时修正 Markdown 或生成器后重新生成。此规则只覆盖 `docs/design` 和 `docs/specs`，不扩展到 `docs/help` 或任意其他 Markdown。
+
+## 8. 最小状态读取
 
 `project_state=true` 时按以下顺序：
 
@@ -147,7 +165,7 @@ docs/specs/FEAT-<author-slug>-<personal-sequence>-<description>.md
 - assignment：授权身份、分支和写入范围。
 - current status、team status：派生视图，冲突时重新生成。
 
-## 8. 多任务热索引
+## 9. 多任务热索引
 
 `.claw/current-status.md` 支持多个用户和多个聊天窗口的活跃 TASK。用生成器在锁内聚合并原子替换：
 
@@ -157,7 +175,7 @@ python3 scripts/generate-current-status.py /path/to/project/.claw --write
 
 每个聊天只更新自己选中的 task status；热索引按字段事实源重建，不使用最后写入覆盖其他工作流。
 
-## 9. 身份硬门禁
+## 10. 身份硬门禁
 
 `collaboration_gate=true` 时，或 legacy 项目已有 developers/assignments/active assignment 时，任何源码、测试、运行配置、迁移、生成资产、FEAT 或 TASK 状态写入前必须运行 `scripts/dev-login.py`。
 
@@ -165,7 +183,7 @@ python3 scripts/generate-current-status.py /path/to/project/.claw --write
 
 只有项目经理能创建、撤销或扩大 developer/assignment。仓库不得保存 manager password、private key、token、secret 或 bearer token。
 
-## 10. 写入与验证
+## 11. 写入与验证
 
 - 时间使用 `YYYY-MM-DDTHH:MM:SSZ`。
 - 只更新事实真正变化的文件；不要机械回写全部状态。
@@ -173,6 +191,7 @@ python3 scripts/generate-current-status.py /path/to/project/.claw --write
 - 初始化、编号分配和热索引生成使用锁、临时文件和原子替换。
 - 已存在且被用户修改的内容不得静默覆盖。
 - 所有新建或明确重写的人类可读内容使用规范中文模板；历史 manifest 的语言标记只用于兼容读取，机器协议值保持不变。
+- 创建或修改 design/specs Markdown 后必须刷新同目录配对 HTML；状态校验会把缺失或摘要不一致视为失败。
 - README 和 AGENTS 保留受控 Skill 声明块；它们不是状态文件。
 - `change_review=true` 且用户明确要求推送到测试环境时，按 change-review reference 使用 `push-test-environment.py`；source-branch-wins 只适用于测试环境。
 
@@ -184,7 +203,7 @@ python3 scripts/validate-state.py /path/to/project/.claw
 
 无 manifest 时使用 legacy v4 profile；有 v5 manifest 时按 catalog、模式、模块和事件动态校验。失败时不得把 manifest 标记为 ready。
 
-## 11. 禁止行为
+## 12. 禁止行为
 
 - 使用其他项目状态目录或创建第二套状态树。
 - 启动时读取全部状态、全部 spec 或禁用模块资料。
@@ -194,3 +213,4 @@ python3 scripts/validate-state.py /path/to/project/.claw
 - 把 current status、task board 或 team status 写成长日志。
 - 在多个文件独立维护同一事实。
 - 用作者署名、聊天上下文或本地缓存绕过身份和 assignment。
+- 手工修改配对 HTML，或让 HTML 反向成为需求、设计和验收事实源。

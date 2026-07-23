@@ -2,7 +2,7 @@
 
 用于开发和发布 AI 软件项目初始化、状态管理、多人协作门禁与代码评审管理 Skill。
 
-当前 Skill 版本：`5.0.4`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
+当前 Skill 版本：`5.0.5`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
 
 ## 核心能力
 
@@ -12,6 +12,7 @@
 - 逐文件问答初始化 goals、ARCHITECTURE、目录职责、DevOps、空 task board 和多任务 current status。
 - 客户环境确认后，按环境初始化根目录 `DevOps/`；客户未定时可明确接受 `DEV/UAT/PROD` 三套预留文件。
 - 初始化 `docs/help` 产品使用手册目录和 `docs/design` 功能/流转设计目录，并生成中文索引。
+- 为 `docs/design` 和 `docs/specs` 中每份 Markdown 生成同目录、同 basename HTML；Markdown 给 AI 和 Git 使用，HTML 给人阅读。
 - 通过开关独立控制项目状态、多人协作门禁和代码合并申请。
 - 新 FEAT/TASK 带用户名，并按用户分别从 `001` 递增。
 - 同时管理多个用户、多个聊天窗口和多个活跃任务。
@@ -121,6 +122,15 @@ python3 /path/to/skill/scripts/allocate-document-id.py feature \
   --project-root /path/to/project \
   --description user-login
 ```
+
+创建或修改 design/specs Markdown 后生成同目录配对 HTML：
+
+```bash
+python3 /path/to/skill/scripts/generate-project-docs-html.py \
+  /path/to/project/docs/specs/FEAT-user-001-login.md --write
+```
+
+传入项目根目录可批量同步；不带 `--write` 时只检查配对 HTML 是否存在且与 Markdown 摘要一致。
 
 未显式传入 `--owner` 时，命名空间依次使用全局 Git 配置的 `user.name`、当前项目本地 Git 配置的 `user.name`、操作系统用户名。
 

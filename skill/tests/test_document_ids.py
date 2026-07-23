@@ -224,6 +224,11 @@ custom:
         self.assertEqual(feature_result.returncode, 0, feature_result.stderr)
         feature_allocation = json.loads(feature_result.stdout)
         feature_fields, _body = read_front_matter(root / str(feature_allocation["path"]))
+        self.assertEqual(
+            feature_allocation["html_path"],
+            "docs/specs/FEAT-alice-smith-001-feature-metadata.html",
+        )
+        self.assertTrue((root / str(feature_allocation["html_path"])).is_file())
         self.assertEqual(feature_fields["schema_version"], "5")
         self.assertEqual(feature_fields["policy_version"], "3")
         self.assertEqual(feature_fields["created_by_slug"], "alice-smith")

@@ -14,6 +14,7 @@ from lib.devops_assets import (
     normalize_environment_names,
 )
 from lib.language import PENDING_LANGUAGE, PRIMARY_LANGUAGE, READABLE_LANGUAGES
+from lib.project_docs_html import validate_project_documents
 
 
 EXPECTED_KINDS = {
@@ -1988,6 +1989,7 @@ def validate_v4_state(state_dir: Path) -> list[str]:
         for path in sorted(tasks_dir.glob("*.md")):
             errors.extend(validate_task_status_file(path))
 
+    errors.extend(validate_project_documents(project_root))
     errors.extend(validate_project_guidance(project_root))
     return errors
 
@@ -2090,6 +2092,9 @@ def validate_v5_state(state_dir: Path, catalog_path: Path, *, strict_v5: bool = 
             errors.extend(file_errors)
             if data:
                 errors.extend(validate_v5_feature_document(path, data, legacy_paths, project_root, state_dir))
+
+    if project_state_enabled:
+        errors.extend(validate_project_documents(project_root))
 
     collaboration_gate_enabled = isinstance(modules, dict) and modules.get("collaboration_gate") is True
     developers_dir = state_dir / "developers"

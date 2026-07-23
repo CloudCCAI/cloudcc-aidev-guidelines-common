@@ -10,6 +10,7 @@ import subprocess
 from pathlib import Path
 
 from lib.document_ids import document_id_from_path, is_feature_id, is_legacy_id, reserve_document
+from lib.project_docs_html import write_companion
 from lib.state_io import clean_value, read_front_matter, utc_now
 
 
@@ -167,6 +168,11 @@ def main() -> int:
         content=content,
         lock_timeout=args.lock_timeout,
     )
+    html_path = (
+        write_companion(allocation.path, project_root=project_root)
+        if allocation.kind == "feature"
+        else None
+    )
     result = {
         "kind": allocation.kind,
         "document_id": allocation.document_id,
@@ -174,6 +180,8 @@ def main() -> int:
         "number": allocation.number,
         "path": allocation.path.relative_to(project_root).as_posix(),
     }
+    if html_path is not None:
+        result["html_path"] = html_path.relative_to(project_root).as_posix()
     if args.json:
         print(json.dumps(result, ensure_ascii=False))
     else:

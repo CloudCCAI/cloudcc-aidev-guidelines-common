@@ -26,6 +26,7 @@ from lib.language import (
     PRIMARY_LANGUAGE,
     manifest_language,
 )
+from lib.project_docs_html import sync_project_documents
 from lib.state_io import clean_value, read_mapping_list_yaml
 
 
@@ -487,6 +488,7 @@ def sync_files(project_root: Path, manifest: dict[str, Any], timestamp: str) -> 
         else:
             file_status[descriptor["id"]] = read_init_status(destination)
     created.extend(sync_project_assets(project_root, manifest, catalog, timestamp))
+    sync_project_documents(project_root, generated_at=timestamp)
     write_manifest(project_root, manifest)
     return created
 
@@ -1214,6 +1216,7 @@ def command_mark(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
             updates["architecture_reviewed_at"] = timestamp if args.status == "complete" else "none"
             updates["architecture_confirmed_by"] = args.confirmed_by if args.status == "complete" else "none"
         update_top_level_fields(path, updates)
+        sync_project_documents(project_root, generated_at=timestamp)
 
         file_status = manifest.setdefault("file_status", {})
         if not isinstance(file_status, dict):
@@ -1312,6 +1315,7 @@ def command_finalize(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
                     EXIT_REPAIR_REQUIRED,
                 )
 
+        sync_project_documents(project_root, generated_at=timestamp)
         validation_command = [
             sys.executable,
             str(SCRIPT_DIR / "validate-state.py"),

@@ -2,6 +2,8 @@
 
 此目录是 **{{PROJECT_NAME}}** 产品和功能设计文档的统一入口。
 
+本目录每份 Markdown 都应由 `generate-project-docs-html.py` 生成一份同目录、同 basename HTML。Markdown 是 AI 与版本管理使用的事实源，HTML 面向人类阅读，请勿手工修改 HTML。
+
 ## 适合存放的内容
 
 - 功能目标、范围、参与角色、前置条件和约束。

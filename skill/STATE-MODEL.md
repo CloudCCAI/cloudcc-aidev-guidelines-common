@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 5.0.4
+version: 5.0.5
 ---
 
 # State Model Reference
@@ -28,6 +28,7 @@ version: 5.0.4
 9. Skill 新写入的人类可读内容固定使用简体中文；manifest 的 `language` 保留为写入策略与历史兼容标记，机器字段、枚举、ID、路径、命令和原始证据保持协议原值。
 10. `.claw/devops.md` 是运维事实源；根目录 `DevOps/` 是按客户环境拆分的可执行资产目录，两者必须引用一致。
 11. `docs/help` 保存用户手册，`docs/design` 保存详细功能与流转设计；所有规范文档统一使用小写 `docs` 根目录。
+12. `docs/design` 与 `docs/specs` 中每份 Markdown 都有同目录、同 basename HTML；Markdown 是唯一事实源，HTML 只是可重建的人类阅读派生视图。
 
 ## 2. 协议 profile
 
@@ -47,7 +48,7 @@ manifest 至少表达以下逻辑字段：
 
 ```yaml
 schema_version: 5
-skill_version: 5.0.4
+skill_version: 5.0.5
 language: zh-CN
 project_mode: pending | greenfield | brownfield | not_applicable
 initialization:
@@ -175,6 +176,8 @@ Skill 5.0.2 起，启用 `project_state` 且模式为 Greenfield/Brownfield 的�
 
 FEAT 是范围、关键设计决策、任务和验收事实源；`docs/design/` 承载需要长期展开的详细设计并由 FEAT 引用。`docs/help/` 只描述面向用户的确认行为，不应成为内部需求或未验证实现的事实源。
 
+Skill 5.0.5 起，初始化器创建 `docs/design/README.md` 后同步创建 `docs/design/README.html`。`docs/help/README.md` 不在本规则范围内。
+
 ### `.claw/current-status.md`
 
 上下文热入口，是派生索引而非任务事实源。v5 frontmatter 至少包含：
@@ -244,6 +247,7 @@ task board 可以短暂落后于单任务执行状态；管理者或集成负责
 ## 9. 事件文件与派生文件
 
 - `docs/specs/FEAT-*.md`：开发类讨论形成设计时创建。
+- `docs/design/**/*.html`、`docs/specs/**/*.html`：对应 Markdown 创建或修改后生成；与源文件同目录、同 basename，通过源内容 SHA-256 判断是否过期，不参与事实解析。
 - `.claw/tasks/TASK-*.md`：真实任务创建时创建。
 - `.claw/issue-list.md`：首次 bug、风险或阻塞时创建。
 - `.claw/test-report.md`：首次真实运行验证时创建。
@@ -283,6 +287,8 @@ docs/specs/FEAT-<author-slug>-<nnn>-<description>.md
 推荐状态：`draft`、`in_design`、`approved`、`in_implementation`、`implemented`、`verified`、`archived`。
 
 文件名作者是原始创建者；多人贡献只更新 contributors，不重命名。
+
+分配器创建 FEAT Markdown 后必须在返回成功前生成同目录配对 HTML。后续修改 FEAT 时，执行者必须刷新该 HTML。
 
 ## 11. TASK
 
@@ -402,6 +408,7 @@ Codeup token 保存于 `.claw-local/codeup.env`；GitHub secret 使用平台 sec
 - 禁用模块没有被初始化器意外创建或要求。
 - 5.0.3 及后续 manifest 固定使用 `language: zh-CN`；历史 ready 状态仍不得保留 `language: pending`。
 - repository 状态和 review config 不包含 secret。
+- `docs/design/**/*.md`、`docs/specs/**/*.md` 都存在同目录同 basename HTML，且 HTML 内记录的源内容摘要与当前 Markdown 一致。
 
 校验失败不得把 manifest 标为 ready。
 
@@ -409,6 +416,7 @@ Codeup token 保存于 `.claw-local/codeup.env`；GitHub secret 使用平台 sec
 
 - 初始化、编号分配和 hot index 生成使用项目锁；`.claw/.locks/` 是 Git ignore 的瞬时协调目录。
 - 写入使用同目录临时文件和原子替换。
+- 配对 HTML 也使用同目录临时文件和原子替换；中断不能留下半写文件。
 - 重复初始化相同内容为 no-op。
 - 已被用户修改的文件不自动覆盖；报告冲突。
 - 中断后从 checkpoint 和第一个未完成核心文件恢复。

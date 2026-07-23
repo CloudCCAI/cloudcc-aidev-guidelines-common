@@ -1,5 +1,11 @@
 # Changelog
 
+## 5.0.5 - 2026-07-23
+
+- 为 `docs/design` 和 `docs/specs` 中每份 Markdown 增加同目录、同 basename 的离线 HTML 人类阅读视图；Markdown 保持唯一事实源。
+- 新增标准库实现的 `generate-project-docs-html.py`，支持单文件刷新、项目批量同步和源内容摘要检查。
+- 初始化器和 FEAT 分配器自动生成配对 HTML，状态校验器报告缺失或过期的阅读视图。
+
 ## 5.0.4 - 2026-07-23
 
 - 新生成的项目 `AGENTS.md` 会要求 Agent 在每次新聊天或新会话中读取上游 `SKILL.md` 的 `metadata.skill_version`，发现新版本时自动更新并重新加载技能。

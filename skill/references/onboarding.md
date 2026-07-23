@@ -100,6 +100,8 @@ docs/
     README.md
 ```
 
+初始化器创建 `docs/design/README.md` 或 Brownfield `docs/specs/PROJECT-BASELINE.md` 后，同时生成同目录、同 basename HTML。Markdown 是事实源，HTML 是人类阅读派生视图；以后修改 design/specs Markdown 时必须运行 `scripts/generate-project-docs-html.py <Markdown 路径> --write`。
+
 `help` 与 `design` 使用小写路径，以避免 `Docs`/`docs` 在不同文件系统上的大小写冲突。README 是目录职责和索引，不代表已经存在经确认的产品文档。重复 start/adopt/sync 只恢复缺失文件，绝不覆盖用户已经编写的 README。
 
 初始化相关 CLI 使用以下退出约定：`0` 表示当前步骤完成且无需继续输入，`2` 表示本次创建/更新已经成功但仍需继续问答，`4` 表示需要修复后再完成，`5` 表示内容冲突，`6` 表示参数或模块组合非法。自动化脚本不得把 `2` 当成写入失败。

@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="cc-aidev-source-sha256" content="38e1c241d0db716f82a22773ec7e9bae19c8fc338d9c97cc17e1bb3292243ea8">
+  <meta name="cc-aidev-generator-version" content="3">
+  <title>Configurable document language</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --paper: #ffffff;
+      --ink: #17212b;
+      --muted: #66727f;
+      --line: #dfe5eb;
+      --accent: #176b87;
+      --accent-soft: #e8f3f6;
+      --code: #f3f5f7;
+      --shadow: 0 18px 50px rgba(21, 35, 48, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 16px/1.72 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 900px); gap: 28px;
+      max-width: 1240px; margin: 0 auto; padding: 28px; align-items: start; }
+    .sidebar { position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow: auto;
+      background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 12px; font-weight: 750;
+      letter-spacing: .08em; text-transform: uppercase; }
+    .source { margin: 0 0 18px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+    .toc-title { margin: 16px 0 8px; font-size: 13px; }
+    .toc { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    .toc li { margin: 3px 0; }
+    .toc a { display: block; padding: 5px 8px; border-radius: 7px; color: #33414d; text-decoration: none; }
+    .toc a:hover { background: var(--accent-soft); color: var(--accent); }
+    .toc-level-3 { padding-left: 12px; }
+    .toc-level-4, .toc-level-5, .toc-level-6 { padding-left: 24px; }
+    .toc-empty { color: var(--muted); padding: 5px 8px; }
+    main { min-width: 0; }
+    .hero, article { background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .hero { border-radius: 20px; padding: clamp(24px, 5vw, 48px); margin-bottom: 20px; }
+    .hero h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); line-height: 1.2; letter-spacing: -.025em; }
+    .notice { margin: 18px 0 0; padding: 12px 14px; border-left: 3px solid var(--accent);
+      background: var(--accent-soft); color: #315461; font-size: 14px; }
+    .metadata { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 22px; }
+    .meta-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfd; }
+    .meta-item span { display: block; color: var(--muted); font-size: 12px; }
+    .meta-item strong { display: block; margin-top: 2px; overflow-wrap: anywhere; }
+    .meta-status strong { color: var(--accent); }
+    .meta-updated strong { white-space: nowrap; font-size: 13px; }
+    article { border-radius: 20px; padding: clamp(22px, 5vw, 48px); }
+    article > h1:first-child { margin-top: 0; }
+    h1, h2, h3, h4 { line-height: 1.32; color: #13202a; }
+    h1 { font-size: 2rem; } h2 { font-size: 1.45rem; } h3 { margin-top: 1.7em; font-size: 1.16rem; }
+    p, ul, ol, blockquote, pre, .table-wrap { margin: 1em 0; }
+    li + li { margin-top: .35em; }
+    blockquote { margin-left: 0; padding: 10px 18px; border-left: 4px solid #9bbbc6;
+      background: #f5f9fa; color: #42535d; }
+    code { padding: .15em .38em; border-radius: 5px; background: var(--code);
+      font: .9em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    pre { overflow: auto; padding: 18px; border-radius: 12px; background: #17212b; color: #e8edf1; }
+    pre code { padding: 0; background: transparent; color: inherit; }
+    img { display: block; max-width: 100%; height: auto; margin: 18px auto; border-radius: 10px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f5f8fa; } tr:last-child td { border-bottom: 0; }
+    .task-item { list-style: none; margin-left: -22px; display: flex; gap: 8px; align-items: flex-start; }
+    .task-item input { margin-top: .42em; }
+    .document-section { margin: 20px 0; border: 1px solid var(--line); border-radius: 14px; overflow: clip; }
+    .document-section > summary { display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 15px 18px; cursor: pointer; background: #f8fafb; list-style: none; }
+    .document-section > summary::-webkit-details-marker { display: none; }
+    .document-section > summary h2 { margin: 0; font-size: 1.35rem; }
+    .document-section > summary span { color: var(--muted); transition: transform .18s ease; }
+    .document-section:not([open]) > summary span { transform: rotate(-90deg); }
+    .section-content { padding: 2px 18px 14px; }
+    .footer { color: var(--muted); text-align: center; font-size: 12px; padding: 18px; }
+    @media (max-width: 820px) {
+      .page { display: block; padding: 14px; }
+      .sidebar { position: static; max-height: none; margin-bottom: 14px; }
+      .hero, article { border-radius: 14px; box-shadow: none; }
+    }
+    @media print {
+      body { background: white; }
+      .page { display: block; max-width: none; padding: 0; }
+      .sidebar { display: none; }
+      .hero, article { border: 0; box-shadow: none; padding: 0; }
+      .document-section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="status-verified">
+  <div class="page">
+    <aside class="sidebar">
+      <p class="eyebrow">Human-readable view</p>
+      <p class="source">docs/specs/FEAT-bimo-002-configurable-document-language.md</p>
+      <strong class="toc-title">本文目录</strong>
+      <ol class="toc"><li class="toc-level-2"><a href="#section-1">背景与目标</a></li>
+<li class="toc-level-2"><a href="#section-2">范围</a></li>
+<li class="toc-level-3"><a href="#section-3">In Scope</a></li>
+<li class="toc-level-3"><a href="#section-4">Out Of Scope</a></li>
+<li class="toc-level-2"><a href="#section-5">当前行为与目标行为</a></li>
+<li class="toc-level-2"><a href="#section-6">方案设计</a></li>
+<li class="toc-level-2"><a href="#section-7">接口与数据影响</a></li>
+<li class="toc-level-2"><a href="#section-8">任务拆分</a></li>
+<li class="toc-level-2"><a href="#section-9">验收标准</a></li>
+<li class="toc-level-2"><a href="#section-10">风险与回滚</a></li>
+<li class="toc-level-2"><a href="#section-11">交接说明</a></li></ol>
+    </aside>
+    <main>
+      <header class="hero">
+        <p class="eyebrow">设计与规格文档</p>
+        <h1>Configurable document language</h1>
+        <div class="metadata"><div class="meta-item meta-id"><span>功能</span><strong>FEAT-bimo-002</strong></div><div class="meta-item meta-status"><span>状态</span><strong>verified</strong></div><div class="meta-item meta-type"><span>类型</span><strong>enhancement</strong></div><div class="meta-item meta-owner"><span>负责人</span><strong>bimo</strong></div><div class="meta-item meta-updated"><span>更新时间</span><strong>2026-07-18T12:39:25Z</strong></div><div class="meta-item meta-author"><span>更新人</span><strong>Bimo</strong></div></div>
+        <p class="notice">此 HTML 面向人类阅读，由 Markdown 自动生成；事实源仍是
+          <code>docs/specs/FEAT-bimo-002-configurable-document-language.md</code>。</p>
+      </header>
+      <article><details class="document-section" open id="section-1"><summary><h2>背景与目标</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>当前 v5 初始化模板和生成器中的人类可读内容以英文或中英混合形式输出，项目不能声明统一的文档语言。</li>
+<li>在 <code>.claw/manifest.yaml</code> 增加语言配置，让初始化问答、核心文件、FEAT、TASK 和派生视图按同一语言生成。</li>
+<li>新项目必须明确选择语言，不再静默采用英文。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-2"><summary><h2>范围</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-3">In Scope</h3>
+<ul>
+<li>manifest 增加顶层 <code>language</code>，新建项目支持 <code>zh-CN</code>、<code>en</code> 和初始化中间值 <code>pending</code>。</li>
+<li>初始化和显式 legacy adoption 支持 <code>--language</code>；未提供时先保存 manifest，再把语言作为第一个待确认问题。</li>
+<li>为中文和英文提供确定性的核心、FEAT/TASK、事件及派生视图文案。</li>
+<li>所有脚本读取同一个语言事实源；校验器、schema、catalog、示例、README 和协议文档保持一致。</li>
+<li>已安装旧项目保持兼容：v4 不新增字段，缺少 <code>language</code> 的早期 v5 按 <code>en</code> 读取。</li>
+<li>语言变化只影响随后新建或明确重写的人类可读内容，不自动批量翻译历史文件。</li>
+</ul>
+<h3 id="section-4">Out Of Scope</h3>
+<ul>
+<li>自动翻译历史文档或用户代码、代码注释、第三方内容。</li>
+<li>翻译机器字段名、状态枚举、文档 ID、路径、命令、API 名称和原始验证输出。</li>
+<li>本版本不内置 <code>zh-CN</code>、<code>en</code> 之外的确定性模板资源。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-5"><summary><h2>当前行为与目标行为</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>Current：manifest 没有语言字段；核心模板多为英文，事件模板和派生视图中英混合。</li>
+<li>Target：新初始化先确认语言，所有新生成的人类可读项目管理内容统一使用该语言，机器协议保持稳定。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-6"><summary><h2>方案设计</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>manifest 使用单一标量：<code>language: pending | zh-CN | en</code>。</li>
+<li><code>pending</code> 只允许出现在非 ready 初始化；语言未确认时不得生成依赖语言的核心文件。</li>
+<li>英文模板保留在 catalog 的规范路径；中文模板放在 <code>templates/locales/zh-CN/</code>，脚本通过共享语言解析器选择资源。</li>
+<li><code>generate-current-status.py</code> 和 <code>summarize-team-status.py</code> 使用同一语言解析器和本地化文案表。</li>
+<li>status/preflight 输出返回 <code>language</code>，让 Agent 在任何写入前完成路由。</li>
+<li>现有 manifest 缺字段时解析为 legacy 默认 <code>en</code>；新 skill 版本生成的 manifest 必须显式包含该字段。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-7"><summary><h2>接口与数据影响</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li><code>project-onboarding.py start|adopt</code> 新增 <code>--language {zh-CN,en}</code>。</li>
+<li><code>configure-modules.py set</code> 新增可选 <code>--language</code>，用于显式更新未来写入语言；不会重写既有文件。</li>
+<li><code>manifest.schema.json</code>、<code>state-catalog.json</code> 和运行时 validator 增加语言规则。</li>
+<li><code>skill_version</code> 从 <code>5.0.0</code> 递增补丁位为 <code>5.0.1</code>，新文档策略升级为 <code>policy_version: 3</code>。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-8"><summary><h2>任务拆分</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li><code>TASK-bimo-006</code>：实现语言配置、双语模板路由、生成器本地化、兼容校验和测试。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-9"><summary><h2>验收标准</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>不传 <code>--language</code> 启动新项目时，只建立可恢复控制面，并把语言作为第一个问题。</li>
+<li>使用 <code>--language zh-CN</code> 时，核心文件、FEAT/TASK 和派生视图的人类可读标题与说明为中文。</li>
+<li>使用 <code>--language en</code> 时，对应内容为英文。</li>
+<li>ready manifest 不允许 <code>language: pending</code>；新版本 manifest 缺少 language 校验失败。</li>
+<li>早期 v5 manifest 缺少 language 和所有无 manifest 的 v4 项目继续通过兼容校验。</li>
+<li>现有项目文件不会因配置变化被静默翻译或覆盖。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-10"><summary><h2>风险与回滚</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>风险：本地化标题会影响依赖固定英文 section 的解析器；必须为关键 section 增加中英文别名测试。</li>
+<li>风险：复制模板会产生漂移；测试必须验证每个 catalog 模板都有受支持语言资源。</li>
+<li>回滚：保留英文规范模板和旧 manifest 的英文兼容行为，可撤回 <code>5.0.1</code> 脚本而不修改既有文档。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-11"><summary><h2>交接说明</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>先读 manifest schema、onboarding reference、模板解析器和本 FEAT；不要把语言配置扩展成代码本地化或历史文档迁移。</li>
+</ul>
+</div></details></article>
+      <footer class="footer">生成时间：2026-07-23T09:05:16Z · 生成器版本：3</footer>
+    </main>
+  </div>
+</body>
+</html>

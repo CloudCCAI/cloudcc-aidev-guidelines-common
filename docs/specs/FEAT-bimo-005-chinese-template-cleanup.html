@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="cc-aidev-source-sha256" content="d6919f2acb007e00f33665dd475900b2873e03822340306b01a75546a5910157">
+  <meta name="cc-aidev-generator-version" content="3">
+  <title>Chinese Template Cleanup</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --paper: #ffffff;
+      --ink: #17212b;
+      --muted: #66727f;
+      --line: #dfe5eb;
+      --accent: #176b87;
+      --accent-soft: #e8f3f6;
+      --code: #f3f5f7;
+      --shadow: 0 18px 50px rgba(21, 35, 48, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 16px/1.72 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .page { display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 900px); gap: 28px;
+      max-width: 1240px; margin: 0 auto; padding: 28px; align-items: start; }
+    .sidebar { position: sticky; top: 24px; max-height: calc(100vh - 48px); overflow: auto;
+      background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+    .eyebrow { margin: 0 0 8px; color: var(--accent); font-size: 12px; font-weight: 750;
+      letter-spacing: .08em; text-transform: uppercase; }
+    .source { margin: 0 0 18px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+    .toc-title { margin: 16px 0 8px; font-size: 13px; }
+    .toc { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    .toc li { margin: 3px 0; }
+    .toc a { display: block; padding: 5px 8px; border-radius: 7px; color: #33414d; text-decoration: none; }
+    .toc a:hover { background: var(--accent-soft); color: var(--accent); }
+    .toc-level-3 { padding-left: 12px; }
+    .toc-level-4, .toc-level-5, .toc-level-6 { padding-left: 24px; }
+    .toc-empty { color: var(--muted); padding: 5px 8px; }
+    main { min-width: 0; }
+    .hero, article { background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .hero { border-radius: 20px; padding: clamp(24px, 5vw, 48px); margin-bottom: 20px; }
+    .hero h1 { margin: 0; font-size: clamp(28px, 4vw, 44px); line-height: 1.2; letter-spacing: -.025em; }
+    .notice { margin: 18px 0 0; padding: 12px 14px; border-left: 3px solid var(--accent);
+      background: var(--accent-soft); color: #315461; font-size: 14px; }
+    .metadata { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 22px; }
+    .meta-item { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfd; }
+    .meta-item span { display: block; color: var(--muted); font-size: 12px; }
+    .meta-item strong { display: block; margin-top: 2px; overflow-wrap: anywhere; }
+    .meta-status strong { color: var(--accent); }
+    .meta-updated strong { white-space: nowrap; font-size: 13px; }
+    article { border-radius: 20px; padding: clamp(22px, 5vw, 48px); }
+    article > h1:first-child { margin-top: 0; }
+    h1, h2, h3, h4 { line-height: 1.32; color: #13202a; }
+    h1 { font-size: 2rem; } h2 { font-size: 1.45rem; } h3 { margin-top: 1.7em; font-size: 1.16rem; }
+    p, ul, ol, blockquote, pre, .table-wrap { margin: 1em 0; }
+    li + li { margin-top: .35em; }
+    blockquote { margin-left: 0; padding: 10px 18px; border-left: 4px solid #9bbbc6;
+      background: #f5f9fa; color: #42535d; }
+    code { padding: .15em .38em; border-radius: 5px; background: var(--code);
+      font: .9em/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    pre { overflow: auto; padding: 18px; border-radius: 12px; background: #17212b; color: #e8edf1; }
+    pre code { padding: 0; background: transparent; color: inherit; }
+    img { display: block; max-width: 100%; height: auto; margin: 18px auto; border-radius: 10px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: #f5f8fa; } tr:last-child td { border-bottom: 0; }
+    .task-item { list-style: none; margin-left: -22px; display: flex; gap: 8px; align-items: flex-start; }
+    .task-item input { margin-top: .42em; }
+    .document-section { margin: 20px 0; border: 1px solid var(--line); border-radius: 14px; overflow: clip; }
+    .document-section > summary { display: flex; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 15px 18px; cursor: pointer; background: #f8fafb; list-style: none; }
+    .document-section > summary::-webkit-details-marker { display: none; }
+    .document-section > summary h2 { margin: 0; font-size: 1.35rem; }
+    .document-section > summary span { color: var(--muted); transition: transform .18s ease; }
+    .document-section:not([open]) > summary span { transform: rotate(-90deg); }
+    .section-content { padding: 2px 18px 14px; }
+    .footer { color: var(--muted); text-align: center; font-size: 12px; padding: 18px; }
+    @media (max-width: 820px) {
+      .page { display: block; padding: 14px; }
+      .sidebar { position: static; max-height: none; margin-bottom: 14px; }
+      .hero, article { border-radius: 14px; box-shadow: none; }
+    }
+    @media print {
+      body { background: white; }
+      .page { display: block; max-width: none; padding: 0; }
+      .sidebar { display: none; }
+      .hero, article { border: 0; box-shadow: none; padding: 0; }
+      .document-section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="status-verified">
+  <div class="page">
+    <aside class="sidebar">
+      <p class="eyebrow">Human-readable view</p>
+      <p class="source">docs/specs/FEAT-bimo-005-chinese-template-cleanup.md</p>
+      <strong class="toc-title">本文目录</strong>
+      <ol class="toc"><li class="toc-level-2"><a href="#section-1">Background and Goal</a></li>
+<li class="toc-level-2"><a href="#section-2">Scope</a></li>
+<li class="toc-level-3"><a href="#section-3">In Scope</a></li>
+<li class="toc-level-3"><a href="#section-4">Out Of Scope</a></li>
+<li class="toc-level-2"><a href="#section-5">Current and Target Behavior</a></li>
+<li class="toc-level-2"><a href="#section-6">Design</a></li>
+<li class="toc-level-2"><a href="#section-7">Interface and Data Impact</a></li>
+<li class="toc-level-2"><a href="#section-8">Task Breakdown</a></li>
+<li class="toc-level-2"><a href="#section-9">Acceptance Criteria</a></li>
+<li class="toc-level-2"><a href="#section-10">Risks and Rollback</a></li>
+<li class="toc-level-2"><a href="#section-11">Handoff</a></li></ol>
+    </aside>
+    <main>
+      <header class="hero">
+        <p class="eyebrow">设计与规格文档</p>
+        <h1>Chinese Template Cleanup</h1>
+        <div class="metadata"><div class="meta-item meta-id"><span>功能</span><strong>FEAT-bimo-005</strong></div><div class="meta-item meta-status"><span>状态</span><strong>verified</strong></div><div class="meta-item meta-type"><span>类型</span><strong>new_feature</strong></div><div class="meta-item meta-owner"><span>负责人</span><strong>bimo</strong></div><div class="meta-item meta-updated"><span>更新时间</span><strong>2026-07-19T02:06:38Z</strong></div><div class="meta-item meta-author"><span>更新人</span><strong>Bimo</strong></div></div>
+        <p class="notice">此 HTML 面向人类阅读，由 Markdown 自动生成；事实源仍是
+          <code>docs/specs/FEAT-bimo-005-chinese-template-cleanup.md</code>。</p>
+      </header>
+      <article><details class="document-section" open id="section-1"><summary><h2>Background and Goal</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>The distributable Skill carries parallel v4, English v5, and Chinese v5 human-readable templates, plus language-selection branches throughout the protocol and scripts.</li>
+<li>Retain one canonical Chinese template set, reduce dead compatibility assets and duplicate helpers, then perform a second independent cleanup scan.</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-2"><summary><h2>Scope</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-3">In Scope</h3>
+<ul>
+<li>Make canonical v5 human-readable templates Chinese and remove <code>templates/locales/zh-CN/</code>.</li>
+<li>New projects use fixed <code>zh-CN</code> output without a language-selection onboarding question.</li>
+<li>Continue reading older manifests containing <code>language: en</code> or <code>language: pending</code>; never rewrite existing historical documents automatically.</li>
+<li>Remove v4 template copies and platform templates that have no runtime consumer.</li>
+<li>Replace inline bilingual derived-view output with Chinese-only output.</li>
+<li>Consolidate safe duplicated catalog, atomic-write, state parsing, version and Codeup helpers where feasible.</li>
+<li>Convert v5 examples and tests to the Chinese-only contract.</li>
+<li>Run a second dead-reference, duplicate-content and generated-artifact scan after the first cleanup, then clean remaining safe findings.</li>
+</ul>
+<h3 id="section-4">Out Of Scope</h3>
+<ul>
+<li>Translating existing customer project files in place.</li>
+<li>Removing legacy v4 or early-v5 state readers and validators.</li>
+<li>Translating machine keys, enum values, IDs, paths, commands or raw evidence.</li>
+<li>Changing feature behavior unrelated to language/template/runtime cleanup.</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-5"><summary><h2>Current and Target Behavior</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>Current: 60 tracked templates include approximately 710 lines each of v4 legacy, canonical English v5, and Chinese mirror content; new onboarding supports <code>pending</code>, <code>en</code>, and <code>zh-CN</code>.</li>
+<li>Target: one canonical Chinese v5 template set, no locale mirror, no new English output path, and explicit read compatibility for historical manifests.</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-6"><summary><h2>Design</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>Move the Chinese mirror content into the existing catalog canonical paths so catalog paths remain stable.</li>
+<li>Keep a compatibility language reader for historical manifests, but make all renderers resolve to Chinese and make new manifests record <code>language: zh-CN</code> deterministically.</li>
+<li>Remove the language selection and reconfiguration interface; an early manifest checkpoint with <code>pending</code> is normalized to <code>zh-CN</code> when onboarding resumes.</li>
+<li>Gate the new fixed-language validation contract at Skill <code>5.0.3</code>; earlier v5 manifests retain read compatibility.</li>
+<li>Use Git history, not shipped inactive templates, as the archive for old v4 template sources.</li>
+<li>Prefer existing <code>scripts/lib/</code> utilities and catalog facts over repeated script-local implementations.</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-7"><summary><h2>Interface and Data Impact</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li><code>project-onboarding.py start/adopt</code> no longer offer a meaningful language choice; <code>configure-modules.py</code> no longer changes document language.</li>
+<li>New <code>5.0.3</code> manifests use fixed <code>language: zh-CN</code>; validator accepts historical <code>en</code>/<code>pending</code> only for earlier versions.</li>
+<li>Template paths in <code>state-catalog.json</code> remain unchanged; their content becomes Chinese.</li>
+<li><code>templates/locales/zh-CN/</code>, inactive root/docs/parallel templates, and unused platform templates are removed.</li>
+<li>Existing English project documents remain untouched and readable.</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-8"><summary><h2>Task Breakdown</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li><code>TASK-bimo-009</code>: perform two cleanup passes, compatibility updates and full verification.</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-9"><summary><h2>Acceptance Criteria</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>A fresh project initializes directly in Chinese without asking for language.</li>
+<li>All catalog-managed Markdown and generated current/team status content is Chinese.</li>
+<li>No <code>templates/locales</code> directory or canonical English human-readable template remains.</li>
+<li>Historical <code>language: en</code> and legacy v4 fixtures still validate and remain unmodified.</li>
+<li>No runtime reference points to deleted templates or removed language branches.</li>
+<li>Duplicate/dead-code scan is executed twice, with the second pass recorded.</li>
+<li>Full tests, compile/syntax checks, strict v5 examples, legacy fixture and repository-state validation pass.</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-10"><summary><h2>Risks and Rollback</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>Risk: deleting templates claimed as v4 compatibility could break an undocumented consumer. Mitigation: prove no runtime references and preserve history in Git.</li>
+<li>Risk: fixed Chinese output could invalidate early-v5 manifests. Mitigation: version-gated validation and read-only compatibility for old <code>en</code>/<code>pending</code> values.</li>
+<li>Risk: broad helper consolidation could change parser behavior. Mitigation: make only test-covered equivalence refactors and defer uncertain consolidation.</li>
+<li>Rollback: restore deleted templates and language routing from the previous commit; do not rewrite generated customer documents.</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-11"><summary><h2>Handoff</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>Read <code>scripts/lib/language.py</code>, manifest schema/catalog, canonical templates, onboarding/preflight/configure/validator scripts, derived-view generators and their tests.</li>
+<li>User-confirmed direction: keep only Chinese templates, clean once, rescan, and clean a second time.</li>
+<li>Verified outcome: both cleanup passes completed; all acceptance checks passed for Skill <code>5.0.3</code>.</li>
+</ul>
+</div></details></article>
+      <footer class="footer">生成时间：2026-07-23T09:05:16Z · 生成器版本：3</footer>
+    </main>
+  </div>
+</body>
+</html>

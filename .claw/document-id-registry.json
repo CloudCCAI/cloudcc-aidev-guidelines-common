@@ -64,6 +64,22 @@
       "number": 9,
       "path": ".claw/tasks/TASK-bimo-009-chinese-template-cleanup.md",
       "allocated_at": "2026-07-19T01:37:00Z"
+    },
+    {
+      "kind": "feature",
+      "document_id": "FEAT-bimo-006",
+      "owner_slug": "bimo",
+      "number": 6,
+      "path": "docs/specs/FEAT-bimo-006-human-readable-html.md",
+      "allocated_at": "2026-07-23T08:49:33Z"
+    },
+    {
+      "kind": "task",
+      "document_id": "TASK-bimo-010",
+      "owner_slug": "bimo",
+      "number": 10,
+      "path": ".claw/tasks/TASK-bimo-010-human-readable-html.md",
+      "allocated_at": "2026-07-23T08:55:20Z"
     }
   ]
 }

@@ -71,6 +71,7 @@ class OnboardingCliTests(unittest.TestCase):
                 "# 产品与功能设计文档",
                 (project / "docs" / "design" / "README.md").read_text(encoding="utf-8"),
             )
+            self.assertTrue((project / "docs" / "design" / "README.html").is_file())
 
             self.mark_all_required_complete(project)
             code, finalized, _ = self.run_python(

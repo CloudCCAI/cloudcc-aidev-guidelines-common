@@ -34,6 +34,8 @@
 
 需要展开页面、交互、业务流转、状态机、异常路径、接口或数据交互时，把详细设计写入 `docs/design/`，并在 FEAT 中保存引用和影响摘要。面向最终用户的操作说明写入 `docs/help/`，应以已确认或已验证的产品行为为依据。不要让 FEAT、design 和 help 重复维护同一事实。
 
+每次创建或修改 `docs/design/**/*.md`、`docs/specs/**/*.md` 后，运行 `scripts/generate-project-docs-html.py <Markdown 路径> --write`，生成同目录、同 basename HTML。Markdown 是唯一事实源；HTML 只面向人类阅读，不得手工编辑。需要补齐整个项目时，以项目根目录作为命令目标。
+
 ## FEAT 命名
 
 新文件使用：
@@ -63,6 +65,8 @@ python3 scripts/allocate-document-id.py feature \
   --project-root /path/to/project \
   --description user-login
 ```
+
+分配器创建 FEAT 时会同时生成配对 HTML，并在 JSON 结果中返回 `html_path`。
 
 ## 多任务热状态
 

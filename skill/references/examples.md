@@ -31,6 +31,8 @@ Skill 5.0.3 起，规范模板固定为中文，直接位于 `templates/` 的各
 
 两个 v5 示例也包含 `docs/help` 和 `docs/design` 的中文索引；它们声明目录职责，不伪造示例产品尚未确认的手册或详细设计。
 
+示例中 `docs/design` 与 `docs/specs` 的每份 Markdown 都带有同目录、同 basename HTML，用于演示 5.0.5 起的人类阅读派生视图。修改示例 Markdown 后必须重新运行 `generate-project-docs-html.py`。
+
 新 FEAT/TASK 未显式指定 `--owner` 时，示例遵循全局 Git `user.name`、当前项目本地 Git `user.name`、操作系统用户名的自动解析顺序，不读取 developer `document_slug`。
 
 legacy 示例用于证明旧文件不被强制改名或补字段。新版本读取它时继续使用 v4 profile；只有用户显式采用 v5 时才建立历史边界。

@@ -13,6 +13,10 @@ SKILL_ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = SKILL_ROOT / "scripts" / "validate-state.py"
 PREFLIGHT = SKILL_ROOT / "scripts" / "project-preflight.py"
 CHECK_ASSIGNMENT = SKILL_ROOT / "scripts" / "check-assignment.py"
+sys.path.insert(0, str(SKILL_ROOT / "scripts"))
+
+from lib.project_docs_html import project_root_for_document, write_companion  # noqa: E402
+
 SKILL_REPO_URL = "https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
 TIMESTAMP = "2026-07-18T03:00:00Z"
 
@@ -20,6 +24,9 @@ TIMESTAMP = "2026-07-18T03:00:00Z"
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(textwrap.dedent(content).lstrip(), encoding="utf-8")
+    project_root = project_root_for_document(path) if path.suffix == ".md" else None
+    if project_root is not None:
+        write_companion(path, project_root=project_root, generated_at=TIMESTAMP)
 
 
 def add_guidance(project_root: Path) -> None:
