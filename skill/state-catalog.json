@@ -263,6 +263,7 @@
       "category": "core",
       "lifecycle": "core",
       "temperature": "hot",
+      "git_tracking": "ignored",
       "init_order": 80,
       "required_when": {
         "all": [
@@ -275,9 +276,9 @@
         "active_task_count",
         "next_action"
       ],
-      "initialization_required": true,
-      "counts_toward_ready": true,
-      "prompt": "确认当前阶段、活跃工作流索引、下一步和按需读取提示。"
+      "initialization_required": false,
+      "counts_toward_ready": false,
+      "prompt": "为当前用户生成个人活跃工作流索引、下一步和按需读取提示。"
     },
     {
       "id": "feature_spec",

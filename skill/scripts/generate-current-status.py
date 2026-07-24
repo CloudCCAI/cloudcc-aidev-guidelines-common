@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import json
 import re
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
 from lib.atomic_io import atomic_write_text, file_lock
-from lib.document_ids import TASK_BOARD_HEADER_RE, document_id_from_path, extract_feature_ids
+from lib.document_ids import TASK_BOARD_HEADER_RE, document_id_from_path, extract_feature_ids, normalize_slug
 from lib.state_io import clean_value, read_front_matter, utc_now
 
 
@@ -160,6 +162,31 @@ def collect_workflows(state_dir: Path) -> list[Workflow]:
     return order_workflows(workflows)
 
 
+def resolve_current_user(project_root: Path, explicit_user: str | None = None) -> str:
+    if explicit_user:
+        return normalize_slug(explicit_user)
+    commands = (
+        ["git", "config", "--global", "--get", "user.name"],
+        ["git", "-C", str(project_root), "config", "--local", "--get", "user.name"],
+    )
+    for command in commands:
+        result = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return normalize_slug(result.stdout.strip())
+    return normalize_slug(getpass.getuser())
+
+
+def workflows_for_user(workflows: list[Workflow], current_user: str) -> list[Workflow]:
+    normalized_user = normalize_slug(current_user)
+    return [workflow for workflow in workflows if normalize_slug(workflow.user) == normalized_user]
+
+
 def order_workflows(workflows: list[Workflow]) -> list[Workflow]:
     """Prioritize active execution while preserving board order for ties."""
 
@@ -192,12 +219,16 @@ def read_initialization_fields(path: Path) -> dict[str, str]:
         key, value = raw_line.split(":", 1)
         if key in fields:
             fields[key] = clean_value(value) or fields[key]
+    legacy_timestamp = fields["init_completed_at"]
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", legacy_timestamp):
+        fields["init_completed_at"] = legacy_timestamp.replace("T", " ").removesuffix("Z")
     return fields
 
 
 def render_current_status(
     workflows: list[Workflow],
     *,
+    current_user: str,
     updated_by: str,
     limit: int = 10,
     initialization: dict[str, str] | None = None,
@@ -207,9 +238,10 @@ def render_current_status(
     init_fields = dict(INIT_DEFAULTS)
     if initialization:
         init_fields.update({key: value for key, value in initialization.items() if key in init_fields})
-    ordered_workflows = order_workflows(workflows)
+    personal_workflows = workflows_for_user(workflows, current_user)
+    ordered_workflows = order_workflows(personal_workflows)
     shown = ordered_workflows[: max(limit, 0)]
-    truncated = len(shown) < len(workflows)
+    truncated = len(shown) < len(personal_workflows)
     active_task = ordered_workflows[0].task_id if ordered_workflows else "none"
     next_action = shown[0].next_action if shown else "确认下一项项目工作"
     lines = [
@@ -222,9 +254,10 @@ def render_current_status(
         f"init_confirmed_by: {json.dumps(init_fields['init_confirmed_by'], ensure_ascii=False)}",
         f"updated_at: {utc_now()}",
         f"updated_by: {json.dumps(updated_by, ensure_ascii=False)}",
-        f"phase: {'active' if workflows else 'idle'}",
+        f"current_user: {json.dumps(normalize_slug(current_user), ensure_ascii=False)}",
+        f"phase: {'active' if personal_workflows else 'idle'}",
         f"active_task: {json.dumps(active_task, ensure_ascii=False)}",
-        f"active_task_count: {len(workflows)}",
+        f"active_task_count: {len(personal_workflows)}",
         f"active_tasks_shown: {len(shown)}",
         f"active_tasks_truncated: {'true' if truncated else 'false'}",
         f"next_action: {json.dumps(_cell(next_action), ensure_ascii=False)}",
@@ -238,7 +271,7 @@ def render_current_status(
             "",
             "# 项目当前状态",
             "",
-            "`current-status.md` 是生成的热索引，所链接的事实源文件仍具有最终权威。",
+            "`current-status.md` 是当前用户的本地热索引，不提交到 Git；所链接的共享事实源文件仍具有最终权威。",
             "",
             "## 活跃工作流",
             "",
@@ -247,20 +280,20 @@ def render_current_status(
     if shown:
         lines.extend(
             [
-                "| 用户 | 功能 | 任务 | 类型 | 状态 | 分支 | 下一步 |",
-                "|---|---|---|---|---|---|---|",
+                "| 功能 | 任务 | 类型 | 状态 | 分支 | 下一步 |",
+                "|---|---|---|---|---|---|",
             ]
         )
         for item in shown:
             lines.append(
-                f"| {_cell(item.user)} | `{item.feature_id}` | `{item.task_id}` | `{item.work_type}` | `{item.status}` | `{item.branch}` | {_cell(item.next_action)} |"
+                f"| `{item.feature_id}` | `{item.task_id}` | `{item.work_type}` | `{item.status}` | `{item.branch}` | {_cell(item.next_action)} |"
             )
     else:
         lines.append(
             "- 当前没有活跃任务，不要创建占位任务。"
         )
     if truncated:
-        remaining = len(workflows) - len(shown)
+        remaining = len(personal_workflows) - len(shown)
         lines.extend(
             [
                 "",
@@ -285,6 +318,7 @@ def render_current_status(
 def generate_and_write_current_status(
     state_dir: Path,
     *,
+    current_user: str | None = None,
     updated_by: str,
     limit: int = 10,
     lock_timeout: float = 10.0,
@@ -295,11 +329,13 @@ def generate_and_write_current_status(
     if state_dir.name != ".claw":
         raise ValueError("current status generation only supports a .claw state directory")
     destination = state_dir / "current-status.md"
+    resolved_user = resolve_current_user(state_dir.parent, current_user)
     with file_lock(state_dir / ".locks" / "current-status.lock", timeout=lock_timeout):
         workflows = collect_workflows(state_dir)
         initialization = read_initialization_fields(destination)
         rendered = render_current_status(
             workflows,
+            current_user=resolved_user,
             updated_by=updated_by,
             limit=limit,
             initialization=initialization,
@@ -311,6 +347,10 @@ def generate_and_write_current_status(
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate the .claw/current-status.md hot index from task sources.")
     parser.add_argument("state_dir", nargs="?", default=".claw", help="Path to the .claw state directory.")
+    parser.add_argument(
+        "--user",
+        help="Personal owner slug to index. Defaults to global Git user.name, project-local Git user.name, then OS user.",
+    )
     parser.add_argument("--updated-by", default="generate-current-status")
     parser.add_argument("--limit", type=int, default=10, help="Maximum active workflows to show. Defaults to 10.")
     parser.add_argument("--lock-timeout", type=float, default=10.0)
@@ -326,16 +366,19 @@ def main() -> int:
     if args.write:
         destination, _rendered = generate_and_write_current_status(
             state_dir,
+            current_user=args.user,
             updated_by=args.updated_by,
             limit=args.limit,
             lock_timeout=args.lock_timeout,
         )
         print(f"Updated: {destination}")
     else:
+        current_user = resolve_current_user(state_dir.resolve().parent, args.user)
         workflows = collect_workflows(state_dir)
         initialization = read_initialization_fields(state_dir / "current-status.md")
         rendered = render_current_status(
             workflows,
+            current_user=current_user,
             updated_by=args.updated_by,
             limit=args.limit,
             initialization=initialization,

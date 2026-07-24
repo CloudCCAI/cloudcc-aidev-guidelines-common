@@ -3,5 +3,6 @@ __pycache__/
 *.py[cod]
 .claw-local/
 .claw/.locks/
+.claw/current-status.md
 .env
 *.local.env

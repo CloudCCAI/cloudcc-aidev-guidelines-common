@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import getpass
 import importlib.util
 import json
 import os
@@ -16,6 +17,7 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from lib.atomic_io import atomic_write_text
+from lib.document_ids import normalize_slug
 from lib.devops_assets import (
     DevOpsAssetContract,
     contract_from_catalog,
@@ -188,8 +190,26 @@ def render_values(
         "CHANGE_REVIEW": str(bool(modules.get("change_review", False))).lower(),
         "EVIDENCE_STATUS": "planned" if project_mode == "greenfield" else "pending verification",
         "PROJECT_NAME": project_root.name if project_root is not None else "project",
+        "CURRENT_USER": resolve_current_user(project_root),
         "UPDATED_BY": "onboarding",
     }
+
+
+def resolve_current_user(project_root: Path | None) -> str:
+    commands = [["git", "config", "--global", "--get", "user.name"]]
+    if project_root is not None:
+        commands.append(["git", "-C", str(project_root), "config", "--local", "--get", "user.name"])
+    for command in commands:
+        result = subprocess.run(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return normalize_slug(result.stdout.strip())
+    return normalize_slug(getpass.getuser())
 
 
 def load_manifest(project_root: Path) -> dict[str, Any]:
@@ -675,7 +695,7 @@ def ensure_local_ignore(project_root: Path) -> None:
     entries = {line.strip() for line in existing.splitlines()}
     required_entries = [
         entry
-        for entry in (".claw-local/", ".claw/.locks/")
+        for entry in (".claw-local/", ".claw/.locks/", ".claw/current-status.md")
         if entry not in entries and entry.rstrip("/") not in entries
     ]
     if not required_entries:

@@ -2,7 +2,7 @@
 
 用于开发和发布 AI 软件项目初始化、状态管理、多人协作门禁与代码评审管理 Skill。
 
-当前 Skill 版本：`5.1.0`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
+当前 Skill 版本：`5.1.2`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
 
 ## 核心能力
 
@@ -18,6 +18,7 @@
 - 同时管理多个用户、多个聊天窗口和多个活跃任务。
 - grandfather 已存在的旧 FEAT/TASK，不强制批量迁移。
 - 以热、温、冷和事件触发实现渐进加载。
+- 通过提交 SHA 固定和缓存穿透检查线上 Skill 版本，避免固定 `main` Raw URL 返回旧内容。
 
 项目状态目录只使用 `.claw/`；本地私密配置只使用 `.claw-local/`。
 
@@ -42,6 +43,16 @@
 | `docs/specs/` | 本仓库的设计规格 |
 
 `skill/` 是独立可发布包；仓库根目录用于开发该 Skill。
+
+## 检查技能更新
+
+每个新聊天或新会话运行已安装 Skill 中的版本检查器：
+
+```bash
+python3 /path/to/skill/scripts/check-skill-version.py --json
+```
+
+检查器优先使用 `git ls-remote` 解析 GitHub `main` 当前提交 SHA；Git 不可用时才以随机查询参数和 `no-cache` 请求 GitHub API。随后从该不可变提交读取 `skill/SKILL.md`。输出包含 `local_version`、`upstream_version`、`upstream_commit`、提交固定的 `upstream_skill_url`、完整技能包 `upstream_install_url` 和 `update_available`。网络或响应校验失败时返回非零状态，不回退到可能缓存的固定分支 Raw URL。
 
 ## 首次接入项目
 
@@ -134,11 +145,14 @@ python3 /path/to/skill/scripts/generate-project-docs-html.py \
 
 未显式传入 `--owner` 时，命名空间依次使用全局 Git 配置的 `user.name`、当前项目本地 Git 配置的 `user.name`、操作系统用户名。
 
-聚合多个活跃任务：
+生成当前用户的本地活跃任务热索引：
 
 ```bash
-python3 /path/to/skill/scripts/generate-current-status.py /path/to/project/.claw --write
+python3 /path/to/skill/scripts/generate-current-status.py \
+  /path/to/project/.claw --user <owner-slug> --write
 ```
+
+`.claw/current-status.md` 必须写入 `.gitignore`，由每个用户在自己的工作区独立维护；它缺失时可直接重新生成，不计入共享项目初始化完成度。共享任务状态仍写入 task board 和 task status。省略 `--user` 时采用与 FEAT/TASK 命名相同的用户解析顺序。
 
 ## Legacy 项目
 

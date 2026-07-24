@@ -1,3 +1,4 @@
 .claw-local/
 .claw/.locks/
+.claw/current-status.md
 DevOps/**/.env

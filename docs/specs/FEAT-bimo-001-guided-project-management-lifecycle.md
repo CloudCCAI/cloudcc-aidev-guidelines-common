@@ -17,10 +17,10 @@ created_by_source: git_config_user_name
 created_by_developer_id: none
 contributors: Bimo
 task_ids: TASK-bimo-001, TASK-bimo-002, TASK-bimo-003, TASK-bimo-004, TASK-bimo-005
-related_decisions: none
+related_decisions: ADR-018
 related_issues: none
 policy_version: 2
-updated_at: 2026-07-18T03:10:11Z
+updated_at: 2026-07-24 03:14:02
 updated_by: Bimo
 ---
 
@@ -32,6 +32,13 @@ updated_by: Bimo
 - 用户已于 `2026-07-18T02:05:46Z` 确认按本文开始实现。
 - 当前为 `verified + complete`：设计基线已确认，v5 实现和回归验证已完成。
 - `TASK-bimo-001` 至 `TASK-bimo-005` 均已完成，历史文件继续按兼容规则保留。
+
+## 5.1.2 修订说明
+
+- 本节覆盖本文第 11 节、验收标准和任务拆分中关于“跨用户共享聚合 `current-status.md`”的旧设计。
+- `.claw/current-status.md` 改为 Git 忽略、可随时重建且不计入共享初始化完成度的本地个人派生视图，只索引 `current_user` 的活跃任务。
+- 多人共享事实继续保存在 task board、task status、FEAT、assignment 和按需生成的 team status 中。
+- 旧项目继续兼容读取；选择 5.1.2 行为后需保留本地文件并停止 Git 跟踪。
 
 ## 1. 背景与目标
 

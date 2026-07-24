@@ -191,6 +191,7 @@ def current_status_text(active_tasks: list[str], *, count: int | None = None, tr
     init_confirmed_by: tester
     updated_at: {TIMESTAMP}
     updated_by: tester
+    current_user: tester
     active_task_count: {task_count}
     active_tasks: {tasks_yaml}
     active_tasks_shown: {len(active_tasks)}
@@ -387,6 +388,30 @@ class ValidateStateV5Tests(unittest.TestCase):
         result = self.run_validator("--strict-v5")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("(v5)", result.stdout)
+
+    def test_v512_requires_personal_status_and_git_ignore(self) -> None:
+        self.add_minimal_v5()
+        write(
+            self.state_dir / "manifest.yaml",
+            manifest_text(skill_version="5.1.2", language="zh-CN", policy_version=3),
+        )
+
+        missing_ignore = self.run_validator("--strict-v5")
+        self.assertNotEqual(missing_ignore.returncode, 0)
+        self.assertIn("missing `.claw/current-status.md` ignore rule", missing_ignore.stdout)
+
+        write(self.project_root / ".gitignore", ".claw/current-status.md\n")
+        valid = self.run_validator("--strict-v5")
+        self.assertEqual(valid.returncode, 0, valid.stdout + valid.stderr)
+
+        current_status = (self.state_dir / "current-status.md").read_text(encoding="utf-8")
+        write(
+            self.state_dir / "current-status.md",
+            current_status.replace("current_user: tester\n", ""),
+        )
+        missing_user = self.run_validator("--strict-v5")
+        self.assertNotEqual(missing_user.returncode, 0)
+        self.assertIn("current_user must be a non-empty lowercase user slug", missing_user.stdout)
 
     def test_v501_manifest_keeps_historical_language_compatibility(self) -> None:
         self.add_minimal_v5()

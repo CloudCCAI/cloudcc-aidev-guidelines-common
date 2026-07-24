@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.1.2 - 2026-07-24
+
+- 将 `.claw/current-status.md` 明确为每个用户独立维护、可随时重建且不计入共享初始化完成度的本地派生状态，并由初始化器写入 Git 忽略规则。
+- `generate-current-status.py` 新增 `--user`，只呈现当前用户的活跃任务；未显式指定时沿用 Git/OS 用户解析顺序。
+- 新增个人状态字段、忽略规则校验、迁移说明和回归测试；多人共享事实继续保留在 task board、task status 与 team status。
+
+## 5.1.1 - 2026-07-24
+
+- 新增 `check-skill-version.py`，优先以 `git ls-remote` 解析 GitHub `main` 提交 SHA，Git 不可用时回退到带随机查询参数和 `no-cache` 的 GitHub API，再读取该提交下不可变的 `skill/SKILL.md`。
+- 版本检查失败时明确返回未知状态，不再依赖可能命中缓存的固定分支 Raw URL。
+- 同步新项目 AGENTS 指令、示例、状态模型和缓存穿透回归测试。
+
 ## 5.1.0 - 2026-07-24
 
 - 将测试冷归档从 `test-report-archive.md` 简化为 `test-archive.md`，并同步 kind、catalog、模板、脚本、校验器和测试。

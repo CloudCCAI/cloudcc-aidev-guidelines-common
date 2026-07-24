@@ -4,7 +4,7 @@ version: 4
 architecture_init_status: complete
 architecture_reviewed_at: 2026-07-18T02:36:33Z
 architecture_confirmed_by: Bimo
-updated_at: 2026-07-19T02:06:38Z
+updated_at: 2026-07-24 03:14:02
 updated_by: Bimo
 ---
 
@@ -276,6 +276,17 @@ updated_by: Bimo
 - 为什么这个方案胜出：单一规范资源消除三份重复内容和 locale 路由分支，同时通过版本门槛保留旧项目可运行性，不把清理成本转嫁为客户文档迁移。
 - 后续影响：删除 locale、旧 v4 和无入口平台模板；派生视图与指导块固定中文；5.0.3 及后续校验要求 `language: zh-CN`；解析器仍保留必要的历史英文标题和状态兼容别名。
 - 验证方式：执行两轮死引用与重复内容扫描、完整单元测试、Python/Shell/JSON 语法检查、v5.0.3 中英文门槛测试以及 Greenfield/Brownfield/legacy 严格校验。
+
+## ADR-018 - Keep current status local to each user
+
+- 状态：`accepted`
+- 日期：`2026-07-24`
+- 背景：共享提交 `.claw/current-status.md` 会让不同用户和聊天窗口反复覆盖同一个派生文件，既增加合并冲突，也把个人会话入口误当成团队事实。
+- 备选方案：继续提交全员聚合热索引；为每个用户提交一份独立热索引；让单一 `current-status.md` 成为 Git 忽略的本地个人视图。
+- 最终结论：`.claw/current-status.md` 由每个用户在自己的工作区独立维护并写入 `.gitignore`。生成器只索引 `current_user` 的活跃任务；该文件缺失时可重建且不计入共享初始化完成度。task board、task status、FEAT、assignment 和 team status 继续承载共享事实。
+- 为什么这个方案胜出：它保持固定的会话入口和小文件预算，同时消除派生文件的跨用户覆盖与无效 Git 变更，不复制团队事实。
+- 后续影响：初始化器自动补充忽略规则；已跟踪该文件的仓库需执行一次 `git rm --cached .claw/current-status.md`；Skill 5.1.2 起校验个人字段和忽略规则。
+- 验证方式：覆盖按用户过滤、初始化忽略规则、5.1.2 版本门槛与旧项目兼容，并运行完整测试及 v4/v5 示例校验。
 
 ## 维护规则
 

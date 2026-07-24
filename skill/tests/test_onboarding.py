@@ -62,7 +62,9 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertIn("## AI 开发协议", (project / "README.md").read_text(encoding="utf-8"))
             agents = (project / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn("metadata.skill_version", agents)
-            self.assertIn("有新版本时自动更新后重新加载本技能", agents)
+            self.assertIn("check-skill-version.py --json", agents)
+            self.assertIn("不得直接依赖固定 `main` Raw URL", agents)
+            self.assertIn("upstream_install_url", agents)
             self.assertIn(
                 "# 产品帮助与使用手册",
                 (project / "docs" / "help" / "README.md").read_text(encoding="utf-8"),
@@ -311,7 +313,7 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertEqual(actual_core, expected_core)
             self.assertEqual(
                 (project / ".gitignore").read_text(encoding="utf-8"),
-                ".claw-local/\n.claw/.locks/\n",
+                ".claw-local/\n.claw/.locks/\n.claw/current-status.md\n",
             )
             self.assertFalse((project / "docs" / "specs" / "PROJECT-BASELINE.md").exists())
             help_index = project / "docs" / "help" / "README.md"
@@ -352,6 +354,7 @@ class OnboardingCliTests(unittest.TestCase):
             current_status = project / ".claw" / "current-status.md"
             finalized_current_status = current_status.read_text(encoding="utf-8")
             self.assertIn("phase: idle", finalized_current_status)
+            self.assertIn("current_user:", finalized_current_status)
             self.assertIn('next_action: "确认下一项项目工作"', finalized_current_status)
 
             code, ready, _ = self.run_python(PREFLIGHT, str(project), "--require-ready", "--json")
@@ -845,6 +848,9 @@ class OnboardingCliTests(unittest.TestCase):
                 self.assertTrue((SKILL_ROOT / template).is_file(), template)
         self.assertEqual(entries["project_baseline"]["template"], "templates/project-state/project-baseline.md")
         self.assertTrue(entries["project_baseline"]["initialization_required"])
+        self.assertEqual(entries["current_status"]["git_tracking"], "ignored")
+        self.assertFalse(entries["current_status"]["initialization_required"])
+        self.assertFalse(entries["current_status"]["counts_toward_ready"])
         self.assertEqual(entries["collaboration_config"]["path"], ".claw/collaboration-config.yaml")
         external_assets = entries["devops"]["external_assets"]
         for asset in external_assets["root_files"] + external_assets["per_environment_files"]:

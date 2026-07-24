@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 5.1.0
+version: 5.1.2
 ---
 
 # State Model Reference
@@ -52,7 +52,7 @@ manifest 至少表达以下逻辑字段：
 
 ```yaml
 schema_version: 5
-skill_version: 5.1.0
+skill_version: 5.1.2
 language: zh-CN
 project_mode: pending | greenfield | brownfield | not_applicable
 initialization:
@@ -110,7 +110,7 @@ AI 只能建议模式，用户最终确认。
 
 ### `project_state`
 
-管理核心状态、会话意图、FEAT、TASK、多任务热索引和事件文件。建议默认开启。
+管理核心状态、会话意图、FEAT、TASK、个人多任务热索引和事件文件。建议默认开启。
 
 关闭时只保留 manifest 和合法启用的非状态模块配置，不创建或加载项目状态文件，也不强制 FEAT/TASK 流程。
 
@@ -184,11 +184,12 @@ Skill 5.0.5 起，初始化器创建 `docs/design/README.md` 后同步创建 `do
 
 ### `.claw/current-status.md`
 
-上下文热入口，是派生索引而非任务事实源。v5 frontmatter 至少包含：
+当前用户的本地上下文热入口，是派生索引而非任务事实源。它必须由 `.gitignore` 忽略，每个用户在各自工作区独立生成和维护，缺失时可从共享事实重建，不计入共享 manifest 的初始化完成度；共享协作事实仍位于 task board、task status、FEAT 和 assignment。v5 frontmatter 至少包含：
 
 ```yaml
 kind: current-status
 schema_version: 5
+current_user: user-slug
 active_task_count: 0
 active_tasks: []
 phase: bootstrap
@@ -197,7 +198,7 @@ updated_at: timestamp
 updated_by: generate-current-status
 ```
 
-正文用紧凑表格展示用户、FEAT、TASK、工作类型、执行状态、分支和下一步。保持少于 60 行，不记录会话日志、变更文件、长验证证据或完整问题详情。
+正文只用紧凑表格展示 `current_user` 的 FEAT、TASK、工作类型、执行状态、分支和下一步。保持少于 60 行，不记录会话日志、变更文件、长验证证据或完整问题详情。已有仓库从共享文件迁移时，保留工作区文件并执行一次 `git rm --cached .claw/current-status.md`。
 
 ### `.claw/goals.md`
 
@@ -370,7 +371,7 @@ FEAT 和 TASK 分别维护每位用户的最高已分配序号。分配器必须
 | 授权身份、分支和写入范围 | assignment |
 | 开发者公开身份和状态 | developer record |
 | 合并顺序和集成 gate | integration-queue |
-| 热索引 | current-status（派生） |
+| 个人热索引 | current-status（本地派生、Git 忽略） |
 | 团队摘要 | team-status（派生） |
 
 冲突时按字段权威来源修复，不能让整个文件全局覆盖其他文件。current status 和 team status 与来源冲突时重新生成。
@@ -439,4 +440,4 @@ Codeup token 保存于 `.claw-local/codeup.env`；GitHub secret 使用平台 sec
 
 项目根 README 和 AGENTS 必须保留受控声明块，要求所有 Agent 在项目工作前加载本 Skill，并给出安装来源。它们是指令锚点，不是状态文件，不计入 init completion。
 
-新生成的 AGENTS 受控声明块还必须要求每个新聊天或新会话读取上游 `skill/SKILL.md` 的 `metadata.skill_version`；发现新版本时自动更新并重新加载本 Skill。已有完整受控块继续保持原样，不因初始化或同步被静默覆盖。
+新生成的 AGENTS 受控声明块还必须要求每个新聊天或新会话运行已安装技能中的 `scripts/check-skill-version.py --json`。检查器优先使用 `git ls-remote` 解析 GitHub `main` 提交 SHA，Git 不可用时才回退到带随机查询参数和 `no-cache` 的 GitHub API 请求，再读取该提交下不可变的 `skill/SKILL.md`；不得直接依赖固定 `main` Raw URL。发现新版本时按返回的 `upstream_install_url` 更新完整技能包并重新加载本 Skill；检查失败时版本状态为未知。已有完整受控块继续保持原样，不因初始化或同步被静默覆盖。

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="cc-aidev-source-sha256" content="00e893f12bcff105852dc0fdb139e493d8f28cb5d78a38b456ca8a7953a34c82">
+  <meta name="cc-aidev-source-sha256" content="1974901e1d1b8f1a1102948d0452100869dc0aec3ae96e5b200d75366ab9705f">
   <meta name="cc-aidev-generator-version" content="4">
   <title>引导式项目初始化与运行期管理重设计</title>
   <style>
@@ -105,65 +105,66 @@
       <p class="source">docs/specs/FEAT-bimo-001-guided-project-management-lifecycle.md</p>
       <strong class="toc-title">本文目录</strong>
       <ol class="toc"><li class="toc-level-2"><a href="#section-1">文档状态</a></li>
-<li class="toc-level-2"><a href="#section-2">1. 背景与目标</a></li>
-<li class="toc-level-2"><a href="#section-3">2. 设计原则</a></li>
-<li class="toc-level-2"><a href="#section-4">3. Skill 启动与项目预检</a></li>
-<li class="toc-level-3"><a href="#section-5">3.1 “第一次启动”的定义</a></li>
-<li class="toc-level-3"><a href="#section-6">3.2 预检顺序</a></li>
-<li class="toc-level-3"><a href="#section-7">3.3 项目初始化判定</a></li>
-<li class="toc-level-2"><a href="#section-8">4. Greenfield 与 Brownfield 判定</a></li>
-<li class="toc-level-3"><a href="#section-9">4.1 只读证据检查</a></li>
-<li class="toc-level-3"><a href="#section-10">4.2 确认规则</a></li>
-<li class="toc-level-3"><a href="#section-11">4.3 Greenfield 初始化</a></li>
-<li class="toc-level-3"><a href="#section-12">4.4 Brownfield 接管</a></li>
-<li class="toc-level-2"><a href="#section-13">5. 功能模块与开关</a></li>
-<li class="toc-level-3"><a href="#section-14">5.1 manifest 建议结构</a></li>
-<li class="toc-level-2"><a href="#section-15">6. 核心文件初始化</a></li>
-<li class="toc-level-3"><a href="#section-16">6.1 文件级初始化状态</a></li>
-<li class="toc-level-3"><a href="#section-17">6.2 核心文件、问题和时机</a></li>
-<li class="toc-level-3"><a href="#section-18">6.3 <code>decisions.md</code> 中的 ARCHITECTURE 模块</a></li>
-<li class="toc-level-3"><a href="#section-19">6.4 引导执行规则</a></li>
-<li class="toc-level-3"><a href="#section-20">6.5 推荐初始化顺序</a></li>
-<li class="toc-level-2"><a href="#section-21">7. 热、温、冷与按需创建</a></li>
-<li class="toc-level-2"><a href="#section-22">8. 每个新 AI 会话的运行期流程</a></li>
-<li class="toc-level-3"><a href="#section-23">8.1 意图确认是建议性引导</a></li>
-<li class="toc-level-3"><a href="#section-24">8.2 哪些工作需要 FEAT</a></li>
-<li class="toc-level-3"><a href="#section-25">8.3 开发类工作门槛</a></li>
-<li class="toc-level-3"><a href="#section-26">8.4 Bug 信息的事实源</a></li>
-<li class="toc-level-2"><a href="#section-27">9. FEAT 文件命名、作者和个人编号</a></li>
-<li class="toc-level-3"><a href="#section-28">9.1 新文件格式</a></li>
-<li class="toc-level-3"><a href="#section-29">9.2 用户名解析顺序</a></li>
-<li class="toc-level-3"><a href="#section-30">9.3 个人递增与并发</a></li>
-<li class="toc-level-3"><a href="#section-31">9.4 建议 frontmatter</a></li>
-<li class="toc-level-2"><a href="#section-32">10. TASK 文件命名和归属</a></li>
-<li class="toc-level-2"><a href="#section-33">11. 多活跃任务与多聊天窗口</a></li>
-<li class="toc-level-2"><a href="#section-34">12. 历史项目与旧文件兼容</a></li>
-<li class="toc-level-3"><a href="#section-35">12.1 基本策略</a></li>
-<li class="toc-level-3"><a href="#section-36">12.2 新旧边界登记</a></li>
-<li class="toc-level-3"><a href="#section-37">12.3 可选迁移</a></li>
-<li class="toc-level-2"><a href="#section-38">13. Skill 包的实现分层</a></li>
-<li class="toc-level-3"><a href="#section-39">13.1 轻量路由层</a></li>
-<li class="toc-level-3"><a href="#section-40">13.2 建议 references</a></li>
-<li class="toc-level-3"><a href="#section-41">13.3 建议模板</a></li>
-<li class="toc-level-3"><a href="#section-42">13.4 建议确定性脚本</a></li>
-<li class="toc-level-3"><a href="#section-43">13.5 状态 catalog</a></li>
-<li class="toc-level-2"><a href="#section-44">14. 校验、失败处理与安全</a></li>
-<li class="toc-level-3"><a href="#section-45">14.1 动态校验</a></li>
-<li class="toc-level-3"><a href="#section-46">14.2 失败和恢复</a></li>
-<li class="toc-level-3"><a href="#section-47">14.3 身份与平台秘密</a></li>
-<li class="toc-level-2"><a href="#section-48">15. 测试场景</a></li>
-<li class="toc-level-2"><a href="#section-49">16. 验收标准</a></li>
-<li class="toc-level-2"><a href="#section-50">17. 范围外</a></li>
-<li class="toc-level-2"><a href="#section-51">18. 任务拆分策略（确认后执行）</a></li>
-<li class="toc-level-2"><a href="#section-52">19. 发布与兼容建议</a></li>
-<li class="toc-level-2"><a href="#section-53">20. 确认记录</a></li>
-<li class="toc-level-2"><a href="#section-54">21. 实现与验证结果</a></li></ol>
+<li class="toc-level-2"><a href="#section-2">5.1.2 修订说明</a></li>
+<li class="toc-level-2"><a href="#section-3">1. 背景与目标</a></li>
+<li class="toc-level-2"><a href="#section-4">2. 设计原则</a></li>
+<li class="toc-level-2"><a href="#section-5">3. Skill 启动与项目预检</a></li>
+<li class="toc-level-3"><a href="#section-6">3.1 “第一次启动”的定义</a></li>
+<li class="toc-level-3"><a href="#section-7">3.2 预检顺序</a></li>
+<li class="toc-level-3"><a href="#section-8">3.3 项目初始化判定</a></li>
+<li class="toc-level-2"><a href="#section-9">4. Greenfield 与 Brownfield 判定</a></li>
+<li class="toc-level-3"><a href="#section-10">4.1 只读证据检查</a></li>
+<li class="toc-level-3"><a href="#section-11">4.2 确认规则</a></li>
+<li class="toc-level-3"><a href="#section-12">4.3 Greenfield 初始化</a></li>
+<li class="toc-level-3"><a href="#section-13">4.4 Brownfield 接管</a></li>
+<li class="toc-level-2"><a href="#section-14">5. 功能模块与开关</a></li>
+<li class="toc-level-3"><a href="#section-15">5.1 manifest 建议结构</a></li>
+<li class="toc-level-2"><a href="#section-16">6. 核心文件初始化</a></li>
+<li class="toc-level-3"><a href="#section-17">6.1 文件级初始化状态</a></li>
+<li class="toc-level-3"><a href="#section-18">6.2 核心文件、问题和时机</a></li>
+<li class="toc-level-3"><a href="#section-19">6.3 <code>decisions.md</code> 中的 ARCHITECTURE 模块</a></li>
+<li class="toc-level-3"><a href="#section-20">6.4 引导执行规则</a></li>
+<li class="toc-level-3"><a href="#section-21">6.5 推荐初始化顺序</a></li>
+<li class="toc-level-2"><a href="#section-22">7. 热、温、冷与按需创建</a></li>
+<li class="toc-level-2"><a href="#section-23">8. 每个新 AI 会话的运行期流程</a></li>
+<li class="toc-level-3"><a href="#section-24">8.1 意图确认是建议性引导</a></li>
+<li class="toc-level-3"><a href="#section-25">8.2 哪些工作需要 FEAT</a></li>
+<li class="toc-level-3"><a href="#section-26">8.3 开发类工作门槛</a></li>
+<li class="toc-level-3"><a href="#section-27">8.4 Bug 信息的事实源</a></li>
+<li class="toc-level-2"><a href="#section-28">9. FEAT 文件命名、作者和个人编号</a></li>
+<li class="toc-level-3"><a href="#section-29">9.1 新文件格式</a></li>
+<li class="toc-level-3"><a href="#section-30">9.2 用户名解析顺序</a></li>
+<li class="toc-level-3"><a href="#section-31">9.3 个人递增与并发</a></li>
+<li class="toc-level-3"><a href="#section-32">9.4 建议 frontmatter</a></li>
+<li class="toc-level-2"><a href="#section-33">10. TASK 文件命名和归属</a></li>
+<li class="toc-level-2"><a href="#section-34">11. 多活跃任务与多聊天窗口</a></li>
+<li class="toc-level-2"><a href="#section-35">12. 历史项目与旧文件兼容</a></li>
+<li class="toc-level-3"><a href="#section-36">12.1 基本策略</a></li>
+<li class="toc-level-3"><a href="#section-37">12.2 新旧边界登记</a></li>
+<li class="toc-level-3"><a href="#section-38">12.3 可选迁移</a></li>
+<li class="toc-level-2"><a href="#section-39">13. Skill 包的实现分层</a></li>
+<li class="toc-level-3"><a href="#section-40">13.1 轻量路由层</a></li>
+<li class="toc-level-3"><a href="#section-41">13.2 建议 references</a></li>
+<li class="toc-level-3"><a href="#section-42">13.3 建议模板</a></li>
+<li class="toc-level-3"><a href="#section-43">13.4 建议确定性脚本</a></li>
+<li class="toc-level-3"><a href="#section-44">13.5 状态 catalog</a></li>
+<li class="toc-level-2"><a href="#section-45">14. 校验、失败处理与安全</a></li>
+<li class="toc-level-3"><a href="#section-46">14.1 动态校验</a></li>
+<li class="toc-level-3"><a href="#section-47">14.2 失败和恢复</a></li>
+<li class="toc-level-3"><a href="#section-48">14.3 身份与平台秘密</a></li>
+<li class="toc-level-2"><a href="#section-49">15. 测试场景</a></li>
+<li class="toc-level-2"><a href="#section-50">16. 验收标准</a></li>
+<li class="toc-level-2"><a href="#section-51">17. 范围外</a></li>
+<li class="toc-level-2"><a href="#section-52">18. 任务拆分策略（确认后执行）</a></li>
+<li class="toc-level-2"><a href="#section-53">19. 发布与兼容建议</a></li>
+<li class="toc-level-2"><a href="#section-54">20. 确认记录</a></li>
+<li class="toc-level-2"><a href="#section-55">21. 实现与验证结果</a></li></ol>
     </aside>
     <main>
       <header class="hero">
         <p class="eyebrow">设计与规格文档</p>
         <h1>引导式项目初始化与运行期管理重设计</h1>
-        <div class="metadata"><div class="meta-item meta-id"><span>功能</span><strong>FEAT-bimo-001</strong></div><div class="meta-item meta-status"><span>状态</span><strong>verified</strong></div><div class="meta-item meta-type"><span>类型</span><strong>feature_iteration</strong></div><div class="meta-item meta-owner"><span>负责人</span><strong>bimo</strong></div><div class="meta-item meta-updated"><span>更新时间</span><strong>2026-07-18T03:10:11Z</strong></div><div class="meta-item meta-author"><span>更新人</span><strong>Bimo</strong></div></div>
+        <div class="metadata"><div class="meta-item meta-id"><span>功能</span><strong>FEAT-bimo-001</strong></div><div class="meta-item meta-status"><span>状态</span><strong>verified</strong></div><div class="meta-item meta-type"><span>类型</span><strong>feature_iteration</strong></div><div class="meta-item meta-owner"><span>负责人</span><strong>bimo</strong></div><div class="meta-item meta-updated"><span>更新时间</span><strong>2026-07-24 03:14:02</strong></div><div class="meta-item meta-author"><span>更新人</span><strong>Bimo</strong></div></div>
         <p class="notice">此 HTML 面向人类阅读，由 Markdown 自动生成；事实源仍是
           <code>docs/specs/FEAT-bimo-001-guided-project-management-lifecycle.md</code>。</p>
       </header>
@@ -175,7 +176,15 @@
 <li><code>TASK-bimo-001</code> 至 <code>TASK-bimo-005</code> 均已完成，历史文件继续按兼容规则保留。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-2"><summary><h2>1. 背景与目标</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-2"><summary><h2>5.1.2 修订说明</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<ul>
+<li>本节覆盖本文第 11 节、验收标准和任务拆分中关于“跨用户共享聚合 <code>current-status.md</code>”的旧设计。</li>
+<li><code>.claw/current-status.md</code> 改为 Git 忽略、可随时重建且不计入共享初始化完成度的本地个人派生视图，只索引 <code>current_user</code> 的活跃任务。</li>
+<li>多人共享事实继续保存在 task board、task status、FEAT、assignment 和按需生成的 team status 中。</li>
+<li>旧项目继续兼容读取；选择 5.1.2 行为后需保留本地文件并停止 Git 跟踪。</li>
+</ul>
+</div></details>
+<details class="document-section" open id="section-3"><summary><h2>1. 背景与目标</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <p>当前 Skill 已经被多个项目安装并产生了大量旧格式状态文件，但现有初始化方式主要是一次性复制固定模板，存在以下问题：</p>
 <ul>
 <li>无法可靠区分“Skill 已安装”和“项目已完成初始化”。</li>
@@ -197,7 +206,7 @@
 <li>对历史项目保持向后兼容，对新创建文件执行新规则。</li>
 </ol>
 </div></details>
-<details class="document-section" open id="section-3"><summary><h2>2. 设计原则</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-4"><summary><h2>2. 设计原则</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <ul>
 <li><strong>引导而非猜测</strong>：先从仓库读取可验证事实，再针对不确定信息提问。</li>
 <li><strong>用户最终确认</strong>：AI 可以推荐项目类型、默认模块和推断结果，但不能替用户确认关键事实。</li>
@@ -211,12 +220,12 @@
 <li><strong>作者标识不等于授权</strong>：Git/系统用户名用于文档归属；启用门禁时仍必须使用已验证的开发者身份。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-4"><summary><h2>3. Skill 启动与项目预检</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
-<h3 id="section-5">3.1 “第一次启动”的定义</h3>
+<details class="document-section" open id="section-5"><summary><h2>3. Skill 启动与项目预检</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-6">3.1 “第一次启动”的定义</h3>
 <p>Skill 平台没有可靠的安装后生命周期钩子，因此“第一次启动”定义为：</p>
 <blockquote>Skill 安装后，AI Agent 第一次在目标项目中加载本 Skill 并准备处理项目请求的会话。</blockquote>
 <p><code>SKILL.md</code> 保持为轻量预检和路由入口；项目根 <code>README.md</code>、<code>AGENTS.md</code> 中的受控声明块负责提醒后续 Agent 在工作前加载 Skill。</p>
-<h3 id="section-6">3.2 预检顺序</h3>
+<h3 id="section-7">3.2 预检顺序</h3>
 <p>每次会话先执行只读预检：</p>
 <ol>
 <li>检查项目唯一状态目录 <code>.claw/</code>。</li>
@@ -228,7 +237,7 @@
 <li>若身份硬门禁已启用，任何受保护写入前继续执行登录与 assignment 校验。</li>
 </ol>
 <p><code>.claw/</code> 是唯一项目状态目录，本文所有状态路径均以它为根目录；本地私密配置统一写入 <code>.claw-local/</code>。实现不再提供其他状态目录的探测、路由或兼容分支。</p>
-<h3 id="section-7">3.3 项目初始化判定</h3>
+<h3 id="section-8">3.3 项目初始化判定</h3>
 <p>新版本以 <code>.claw/manifest.yaml</code> 为机器权威入口：</p>
 <ul>
 <li>不存在状态目录：项目未初始化。</li>
@@ -239,8 +248,8 @@
 </ul>
 <p>目录或某个旧文件单独存在，不能直接等价为“新协议初始化完成”。</p>
 </div></details>
-<details class="document-section" open id="section-8"><summary><h2>4. Greenfield 与 Brownfield 判定</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
-<h3 id="section-9">4.1 只读证据检查</h3>
+<details class="document-section" open id="section-9"><summary><h2>4. Greenfield 与 Brownfield 判定</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-10">4.1 只读证据检查</h3>
 <p>AI 通过以下证据形成建议：</p>
 <ul>
 <li>是否存在源代码、构建文件、依赖清单、数据库迁移、部署配置和测试。</li>
@@ -248,13 +257,13 @@
 <li>是否已经有可运行入口、稳定目录结构、外部接口或生产配置。</li>
 <li>仓库是否只有空目录、基础脚手架或尚未实现的占位内容。</li>
 </ul>
-<h3 id="section-10">4.2 确认规则</h3>
+<h3 id="section-11">4.2 确认规则</h3>
 <ul>
 <li>AI 输出“建议判定 + 证据 + 不确定项”。</li>
 <li>用户确认是 <code>greenfield</code> 或 <code>brownfield</code>，也可以纠正 AI 的建议。</li>
 <li>判定结果写入 manifest；未经确认不得静默固化。</li>
 </ul>
-<h3 id="section-11">4.3 Greenfield 初始化</h3>
+<h3 id="section-12">4.3 Greenfield 初始化</h3>
 <p>通过每次 1～3 个问题逐步收集：</p>
 <ul>
 <li>项目目标、核心用户、成功标准、范围和约束。</li>
@@ -263,7 +272,7 @@
 <li>构建、运行、测试、部署、环境变量和外部依赖。</li>
 <li>是否已经有第一项工作；没有时保持空看板，不创建虚假的 <code>TASK-001</code>。</li>
 </ul>
-<h3 id="section-12">4.4 Brownfield 接管</h3>
+<h3 id="section-13">4.4 Brownfield 接管</h3>
 <ul>
 <li>先读取现有代码、配置、入口、构建和部署事实，再提问。</li>
 <li>所有结论标为 <code>verified</code>、<code>inferred</code> 或 <code>pending verification</code>。</li>
@@ -272,7 +281,7 @@
 <li>基线稳定后转为冷资料；当前架构、目录和 DevOps 事实仍分别由核心状态文件维护，避免重复事实源。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-13"><summary><h2>5. 功能模块与开关</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-14"><summary><h2>5. 功能模块与开关</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <p>初始化时询问用户是否启用以下模块：</p>
 <div class="table-wrap"><table><thead><tr>
 <th>模块</th>
@@ -314,7 +323,7 @@
 <li><code>change_review</code> 可以独立于项目状态工作；项目状态开启时增加 FEAT/TASK 追踪，门禁开启时再增加 identity/assignment 检查。</li>
 <li><code>project_state=off</code> 时跳过 Greenfield/Brownfield 内容问答、核心状态文件和运行期 FEAT/TASK 流程，只初始化 manifest 以及合法启用的非状态模块配置。</li>
 </ul>
-<h3 id="section-14">5.1 manifest 建议结构</h3>
+<h3 id="section-15">5.1 manifest 建议结构</h3>
 <pre><code class="language-yaml">schema_version: 5
 skill_version: 5.0.0
 project_mode: greenfield | brownfield | not_applicable
@@ -337,8 +346,8 @@ compatibility:
   policy_effective_at: timestamp</code></pre>
 <p><code>not_applicable</code> 只允许在 <code>project_state=false</code> 时使用，表示已经按用户选择跳过项目类型和项目状态基线问答；<code>project_state=true</code> 时仍必须是 <code>greenfield</code> 或 <code>brownfield</code>。实际实现由统一 schema/catalog 定义字段，示例不作为重复事实源。</p>
 </div></details>
-<details class="document-section" open id="section-15"><summary><h2>6. 核心文件初始化</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
-<h3 id="section-16">6.1 文件级初始化状态</h3>
+<details class="document-section" open id="section-16"><summary><h2>6. 核心文件初始化</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-17">6.1 文件级初始化状态</h3>
 <p>每个由初始化流程创建的核心内容文件都包含：</p>
 <pre><code class="language-yaml">init_status: not_started | in_progress | awaiting_confirmation | complete | needs_review
 init_completed_at: timestamp | none
@@ -352,7 +361,7 @@ init_confirmed_by: username | developer_id | none</code></pre>
 <li><code>needs_review</code>：仓库事实变化、校验失败或关键未知项导致内容需要复核。</li>
 </ul>
 <p>文件状态是权威事实；manifest 中的总体初始化状态由这些文件和已启用模块聚合得出。尚未触发、因模块关闭而不存在的文件，不计为未完成。</p>
-<h3 id="section-17">6.2 核心文件、问题和时机</h3>
+<h3 id="section-18">6.2 核心文件、问题和时机</h3>
 <div class="table-wrap"><table><thead><tr>
 <th>文件</th>
 <th>温度</th>
@@ -422,7 +431,7 @@ init_confirmed_by: username | developer_id | none</code></pre>
 </tbody></table></div>
 <p>多人门禁配置文件只在 <code>collaboration_gate=on</code> 后按真实成员和授权事件创建，不预建空 <code>developers/</code>、<code>assignments/</code> 目录。</p>
 <p>项目根 <code>README.md</code>、<code>AGENTS.md</code> 中的受控声明块是 Agent 指令锚点，不是项目状态文件，不使用内容文件的 <code>init_status</code>，也不计入核心文件完成度。</p>
-<h3 id="section-18">6.3 <code>decisions.md</code> 中的 ARCHITECTURE 模块</h3>
+<h3 id="section-19">6.3 <code>decisions.md</code> 中的 ARCHITECTURE 模块</h3>
 <p>不再新增独立 <code>ARCHITECTURE.md</code>。架构信息加入 <code>.claw/decisions.md</code> 的固定 <code>## ARCHITECTURE</code> 模块，内容至少包括：</p>
 <ul>
 <li>系统类型和主要技术栈。</li>
@@ -441,7 +450,7 @@ init_confirmed_by: username | developer_id | none</code></pre>
 architecture_reviewed_at: timestamp | none
 architecture_confirmed_by: username | developer_id | none</code></pre>
 <p>文件级 <code>init_status</code> 表示该核心文件的首次建档是否完成；<code>architecture_init_status</code> 精确表示其中架构基线的完成度。新增 ADR 不会把已经确认的架构初始化状态重置为未开始，但推翻当前架构的 ADR 应将其标为 <code>needs_review</code>。</p>
-<h3 id="section-19">6.4 引导执行规则</h3>
+<h3 id="section-20">6.4 引导执行规则</h3>
 <ul>
 <li>每轮只问 1～3 个关联问题，避免一次抛出长问卷。</li>
 <li>优先从仓库证据预填，并显示证据来源和置信状态。</li>
@@ -451,7 +460,7 @@ architecture_confirmed_by: username | developer_id | none</code></pre>
 <li>“完成初始化”允许存在明确标记的待验证事实，但不允许未解释的模板占位符。</li>
 <li>所有核心文件完成并通过校验后，先请求最终确认，再把 manifest 置为 <code>ready</code>。</li>
 </ul>
-<h3 id="section-20">6.5 推荐初始化顺序</h3>
+<h3 id="section-21">6.5 推荐初始化顺序</h3>
 <pre><code class="language-text">manifest(in_progress)
   → 询问模块开关并校验依赖
   ├─ project_state=on
@@ -470,7 +479,7 @@ architecture_confirmed_by: username | developer_id | none</code></pre>
   → 用户最终确认
   → manifest(ready)</code></pre>
 </div></details>
-<details class="document-section" open id="section-21"><summary><h2>7. 热、温、冷与按需创建</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-22"><summary><h2>7. 热、温、冷与按需创建</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <p>温度是加载策略，不强制对应物理目录：</p>
 <ul>
 <li><strong>机器热</strong>：<code>manifest.yaml</code>，用于路由和校验，不向模型展开全部内容。</li>
@@ -522,8 +531,8 @@ architecture_confirmed_by: username | developer_id | none</code></pre>
 </tbody></table></div>
 <p><code>team-status.md</code> 是管理者查询时生成的派生视图，不参与手工初始化。安装包内的 FEAT/baseline 模板由 Skill 直接渲染，不再复制 <code>_feature-spec-template.md</code>、<code>_project-baseline-template.md</code> 到目标项目。</p>
 </div></details>
-<details class="document-section" open id="section-22"><summary><h2>8. 每个新 AI 会话的运行期流程</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
-<h3 id="section-23">8.1 意图确认是建议性引导</h3>
+<details class="document-section" open id="section-23"><summary><h2>8. 每个新 AI 会话的运行期流程</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-24">8.1 意图确认是建议性引导</h3>
 <p>每次打开新的 AI 聊天：</p>
 <ul>
 <li>如果用户已经清楚说明要做什么，直接复述理解并继续，不重复问固定问题。</li>
@@ -535,7 +544,7 @@ architecture_confirmed_by: username | developer_id | none</code></pre>
 work_kind: new_feature | feature_iteration | bugfix | refactor | docs | test | release | deploy | review | investigation | project_management | custom
 requires_feat: true | false</code></pre>
 <p><code>session_intent</code> 保留用户原意；<code>work_kind</code> 仅用于路由，允许扩展，不能反向覆盖用户目标。</p>
-<h3 id="section-24">8.2 哪些工作需要 FEAT</h3>
+<h3 id="section-25">8.2 哪些工作需要 FEAT</h3>
 <p>通常需要 FEAT：</p>
 <ul>
 <li>新需求或新功能。</li>
@@ -545,7 +554,7 @@ requires_feat: true | false</code></pre>
 <li>预计跨会话、跨 Agent 或需要长期交接的实现。</li>
 </ul>
 <p>简单查询、只读分析、小型独立维护等可以不创建 FEAT；由路由规则结合风险和用户意图判断。</p>
-<h3 id="section-25">8.3 开发类工作门槛</h3>
+<h3 id="section-26">8.3 开发类工作门槛</h3>
 <pre><code class="language-text">确认本次意图
   → 与用户讨论现状、目标和约束
   → 讨论完整性检查
@@ -565,15 +574,15 @@ requires_feat: true | false</code></pre>
 <li>已知风险、未决问题以及用户对方案的确认。</li>
 </ul>
 <p>在 FEAT 确认前可以进行只读分析和方案探索；需要 FEAT 的工作不得先实现后补设计。若用户要开始一项新工作而已有活跃工作，应显示现有工作，并让用户选择继续、并行、暂停或取消，不能静默覆盖。</p>
-<h3 id="section-26">8.4 Bug 信息的事实源</h3>
+<h3 id="section-27">8.4 Bug 信息的事实源</h3>
 <ul>
 <li><code>issue-list.md</code> 保存现象、严重级别、影响、根因状态和阻塞信息。</li>
 <li>FEAT 保存修复方案、变更范围、验收标准和回归策略。</li>
 <li>两者通过 ID 互相引用，不重复维护同一事实。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-27"><summary><h2>9. FEAT 文件命名、作者和个人编号</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
-<h3 id="section-28">9.1 新文件格式</h3>
+<details class="document-section" open id="section-28"><summary><h2>9. FEAT 文件命名、作者和个人编号</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-29">9.1 新文件格式</h3>
 <pre><code class="language-text">FEAT-&lt;username&gt;-&lt;personal-feature-number&gt;-&lt;short-description&gt;.md</code></pre>
 <p>例如：</p>
 <pre><code class="language-text">FEAT-xuhm-001-user-login.md
@@ -586,7 +595,7 @@ FEAT-lisi-001-order-export.md</code></pre>
 <li><code>short-description</code>：简短、稳定、可读的功能描述。</li>
 </ol>
 <p>规范 ID 为 <code>FEAT-&lt;username&gt;-&lt;number&gt;</code>，description 只属于文件路径，不属于稳定 ID。</p>
-<h3 id="section-29">9.2 用户名解析顺序</h3>
+<h3 id="section-30">9.2 用户名解析顺序</h3>
 <ol>
 <li>门禁启用时，使用已登录开发者的稳定 slug，并在 frontmatter 记录 <code>developer_id</code>。</li>
 <li>否则使用 <code>git config user.name</code>。</li>
@@ -594,7 +603,7 @@ FEAT-lisi-001-order-export.md</code></pre>
 <li>仍不可用或归一化存在歧义时，让用户确认。</li>
 </ol>
 <p>显示名与文件名 slug 分开保存。slug 使用小写字母、数字和连字符等安全字符；Git/系统用户名只负责归属，不构成门禁授权。</p>
-<h3 id="section-30">9.3 个人递增与并发</h3>
+<h3 id="section-31">9.3 个人递增与并发</h3>
 <ul>
 <li>每个用户独立拥有 <code>001</code>、<code>002</code>……序列，不使用项目全局序号。</li>
 <li>同一用户的所有新式 FEAT 文件参与该用户序列；旧式 <code>FEAT-001</code> 不参与。</li>
@@ -602,7 +611,7 @@ FEAT-lisi-001-order-export.md</code></pre>
 <li>分配脚本必须在锁内扫描、计算并以排他方式创建，防止同一用户的多个聊天窗口取得相同编号。</li>
 <li>多位贡献者写入 <code>contributors</code>；文件名保留原创建者，不因转交而重命名。</li>
 </ul>
-<h3 id="section-31">9.4 建议 frontmatter</h3>
+<h3 id="section-32">9.4 建议 frontmatter</h3>
 <pre><code class="language-yaml">kind: feature-spec
 feature_id: FEAT-xuhm-001
 work_type: new_feature | feature_iteration | bugfix | custom
@@ -616,7 +625,7 @@ created_by_developer_id: DEV-001 | none
 contributors: XuHM
 task_ids: none</code></pre>
 </div></details>
-<details class="document-section" open id="section-32"><summary><h2>10. TASK 文件命名和归属</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-33"><summary><h2>10. TASK 文件命名和归属</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <p>所有新任务，无论来自 FEAT 还是其他工作，都使用：</p>
 <pre><code class="language-text">TASK-&lt;username&gt;-&lt;personal-task-number&gt;-&lt;short-description&gt;.md</code></pre>
 <p>示例：</p>
@@ -635,7 +644,7 @@ TASK-lisi-001-fix-order-timeout.md</code></pre>
 <li>ID 分配同样使用锁和排他创建，支持多个聊天窗口并发。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-33"><summary><h2>11. 多活跃任务与多聊天窗口</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-34"><summary><h2>11. 多活跃任务与多聊天窗口</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <p><code>current-status.md</code> 必须从单任务模型升级为多工作流热索引：</p>
 <pre><code class="language-yaml">active_task_count: 2
 active_tasks:
@@ -655,8 +664,8 @@ active_tasks:
 <li>项目可以保留总体 phase；每条工作流另外拥有自己的 stage。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-34"><summary><h2>12. 历史项目与旧文件兼容</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
-<h3 id="section-35">12.1 基本策略</h3>
+<details class="document-section" open id="section-35"><summary><h2>12. 历史项目与旧文件兼容</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-36">12.1 基本策略</h3>
 <ul>
 <li>已经存在的 <code>FEAT-001-*</code>、<code>TASK-001</code> 和旧版核心文件全部 grandfather，不强制重命名、补字段或改引用。</li>
 <li>新版本生效后创建的文件必须使用带用户名的新格式。</li>
@@ -665,7 +674,7 @@ active_tasks:
 <li>兼容读取器必须同时解析旧版单值 <code>active_task</code> 和新版 <code>active_tasks</code> 列表，并统一投影为内部工作流集合。</li>
 <li>不使用 Git 文件时间或 commit 时间判断文件属于新旧协议。</li>
 </ul>
-<h3 id="section-36">12.2 新旧边界登记</h3>
+<h3 id="section-37">12.2 新旧边界登记</h3>
 <p>历史项目第一次使用新版本时，创建非破坏性的 <code>.claw/legacy-document-index.yaml</code>，登记当时已存在的旧路径和 ID，并在 manifest 记录：</p>
 <pre><code class="language-yaml">legacy_documents_allowed: true
 legacy_index_path: .claw/legacy-document-index.yaml
@@ -680,11 +689,11 @@ policy_effective_at: timestamp</code></pre>
 <li>FEAT/TASK 交叉引用同时接受旧 ID 和新 ID。</li>
 <li>新用户个人序列从 <code>001</code> 开始，历史全局编号不能推断为任何用户所有。</li>
 </ul>
-<h3 id="section-37">12.3 可选迁移</h3>
+<h3 id="section-38">12.3 可选迁移</h3>
 <p>历史文件批量改名、补字段和更新引用只允许在用户明确选择迁移后执行；迁移必须生成 ID/path 映射、先校验后提交，并支持回滚。默认路径永远是兼容读取而不是自动重写。</p>
 </div></details>
-<details class="document-section" open id="section-38"><summary><h2>13. Skill 包的实现分层</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
-<h3 id="section-39">13.1 轻量路由层</h3>
+<details class="document-section" open id="section-39"><summary><h2>13. Skill 包的实现分层</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-40">13.1 轻量路由层</h3>
 <p><code>skill/SKILL.md</code> 只保留：</p>
 <ul>
 <li>项目预检入口。</li>
@@ -694,7 +703,7 @@ policy_effective_at: timestamp</code></pre>
 <li>何时读取对应 reference、运行脚本或渲染模板。</li>
 </ul>
 <p>详细 schema、问卷、平台差异和示例移到按需资源，避免每次加载全部协议。</p>
-<h3 id="section-40">13.2 建议 references</h3>
+<h3 id="section-41">13.2 建议 references</h3>
 <pre><code class="language-text">references/
 ├── onboarding.md
 ├── state-model.md
@@ -705,7 +714,7 @@ policy_effective_at: timestamp</code></pre>
 └── platforms/
     ├── codeup.md
     └── github.md</code></pre>
-<h3 id="section-41">13.3 建议模板</h3>
+<h3 id="section-42">13.3 建议模板</h3>
 <pre><code class="language-text">templates/
 ├── core/
 │   ├── manifest.yaml
@@ -724,7 +733,7 @@ policy_effective_at: timestamp</code></pre>
 ├── collaboration-gate/
 └── change-review/</code></pre>
 <p>模板保留在 Skill 包内，事件发生时直接渲染到项目，避免目标项目中长期存在未使用模板。</p>
-<h3 id="section-42">13.4 建议确定性脚本</h3>
+<h3 id="section-43">13.4 建议确定性脚本</h3>
 <ul>
 <li><code>project-preflight</code>：状态目录、manifest、legacy、项目模式证据和门禁预检。</li>
 <li><code>project-onboarding</code>：问答 checkpoint、逐文件生成、恢复和最终确认。</li>
@@ -736,7 +745,7 @@ policy_effective_at: timestamp</code></pre>
 </ul>
 <p>现有 <code>init-state.sh</code> 可先保留为兼容包装器并给出弃用提示，不能继续作为新协议唯一事实源。</p>
 <p>本版提供的是显式 <code>adopt</code> 与不可覆盖的 legacy boundary，不提供批量改名迁移命令。未来若用户明确要求批量迁移，必须另行设计 path/ID mapping 和回滚机制。</p>
-<h3 id="section-43">13.5 状态 catalog</h3>
+<h3 id="section-44">13.5 状态 catalog</h3>
 <p>新增统一的机器可读 catalog/schema，至少描述：</p>
 <ul>
 <li>文件路径或路径模式。</li>
@@ -749,8 +758,8 @@ policy_effective_at: timestamp</code></pre>
 </ul>
 <p>初始化器、路由器和校验器共同读取 catalog，避免脚本固定要求八个文件、模板却演进为另一套规则。</p>
 </div></details>
-<details class="document-section" open id="section-44"><summary><h2>14. 校验、失败处理与安全</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
-<h3 id="section-45">14.1 动态校验</h3>
+<details class="document-section" open id="section-45"><summary><h2>14. 校验、失败处理与安全</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<h3 id="section-46">14.1 动态校验</h3>
 <p>校验器必须验证：</p>
 <ul>
 <li>manifest 与启用模块配置一致。</li>
@@ -763,7 +772,7 @@ policy_effective_at: timestamp</code></pre>
 <li>禁用模块没有被初始化器或路由器加载。</li>
 <li>review 配置不包含 token；assignment 和仓库状态不包含 secret。</li>
 </ul>
-<h3 id="section-46">14.2 失败和恢复</h3>
+<h3 id="section-47">14.2 失败和恢复</h3>
 <ul>
 <li>写入使用临时文件 + 原子替换；编号分配和 current status 聚合使用项目内锁。</li>
 <li>单个文件生成失败时保持 manifest 为 <code>in_progress</code>，保存 checkpoint，不把半成品标记为 complete。</li>
@@ -771,14 +780,14 @@ policy_effective_at: timestamp</code></pre>
 <li>重试必须幂等，不删除用户内容。</li>
 <li>并发写冲突时停止自动覆盖，展示两边差异并请求协调。</li>
 </ul>
-<h3 id="section-47">14.3 身份与平台秘密</h3>
+<h3 id="section-48">14.3 身份与平台秘密</h3>
 <ul>
 <li>Git/OS 用户名只用于署名和命名空间。</li>
 <li>门禁启用时，源码、spec、任务等受保护写入仍必须通过 SSH challenge-response 和 assignment。</li>
 <li>Codeup/GitHub token 只保存在本地忽略文件或环境变量，不进入 manifest、review config、日志或设计文档。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-48"><summary><h2>15. 测试场景</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-49"><summary><h2>15. 测试场景</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <p>实现后至少覆盖：</p>
 <ol>
 <li>空仓库 Greenfield 初始化、逐文件问答和最终确认。</li>
@@ -801,7 +810,7 @@ policy_effective_at: timestamp</code></pre>
 <li>未执行真实测试时不会生成通过记录。</li>
 </ol>
 </div></details>
-<details class="document-section" open id="section-49"><summary><h2>16. 验收标准</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-50"><summary><h2>16. 验收标准</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <ul>
 <li>首次加载 Skill 能可靠判断未初始化、初始化中、已完成或历史安装状态。</li>
 <li>AI 能基于证据建议 Greenfield/Brownfield，并由用户确认。</li>
@@ -818,14 +827,14 @@ policy_effective_at: timestamp</code></pre>
 <li>初始化和运行期写入在中断、重试和并发条件下保持幂等、可审计、非破坏性。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-50"><summary><h2>17. 范围外</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-51"><summary><h2>17. 范围外</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <ul>
 <li>本规格不自动迁移或重命名任何现有 FEAT、TASK、current status 或看板记录。</li>
 <li>本规格不选择唯一的远程代码托管平台；平台由模块配置决定。</li>
 <li>本规格不把聊天平台的 conversation ID 作为唯一并发标识。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-51"><summary><h2>18. 任务拆分策略（确认后执行）</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-52"><summary><h2>18. 任务拆分策略（确认后执行）</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <p>已创建以下正式任务：</p>
 <ol>
 <li><code>TASK-bimo-001</code>：manifest、状态 catalog、项目预检、模块开关、可恢复初始化和核心模板。</li>
@@ -835,10 +844,10 @@ policy_effective_at: timestamp</code></pre>
 <li><code>TASK-bimo-005</code>：Skill 路由、状态模型、references、示例、回归验证和版本发布准备。</li>
 </ol>
 </div></details>
-<details class="document-section" open id="section-52"><summary><h2>19. 发布与兼容建议</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-53"><summary><h2>19. 发布与兼容建议</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <p>该设计会改变新项目的初始化模型、文件清单、命名方式和会话流程，已将 <code>skill/SKILL.md</code> 的 <code>metadata.skill_version</code> 升级为 <code>5.0.0</code>。旧项目继续使用 legacy profile，只有显式 adoption 才建立 v5 边界。</p>
 </div></details>
-<details class="document-section" open id="section-53"><summary><h2>20. 确认记录</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-54"><summary><h2>20. 确认记录</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <ul>
 <li><code>2026-07-18T02:05:46Z</code>：用户确认“按照这个设计开始实现”。</li>
 <li>确认人：<code>Bimo</code>。</li>
@@ -846,7 +855,7 @@ policy_effective_at: timestamp</code></pre>
 <li>当前阶段：<code>verified</code>，等待用户决定是否提交或发布。</li>
 </ul>
 </div></details>
-<details class="document-section" open id="section-54"><summary><h2>21. 实现与验证结果</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
+<details class="document-section" open id="section-55"><summary><h2>21. 实现与验证结果</h2><span aria-hidden="true">⌄</span></summary><div class="section-content">
 <ul>
 <li>v5 路由、manifest/catalog、模块开关、逐文件初始化、Greenfield/Brownfield、ARCHITECTURE、个人编号、多任务热索引、显式 legacy adoption 和双栈校验已实现。</li>
 <li>三个独立前向测试分别覆盖 Greenfield 全流程、block-mapping legacy adoption、模块组合与禁用资源不加载；报告的问题已全部修复并回归通过。</li>
@@ -855,7 +864,7 @@ policy_effective_at: timestamp</code></pre>
 <li>发布质量：Python 编译、Shell 语法、GitHub workflow YAML/Shell、Skill frontmatter、JSON、旧目录残留和 <code>git diff --check</code> 均通过。</li>
 </ul>
 </div></details></article>
-      <footer class="footer">生成时间：2026-07-24 01:50:22 · 生成器版本：4</footer>
+      <footer class="footer">生成时间：2026-07-24 03:16:37 · 生成器版本：4</footer>
     </main>
   </div>
 </body>

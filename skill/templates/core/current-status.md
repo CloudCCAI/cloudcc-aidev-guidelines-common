@@ -7,6 +7,7 @@ init_completed_at: none
 init_confirmed_by: none
 updated_at: {{TIMESTAMP}}
 updated_by: onboarding
+current_user: "{{CURRENT_USER}}"
 phase: onboarding
 active_task: "none"
 active_task_count: 0
@@ -22,7 +23,7 @@ read_next:
 
 # 项目当前状态
 
-`current-status.md` 是紧凑热索引，不保存任务进度或设计详情。
+`current-status.md` 是当前用户的本地紧凑热索引，不提交到 Git，也不保存任务进度或设计详情。
 
 ## 快照
 
@@ -43,5 +44,6 @@ read_next:
 ## 维护规则
 
 - 本文件保持在 60 行以内。
+- 本文件只索引 `current_user` 的活跃任务，并由每个用户在各自工作区独立维护。
 - 初始化时不得创建占位任务。
 - 根据权威任务和看板状态重新生成本索引。

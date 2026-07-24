@@ -117,11 +117,18 @@ updated_by: test
         self.assertEqual(new.status, "in_progress")
         self.assertEqual(new.feature_id, "FEAT-bimo-001")
         self.assertEqual(new.user, "bimo")
-        rendered = current_status.render_current_status(workflows, updated_by="test", limit=10)
+        rendered = current_status.render_current_status(
+            workflows,
+            current_user="bimo",
+            updated_by="test",
+            limit=10,
+        )
         self.assertIn("version: 5", rendered)
-        self.assertIn('active_task: "TASK-001"', rendered)
-        self.assertIn("active_task_count: 2", rendered)
-        self.assertIn("active_tasks: [TASK-001, TASK-bimo-001]", rendered)
+        self.assertIn('current_user: "bimo"', rendered)
+        self.assertIn('active_task: "TASK-bimo-001"', rendered)
+        self.assertIn("active_task_count: 1", rendered)
+        self.assertIn("active_tasks: [TASK-bimo-001]", rendered)
+        self.assertNotIn("TASK-001", rendered)
         self.assertNotIn("\n  - TASK-", rendered)
         self.assertIn("# 项目当前状态", rendered)
         self.assertIn("## 活跃工作流", rendered)
@@ -132,7 +139,11 @@ updated_by: test
         _root, state_dir = self.make_project()
         (state_dir / "task-board.md").write_text("# Task Board\n\n## Active Tasks\n", encoding="utf-8")
         workflows = current_status.collect_workflows(state_dir)
-        rendered = current_status.render_current_status(workflows, updated_by="test")
+        rendered = current_status.render_current_status(
+            workflows,
+            current_user="tester",
+            updated_by="test",
+        )
         self.assertEqual(workflows, [])
         self.assertIn("schema_version: 5", rendered)
         self.assertIn("version: 5", rendered)
@@ -163,6 +174,7 @@ updated_by: test
         self.assertEqual([item.task_id for item in workflows], ["TASK-user-001"])
         rendered = current_status.render_current_status(
             workflows,
+            current_user="user",
             updated_by="test",
             language="en",
         )
@@ -211,7 +223,12 @@ status: done
             )
             for number in range(1, 31)
         ]
-        rendered = current_status.render_current_status(workflows, updated_by="test", limit=8)
+        rendered = current_status.render_current_status(
+            workflows,
+            current_user="user",
+            updated_by="test",
+            limit=8,
+        )
         self.assertIn("active_task_count: 30", rendered)
         self.assertIn("active_tasks_truncated: true", rendered)
         self.assertLessEqual(len(rendered.splitlines()), 60)
@@ -247,7 +264,12 @@ status: done
             )
         )
 
-        rendered = current_status.render_current_status(workflows, updated_by="test", limit=10)
+        rendered = current_status.render_current_status(
+            workflows,
+            current_user="user",
+            updated_by="test",
+            limit=10,
+        )
 
         self.assertIn("active_tasks: [TASK-user-011", rendered)
         self.assertNotIn("TASK-user-010", rendered)
@@ -320,6 +342,7 @@ init_confirmed_by: user
 
         destination, rendered = current_status.generate_and_write_current_status(
             state_dir,
+            current_user="bimo",
             updated_by="test",
         )
 
@@ -328,6 +351,29 @@ init_confirmed_by: user
         self.assertIn('init_status: "complete"', rendered)
         self.assertIn('init_confirmed_by: "user"', rendered)
         self.assertTrue((state_dir / ".locks" / "current-status.lock").is_file())
+
+    def test_generation_normalizes_legacy_initialization_timestamp(self) -> None:
+        _root, state_dir = self.make_project()
+        (state_dir / "task-board.md").write_text("# Task Board\n\n## Active Tasks\n", encoding="utf-8")
+        (state_dir / "current-status.md").write_text(
+            """---
+kind: current-status
+init_status: complete
+init_completed_at: 2026-07-18T00:00:00Z
+init_confirmed_by: user
+---
+""",
+            encoding="utf-8",
+        )
+
+        _destination, rendered = current_status.generate_and_write_current_status(
+            state_dir,
+            current_user="user",
+            updated_by="test",
+        )
+
+        self.assertIn('init_completed_at: "2026-07-18 00:00:00"', rendered)
+        self.assertNotIn("2026-07-18T00:00:00Z", rendered)
 
 
 if __name__ == "__main__":

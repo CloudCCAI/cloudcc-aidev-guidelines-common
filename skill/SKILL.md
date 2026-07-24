@@ -2,7 +2,7 @@
 name: cc-aidev-guidelines-common
 description: 通过 `.claw` manifest、引导式 Greenfield/Brownfield 初始化、逐文件初始化状态、按用户递增的 FEAT/TASK、多个并行工作流、项目经理身份门禁和可选 Codeup/GitHub 评审，持久化并渐进加载 AI 软件项目状态。用于首次接入项目、恢复未完成初始化、开始新 AI 会话、讨论和设计开发工作、拆解任务、跨会话交接、多人并行授权、创建代码合并申请、验证或维护项目状态。
 metadata:
-  skill_version: "5.1.0"
+  skill_version: "5.1.2"
 ---
 
 # AI 项目初始化与交付路由
@@ -80,11 +80,15 @@ python3 scripts/project-preflight.py /path/to/project --json
 
 ## 4. 新会话意图
 
-每个新 AI 会话先读取上游
-`https://raw.githubusercontent.com/CloudCCAI/cloudcc-aidev-guidelines-common/main/skill/SKILL.md`
-中的 `metadata.skill_version`，与当前安装版本比较；发现新版本时自动更新并重新加载本 Skill，再继续项目流程。
+每个新 AI 会话先运行已安装技能中的抗缓存版本检查：
 
-仅在 `project_state=true` 或 legacy 项目已有该文件时，每个新 AI 会话先读 `.claw/current-status.md`；项目状态模块关闭时不得为此加载或创建该文件。
+```bash
+python3 scripts/check-skill-version.py --json
+```
+
+脚本优先使用 `git ls-remote` 解析 GitHub `main` 的提交 SHA；Git 不可用时才回退到带随机查询参数和 `no-cache` 的 GitHub API 请求。随后按该 SHA 读取不可变的 `skill/SKILL.md`，不得直接依赖固定 `main` Raw URL。`update_available=true` 时按返回的 `upstream_install_url` 更新完整技能包并重新加载本 Skill，再继续项目流程。检查失败时把线上版本状态标为未知，不得把本地版本宣称为最新。
+
+仅在 `project_state=true` 或 legacy 项目已有该文件时，每个新 AI 会话先读本地个人状态 `.claw/current-status.md`；它必须被 Git 忽略并由当前用户独立维护。文件缺失时先运行 `generate-current-status.py` 重建，不得把缺失视为共享项目尚未初始化。项目状态模块关闭时不得为此加载或创建该文件。
 
 - 用户目标清楚：复述理解并继续，不重复问。
 - 用户目标不清楚：开放式询问，可以提示“新需求、老功能迭代、修改 bug”等例子。
@@ -165,13 +169,15 @@ python3 scripts/generate-project-docs-html.py /path/to/project --write
 - assignment：授权身份、分支和写入范围。
 - current status、team status：派生视图，冲突时重新生成。
 
-## 9. 多任务热索引
+## 9. 个人热索引
 
-`.claw/current-status.md` 支持多个用户和多个聊天窗口的活跃 TASK。用生成器在锁内聚合并原子替换：
+`.claw/current-status.md` 只索引当前用户的活跃 TASK，是本地派生视图，不是多人共享事实源，也不计入共享 manifest 的初始化完成度。`.gitignore` 必须包含 `.claw/current-status.md`；已有仓库若曾跟踪它，应保留本地文件并执行 `git rm --cached .claw/current-status.md` 一次。文件缺失或需要刷新时，用生成器在锁内按当前用户过滤并原子替换：
 
 ```bash
-python3 scripts/generate-current-status.py /path/to/project/.claw --write
+python3 scripts/generate-current-status.py /path/to/project/.claw --user <owner-slug> --write
 ```
+
+未传 `--user` 时，当前用户按全局 Git `user.name`、项目本地 Git `user.name`、操作系统用户名的顺序解析。跨用户协调继续读取共享的 `task-board.md`、任务状态文件和按需生成的 `team-status.md`。
 
 `task-board.md` 的已完成区只保留最新 5 张 `done` 或 `canceled` 卡片。每次任务进入终态后先运行：
 

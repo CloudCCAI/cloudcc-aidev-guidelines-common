@@ -6,6 +6,7 @@ init_completed_at: 2026-01-02 00:11:00
 init_confirmed_by: sample-maintainer
 updated_at: 2026-01-02 00:11:00
 updated_by: generate-current-status
+current_user: sample-maintainer
 phase: idle
 active_task_count: 0
 active_tasks_shown: 0
@@ -17,7 +18,7 @@ task_board: .claw/task-board.md
 
 # 项目当前状态
 
-`current-status.md` 是生成的热索引。
+`current-status.md` 是 sample-maintainer 的本地热索引，不提交到 Git。
 
 ## 活跃工作流
 

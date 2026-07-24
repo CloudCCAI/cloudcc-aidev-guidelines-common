@@ -1711,7 +1711,14 @@ def find_feature_path(project_root: Path, feature_id: str) -> Path | None:
     return candidates[0] if len(candidates) == 1 else None
 
 
-def validate_v5_current_status(path: Path, state_dir: Path, legacy_paths: set[str], project_root: Path) -> list[str]:
+def validate_v5_current_status(
+    path: Path,
+    state_dir: Path,
+    legacy_paths: set[str],
+    project_root: Path,
+    *,
+    require_current_user: bool = False,
+) -> list[str]:
     data, body, errors = read_front_matter_yaml(path)
     if not data:
         return errors
@@ -1724,6 +1731,10 @@ def validate_v5_current_status(path: Path, state_dir: Path, legacy_paths: set[st
 
     relative_path = normalized_project_path(path, project_root)
     is_registered_legacy = relative_path in legacy_paths
+    if require_current_user and not is_registered_legacy:
+        current_user = clean_value(data.get("current_user", ""))
+        if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", current_user):
+            errors.append(f"{path}: current_user must be a non-empty lowercase user slug")
     active_tasks_value = data.get("active_tasks")
     if active_tasks_value is None:
         if not is_registered_legacy:
@@ -1774,6 +1785,20 @@ def validate_v5_current_status(path: Path, state_dir: Path, legacy_paths: set[st
         elif count != len(active_tasks):
             errors.append(f"{path}: active_task_count `{count}` does not match active_tasks length `{len(active_tasks)}`")
     return errors
+
+
+def validate_current_status_git_ignore(project_root: Path) -> list[str]:
+    path = project_root / ".gitignore"
+    if not path.is_file():
+        return [f"{path}: missing `.claw/current-status.md` ignore rule for the local personal status"]
+    entries = {
+        line.strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    }
+    if not ({".claw/current-status.md", "/.claw/current-status.md"} & entries):
+        return [f"{path}: missing `.claw/current-status.md` ignore rule for the local personal status"]
+    return []
 
 
 def validate_v5_task_document(path: Path, data: dict[str, object], legacy_paths: set[str], project_root: Path) -> list[str]:
@@ -2216,7 +2241,18 @@ def validate_v5_state(state_dir: Path, catalog_path: Path, *, strict_v5: bool = 
 
     current_status = state_dir / "current-status.md"
     if project_state_enabled and current_status.exists():
-        errors.extend(validate_v5_current_status(current_status, state_dir, legacy_paths, project_root))
+        personal_status_required = version_tuple(manifest.get("skill_version")) >= (5, 1, 2)
+        errors.extend(
+            validate_v5_current_status(
+                current_status,
+                state_dir,
+                legacy_paths,
+                project_root,
+                require_current_user=personal_status_required,
+            )
+        )
+        if personal_status_required:
+            errors.extend(validate_current_status_git_ignore(project_root))
 
     tasks_dir = state_dir / "tasks"
     if project_state_enabled and tasks_dir.exists():

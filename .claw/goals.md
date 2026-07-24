@@ -1,7 +1,7 @@
 ---
 kind: goals
 version: 4
-updated_at: 2026-07-18T02:36:33Z
+updated_at: 2026-07-24 03:14:02
 updated_by: Bimo
 lifecycle: active
 ---
@@ -21,7 +21,7 @@ lifecycle: active
 - 维护 `skill/SKILL.md`、`skill/STATE-MODEL.md`、catalog、references、模板、脚本、测试和示例的一致协议
 - 通过 manifest 和逐文件状态提供可检测、可引导、可暂停恢复的 Greenfield/Brownfield 初始化
 - 用开关独立控制项目状态、多人协作门禁和代码合并申请，只加载启用模块
-- 以带用户名的个人 FEAT/TASK 序列和多工作流热索引支持多人、多聊天窗口并行
+- 以带用户名的个人 FEAT/TASK 序列、本地个人热索引和共享任务事实支持多人、多聊天窗口并行
 - 对已有 `.claw` 文件和旧全局 ID 保持非破坏性兼容，对新文件执行 v5 规则
 - 提供项目经理门控授权、SSH challenge-response、assignment、平台评审和动态状态校验
 
@@ -45,7 +45,7 @@ lifecycle: active
 ### V1
 
 - [x] 建立 manifest/catalog 驱动的 v5 引导式初始化
-- [x] 建立模块开关、个人编号和多任务热状态
+- [x] 建立模块开关、个人编号和 Git 忽略的个人多任务热状态
 - [x] 提供 Greenfield、Brownfield 与 legacy 回归示例
 - [ ] 在更多真实仓库中验证 Brownfield 显式 adoption 体验
 - [ ] 补充更多围绕多智能体交接的最佳实践示例

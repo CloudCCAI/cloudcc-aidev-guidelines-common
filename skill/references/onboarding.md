@@ -136,7 +136,7 @@ python3 scripts/configure-modules.py review /path/to/project \
 4. `directory-map.md`：目录职责、入口、允许依赖和禁止依赖。
 5. `devops.md`：已验证或待验证的构建、运行、测试、部署和环境要求。
 6. 已启用模块配置。
-7. 空 `task-board.md` 和多任务 `current-status.md`。
+7. 空 `task-board.md` 和 Git 忽略的个人多任务 `current-status.md`。
 
 详细功能设计需要长期独立维护时写入 `docs/design/`，并由 FEAT 引用；FEAT 仍负责范围、关键决策、任务拆分和验收，不在两处重复维护同一事实。功能经过验证并需要用户说明时更新 `docs/help/`，不得在实现前臆造产品行为。
 

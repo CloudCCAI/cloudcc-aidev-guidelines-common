@@ -4,7 +4,7 @@
 
 ## 会话入口
 
-每个新 AI 会话先读 `.claw/current-status.md`。如果用户已经清楚说明目标，直接继续；如果目标不清楚，用开放式问题确认本次要做什么。
+每个新 AI 会话先读当前工作区的个人文件 `.claw/current-status.md`。该文件必须被 Git 忽略，每个用户独立维护；缺失时从共享任务事实重新生成，不得把缺失视为共享项目尚未初始化。如果用户已经清楚说明目标，直接继续；如果目标不清楚，用开放式问题确认本次要做什么。
 
 新建或明确重写的 FEAT、TASK、核心状态和事件文件，其标题、说明和用户可读内容固定使用 catalog 指向的规范中文模板；frontmatter 字段、枚举、ID、路径、命令和原始验证输出保持机器协议原值。历史 manifest 的 `language` 只用于兼容读取，不再参与模板选择。
 
@@ -68,9 +68,9 @@ python3 scripts/allocate-document-id.py feature \
 
 分配器创建 FEAT 时会同时生成配对 HTML，并在 JSON 结果中返回 `html_path`。
 
-## 多任务热状态
+## 个人热状态
 
-`.claw/current-status.md` 可以同时索引多个活跃任务。生成器按字段事实源聚合：
+`.claw/current-status.md` 只索引当前用户的多个活跃任务，不是共享事实源，也不计入共享初始化完成度。`.gitignore` 必须包含 `.claw/current-status.md`；已被 Git 跟踪的旧文件保留在工作区并通过 `git rm --cached .claw/current-status.md` 停止跟踪。文件缺失或需要刷新时，生成器按用户过滤以下字段事实源：
 
 - task board：队列、优先级、依赖、协调状态和引用。
 - task status：执行状态、进展、验证、阻塞、下一步和交接。
@@ -78,10 +78,10 @@ python3 scripts/allocate-document-id.py feature \
 - FEAT：需求、设计和验收。
 
 ```bash
-python3 scripts/generate-current-status.py /path/to/project/.claw --write
+python3 scripts/generate-current-status.py /path/to/project/.claw --user <owner-slug> --write
 ```
 
-生成器使用锁和原子替换，保持热文件少于 60 行。新会话只展开所选任务及其关联 FEAT/issue/decision/assignment。
+未传 `--user` 时，生成器依次使用全局 Git `user.name`、项目本地 Git `user.name` 和操作系统用户名。生成器使用锁和原子替换，保持热文件少于 60 行。跨用户协调读取共享的 task board 或 team status；新会话只展开当前用户所选任务及其关联 FEAT/issue/decision/assignment。
 
 任务进入 `done` 或 `canceled` 后，先把任务卡放到已完成区顶部，再运行：
 
