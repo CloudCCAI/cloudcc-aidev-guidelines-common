@@ -7,7 +7,7 @@ owner_role: backend-agent
 task_ids: TASK-001
 related_decisions: ADR-002
 related_issues: ISSUE-002
-updated_at: 2026-04-01T09:27:00Z
+updated_at: 2026-04-01 09:27:00
 updated_by: ai
 ---
 

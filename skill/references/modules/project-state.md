@@ -83,10 +83,36 @@ python3 scripts/generate-current-status.py /path/to/project/.claw --write
 
 生成器使用锁和原子替换，保持热文件少于 60 行。新会话只展开所选任务及其关联 FEAT/issue/decision/assignment。
 
+任务进入 `done` 或 `canceled` 后，先把任务卡放到已完成区顶部，再运行：
+
+```bash
+python3 scripts/archive-completed-tasks.py /path/to/project/.claw --write
+```
+
+已完成区只保留最新 5 张卡片；命令把第 6 张及更旧卡片移动到 `task-archive.md`。归档只移动索引卡，不删除 `.claw/tasks/TASK-*.md`。
+
+`test-report.md` 只保留最新摘要、未解决状态索引和最近 5 条详细记录。新增第 6 条后运行：
+
+```bash
+python3 scripts/archive-test-reports.py /path/to/project/.claw --write
+```
+
+更早证据完整移动到冷文件 `test-archive.md`。归档时保留 `FAILED`、`BLOCKED`、`PENDING` 和 `NOT_RUN` 的紧凑索引，不能让未解决验证从当前视图消失。
+
+`issue-list.md` 保留所有未闭环问题和最近 5 条关闭索引。问题成为 `verified` 或 `closed` 后运行：
+
+```bash
+python3 scripts/archive-resolved-issues.py /path/to/project/.claw --write
+```
+
+完整问题条目移动到冷文件 `issue-archive.md`。`fixed` 仍然需要运行时或人工验证，不能归档。
+
 ## 事件文件
 
 - 首次 bug、风险或阻塞：创建 `issue-list.md`。
+- 首次问题进入 `verified` 或 `closed`：创建 `issue-archive.md` 并归档完整条目。
 - 首次真实验证：创建 `test-report.md`。
+- 第 6 条详细测试记录：创建 `test-archive.md` 并归档更早记录。
 - 首次归档：创建 `task-archive.md`。
 - 首次真实并行集成：创建 `integration-queue.md`。
 - 管理者查询团队状态：生成 `team-status.md`，不要手工维护。

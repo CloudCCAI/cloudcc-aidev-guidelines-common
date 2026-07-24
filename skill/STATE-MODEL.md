@@ -1,11 +1,15 @@
 ---
 title: State Model Reference
-version: 5.0.5
+version: 5.1.0
 ---
 
 # State Model Reference
 
 本文定义 `cc-aidev-guidelines-common` schema v5 的详细状态模型。`SKILL.md` 负责路由；本文负责字段语义、事实源、兼容和冲突规则。
+
+协议中新写入的 `timestamp` 使用普通 UTC 日期时间格式 `YYYY-MM-DD HH:MM:SS`，例如
+`2026-07-07 02:15:31`。读取和校验已有项目时兼容历史格式
+`YYYY-MM-DDTHH:MM:SSZ`，但不得继续生成历史格式，也不得仅为改格式批量回写旧状态。
 
 ## 目录
 
@@ -48,7 +52,7 @@ manifest 至少表达以下逻辑字段：
 
 ```yaml
 schema_version: 5
-skill_version: 5.0.5
+skill_version: 5.1.0
 language: zh-CN
 project_mode: pending | greenfield | brownfield | not_applicable
 initialization:
@@ -236,7 +240,9 @@ environment_names: DEV, UAT, PROD
 
 ### `.claw/task-board.md`
 
-任务队列和协调索引的事实源。初始化为空，不制造 `TASK-001`。每张 active card 记录状态、优先级、owner role、依赖、spec/task/assignment 指针和 next action；单张卡片保持少于 20 行，看板整体按真实任务数量伸缩。
+任务队列和协调索引的事实源。初始化为空，不制造 `TASK-001`。每张 active card 记录状态、优先级、owner role、依赖、spec/task/assignment 指针和 next action；单张卡片保持少于 20 行。
+
+已完成区按看板顺序保留最新 5 张 `done` 或 `canceled` 卡片。每次任务进入终态后运行 `archive-completed-tasks.py <state-dir> --write`；命令在项目锁内将第 6 张及更旧卡片移动到 `.claw/task-archive.md`，并原子替换两个索引文件。归档不删除 `.claw/tasks/TASK-*.md`，重复运行不得重复卡片。
 
 task board 可以短暂落后于单任务执行状态；管理者或集成负责人负责协调字段。
 
@@ -250,7 +256,9 @@ task board 可以短暂落后于单任务执行状态；管理者或集成负责
 - `docs/design/**/*.html`、`docs/specs/**/*.html`：对应 Markdown 创建或修改后生成；与源文件同目录、同 basename，通过源内容 SHA-256 判断是否过期，不参与事实解析。
 - `.claw/tasks/TASK-*.md`：真实任务创建时创建。
 - `.claw/issue-list.md`：首次 bug、风险或阻塞时创建。
+- `.claw/issue-archive.md`：问题首次进入 `verified` 或 `closed` 终态并归档时创建；保存完整历史问题事实。
 - `.claw/test-report.md`：首次真实运行验证时创建。
+- `.claw/test-archive.md`：测试报告第 6 条详细记录归档时创建；保存完整历史验证证据，作为冷文件按需读取。
 - `.claw/task-archive.md`：首次归档时创建。
 - `.claw/integration-queue.md`：出现真实并行分支时创建。
 - `.claw/developers/*.yaml`：门禁启用后登记真实成员时创建。
@@ -259,6 +267,10 @@ task board 可以短暂落后于单任务执行状态；管理者或集成负责
 - `.claw-local/identity.json`：本地登录成功后创建，必须 Git ignore。
 
 安装包模板不复制为目标项目中的 `_feature-spec-template.md` 或 `_project-baseline-template.md`。
+
+`issue-list.md` 保留所有 `open`、`in_progress`、`blocked`、`fixed` 问题和最近 5 条关闭索引。状态为 `verified` 或 `closed` 后运行 `archive-resolved-issues.py <state-dir> --write`，将完整条目移动到 `issue-archive.md`。`fixed` 仍表示待验证，不能为了缩短文件而归档。
+
+`test-report.md` 只保留最新运行摘要、归档批次中的未解决状态索引和按从新到旧排列的最近 5 条详细记录，整体不得超过 150 行。新增第 6 条后运行 `archive-test-reports.py <state-dir> --write`；命令在项目锁内把更旧证据移动到 `test-archive.md`。归档不得删除或改写原始命令、状态和证据，也不得把 `FAILED`、`BLOCKED`、`PENDING` 或 `NOT_RUN` 隐藏为通过。历史项目中的 `test-report-archive.md` 继续按旧名称读取，但新写入统一使用 `test-archive.md`。
 
 ## 10. FEAT
 
@@ -352,7 +364,8 @@ FEAT 和 TASK 分别维护每位用户的最高已分配序号。分配器必须
 | 队列、优先级、依赖、协调指针 | task-board |
 | 执行进展、验证、变更、阻塞、下一步、交接 | task status |
 | 需求、设计、验收 | FEAT |
-| bug/risk 根因和严重度 | issue-list |
+| 当前 bug/risk 根因和严重度 | issue-list |
+| 已关闭 bug/risk 的完整历史 | issue-archive |
 | 真实测试证据 | test-report |
 | 授权身份、分支和写入范围 | assignment |
 | 开发者公开身份和状态 | developer record |
@@ -367,7 +380,7 @@ FEAT 和 TASK 分别维护每位用户的最高已分配序号。分配器必须
 - 机器热：manifest。
 - 上下文热：current status。
 - 温：task board、选中 task、选中 FEAT、相关 architecture/ADR、directory map、当前 issue/test/devops、启用模块配置。
-- 冷：稳定 goals、ADR 历史、baseline、archive、已完成 FEAT/TASK。
+- 冷：稳定 goals、ADR 历史、baseline、issue/test/task archive、已完成 FEAT/TASK。
 
 每次会话：manifest 路由 → current status → task board（实现/排期时）→ 选中 task → 关联 FEAT → 仅触发的其他文件。
 

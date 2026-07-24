@@ -2,12 +2,12 @@
 kind: decisions
 schema_version: 5
 init_status: complete
-init_completed_at: 2026-01-01T00:05:00Z
+init_completed_at: 2026-01-01 00:05:00
 init_confirmed_by: sample-owner
 architecture_init_status: complete
-architecture_reviewed_at: 2026-01-01T00:05:00Z
+architecture_reviewed_at: 2026-01-01 00:05:00
 architecture_confirmed_by: sample-owner
-updated_at: 2026-01-01T00:05:00Z
+updated_at: 2026-01-01 00:05:00
 updated_by: sample-owner
 project_mode: greenfield
 ---

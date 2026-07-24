@@ -2,9 +2,9 @@
 kind: directory-map
 schema_version: 5
 init_status: complete
-init_completed_at: 2026-01-02T00:08:00Z
+init_completed_at: 2026-01-02 00:08:00
 init_confirmed_by: sample-maintainer
-updated_at: 2026-01-02T00:08:00Z
+updated_at: 2026-01-02 00:08:00
 updated_by: sample-maintainer
 project_mode: brownfield
 ---

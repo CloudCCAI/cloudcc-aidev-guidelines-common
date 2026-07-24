@@ -434,7 +434,7 @@ custom:
         content = feature_path.read_text(encoding="utf-8")
         content = content.replace("status: draft", "status: approved", 1)
         content = content.replace("init_status: awaiting_confirmation", "init_status: complete", 1)
-        content = content.replace("init_completed_at: none", "init_completed_at: 2026-07-18T02:00:00Z", 1)
+        content = content.replace("init_completed_at: none", "init_completed_at: 2026-07-18 02:00:00", 1)
         content = content.replace("init_confirmed_by: none", "init_confirmed_by: Alice", 1)
         feature_path.write_text(content, encoding="utf-8")
 

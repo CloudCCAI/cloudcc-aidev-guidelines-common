@@ -25,4 +25,5 @@ archive_status: active
 ## 维护规则
 
 - 只归档 `done` 或 `canceled` 任务。
+- `task-board.md` 已完成区只保留最新 5 张卡片，第 6 张及更旧卡片由 `archive-completed-tasks.py` 移入本文件。
 - 归档是从 task board 移动索引卡，不删除任务事实文件。

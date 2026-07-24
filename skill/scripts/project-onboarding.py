@@ -72,10 +72,10 @@ class OnboardingError(RuntimeError):
 
 def utc_now(explicit: str | None = None) -> str:
     if explicit:
-        if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", explicit):
-            raise OnboardingError("invalid_timestamp", "--now must use YYYY-MM-DDTHH:MM:SSZ", EXIT_INVALID_INPUT)
+        if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", explicit):
+            raise OnboardingError("invalid_timestamp", "--now must use YYYY-MM-DD HH:MM:SS", EXIT_INVALID_INPUT)
         return explicit
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def calendar_date(timestamp: str) -> str:

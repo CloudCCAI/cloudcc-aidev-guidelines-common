@@ -187,7 +187,11 @@ def load_snapshot(path: Path) -> dict[str, object]:
         raise ValueError(f"invalid legacy snapshot schema_version in {path}")
     for field_name in ("captured_at", "policy_effective_at"):
         value = clean_value(fields.get(field_name))
-        if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", value):
+        if not re.fullmatch(
+            r"(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
+            r"|[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)",
+            value,
+        ):
             raise ValueError(f"invalid legacy snapshot {field_name} in {path}")
     seen_paths: set[str] = set()
     for entry in documents:

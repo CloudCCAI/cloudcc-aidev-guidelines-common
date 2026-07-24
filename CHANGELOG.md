@@ -1,5 +1,33 @@
 # Changelog
 
+## 5.1.0 - 2026-07-24
+
+- 将测试冷归档从 `test-report-archive.md` 简化为 `test-archive.md`，并同步 kind、catalog、模板、脚本、校验器和测试。
+- 新写入统一使用新名称；校验器继续兼容已有项目中的旧文件名。
+
+## 5.0.9 - 2026-07-24
+
+- 将 `issue-list.md` 调整为未闭环问题与最近 5 条关闭索引的温数据文件。
+- 新增 `issue-archive.md` 和 `archive-resolved-issues.py`，只移动 `verified` / `closed` 完整条目；`fixed` 待验证问题继续留在当前列表。
+- 增加 catalog、模板、校验规则、确定性迁移与幂等回归测试。
+
+## 5.0.8 - 2026-07-24
+
+- 将当前 `test-report.md` 限制为 150 行以内，并只保留最新摘要、未解决状态索引和最近 5 条详细测试记录。
+- 新增 `test-report-archive.md` 冷归档和 `archive-test-reports.py`；历史验证证据保持原文，归档批次中的未解决状态在当前报告保留紧凑索引。
+- 增加 legacy 大文件的确定性迁移、catalog/模板/校验规则和回归测试。
+
+## 5.0.7 - 2026-07-24
+
+- 将 `task-board.md` 已完成区的保留上限从 20 张降为最新 5 张，减少实现和排期时的重复上下文。
+- 新增带项目锁、原子写入和幂等去重的 `archive-completed-tasks.py`；第 6 张及更旧的终态卡片移动到 `task-archive.md`，任务事实文件保持不变。
+- 同步状态模型、模块说明、模板、校验阈值和回归测试。
+
+## 5.0.6 - 2026-07-24
+
+- 将新写入的 UTC 时间从 `YYYY-MM-DDTHH:MM:SSZ` 改为普通日期时间格式 `YYYY-MM-DD HH:MM:SS`。
+- 生成器、初始化器、登录状态、派生视图、示例和测试统一使用新格式；校验器继续兼容已有项目中的历史格式。
+
 ## 5.0.5 - 2026-07-23
 
 - 为 `docs/design` 和 `docs/specs` 中每份 Markdown 增加同目录、同 basename 的离线 HTML 人类阅读视图；Markdown 保持唯一事实源。

@@ -2,9 +2,9 @@
 kind: devops
 schema_version: 5
 init_status: complete
-init_completed_at: 2026-01-02T00:09:00Z
+init_completed_at: 2026-01-02 00:09:00
 init_confirmed_by: sample-maintainer
-updated_at: 2026-01-02T00:09:00Z
+updated_at: 2026-01-02 00:09:00
 updated_by: sample-maintainer
 project_mode: brownfield
 verification_status: pending

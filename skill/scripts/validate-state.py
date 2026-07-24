@@ -29,7 +29,10 @@ EXPECTED_KINDS = {
 }
 OPTIONAL_STATE_KINDS = {
     "integration-queue.md": "integration-queue",
+    "issue-archive.md": "issue-archive",
     "team-status.md": "team-status",
+    "test-archive.md": "test-archive",
+    "test-report-archive.md": "test-report-archive",
 }
 STATE_KINDS = {**EXPECTED_KINDS, **OPTIONAL_STATE_KINDS}
 SKILL_REPO_URL = "https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
@@ -108,10 +111,21 @@ PROJECT_BASELINE_STATUSES = {
     "verified",
     "archived",
 }
-TASK_BOARD_COMPLETED_LIMIT = 20
+TASK_BOARD_COMPLETED_LIMIT = 5
 CURRENT_STATUS_LINE_LIMIT = 60
 TASK_CARD_LINE_LIMIT = 20
 TASK_STATUS_LINE_LIMIT = 120
+TEST_REPORT_LINE_LIMIT = 150
+TEST_REPORT_RECENT_LIMIT = 5
+TEST_REPORT_RECENT_SECTIONS = {"Recent Test Records", "最近测试记录"}
+ISSUE_TERMINAL_STATUSES = {"verified", "closed"}
+ISSUE_RECENT_CLOSED_LIMIT = 5
+ISSUE_RECENT_CLOSED_SECTIONS = {"Recently Closed Issues", "最近关闭问题"}
+ISSUE_CARD_RE = re.compile(r"^###\s+(ISSUE-[A-Za-z0-9-]+)\s+[—-]\s+(.+?)\s*$")
+ISSUE_STATUS_RE = re.compile(
+    r"(?:状态：|status:\s*)`(open|in_progress|blocked|fixed|verified|closed)`",
+    re.IGNORECASE,
+)
 FORBIDDEN_CURRENT_STATUS_HEADINGS = {
     "本次会话进展",
     "修改文件",
@@ -123,7 +137,10 @@ FORBIDDEN_CURRENT_STATUS_HEADINGS = {
     "Verified Facts",
 }
 ONBOARDING_INCOMPLETE_SENTINEL = "<!-- cc-aidev:onboarding-incomplete -->"
-TIMESTAMP_RE = re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$")
+TIMESTAMP_RE = re.compile(
+    r"^(?:[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
+    r"|[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z)$"
+)
 DOCUMENT_SLUG_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LEGACY_TASK_ID_PATTERN = r"TASK-[0-9]+"
 V5_TASK_ID_PATTERN = r"TASK-[a-z0-9]+(?:-[a-z0-9]+)*-(?!000)[0-9]{3}"
@@ -797,6 +814,114 @@ def validate_test_report(path: Path, front_matter: dict[str, str], body: str, er
             f"{path.name}: latest summary status `{summary_status}` does not match last_run_status `{last_run_status}`"
         )
 
+    if front_matter.get("schema_version") != "5":
+        return
+    total_lines = len(path.read_text(encoding="utf-8").splitlines())
+    if total_lines > TEST_REPORT_LINE_LIMIT:
+        errors.append(
+            f"{path.name}: has {total_lines} lines; keep the current report under {TEST_REPORT_LINE_LIMIT} lines and move older evidence to `test-archive.md`"
+        )
+    lines = body.splitlines()
+    recent_count: int | None = None
+    for index, line in enumerate(lines):
+        if not line.startswith("## ") or line[3:].strip() not in TEST_REPORT_RECENT_SECTIONS:
+            continue
+        end = next(
+            (candidate for candidate in range(index + 1, len(lines)) if lines[candidate].startswith("## ")),
+            len(lines),
+        )
+        recent_count = sum(1 for candidate in lines[index + 1 : end] if candidate.startswith("### "))
+        break
+    if recent_count is None:
+        errors.append(f"{path.name}: missing `最近测试记录` section")
+    elif recent_count > TEST_REPORT_RECENT_LIMIT:
+        errors.append(
+            f"{path.name}: has {recent_count} recent test records; archive older evidence so at most {TEST_REPORT_RECENT_LIMIT} remain"
+        )
+
+
+def parsed_issue_cards(body: str) -> list[tuple[str, str]]:
+    lines = body.splitlines()
+    headings = [
+        index
+        for index, line in enumerate(lines)
+        if ISSUE_CARD_RE.match(line)
+    ]
+    cards: list[tuple[str, str]] = []
+    for offset, index in enumerate(headings):
+        end = headings[offset + 1] if offset + 1 < len(headings) else len(lines)
+        next_section = next(
+            (
+                candidate
+                for candidate in range(index + 1, end)
+                if lines[candidate].startswith("## ")
+            ),
+            end,
+        )
+        heading = ISSUE_CARD_RE.match(lines[index])
+        assert heading is not None
+        status = ""
+        for line in lines[index + 1 : next_section]:
+            match = ISSUE_STATUS_RE.search(line)
+            if match:
+                status = match.group(1).lower()
+                break
+        cards.append((heading.group(1), status))
+    return cards
+
+
+def validate_issue_list(
+    path: Path,
+    front_matter: dict[str, str],
+    body: str,
+    errors: list[str],
+) -> None:
+    if front_matter.get("schema_version") != "5":
+        return
+    for issue_id, status in parsed_issue_cards(body):
+        if not status:
+            errors.append(f"{path.name}: issue `{issue_id}` is missing a recognized status")
+        elif status in ISSUE_TERMINAL_STATUSES:
+            errors.append(
+                f"{path.name}: terminal issue `{issue_id}` must be moved to `issue-archive.md`"
+            )
+
+    lines = body.splitlines()
+    recent_count: int | None = None
+    for index, line in enumerate(lines):
+        if not line.startswith("## ") or line[3:].strip() not in ISSUE_RECENT_CLOSED_SECTIONS:
+            continue
+        end = next(
+            (candidate for candidate in range(index + 1, len(lines)) if lines[candidate].startswith("## ")),
+            len(lines),
+        )
+        recent_count = sum(
+            1
+            for candidate in lines[index + 1 : end]
+            if re.match(r"^-\s+`ISSUE-[A-Za-z0-9-]+`", candidate)
+        )
+        break
+    if recent_count is None:
+        errors.append(f"{path.name}: missing `最近关闭问题` section")
+    elif recent_count > ISSUE_RECENT_CLOSED_LIMIT:
+        errors.append(
+            f"{path.name}: has {recent_count} recently closed issue summaries; keep at most {ISSUE_RECENT_CLOSED_LIMIT}"
+        )
+
+
+def validate_issue_archive(path: Path, body: str) -> list[str]:
+    errors: list[str] = []
+    seen_ids: set[str] = set()
+    for issue_id, status in parsed_issue_cards(body):
+        if issue_id in seen_ids:
+            errors.append(f"{path.name}: duplicate issue id `{issue_id}`")
+        seen_ids.add(issue_id)
+        if status not in ISSUE_TERMINAL_STATUSES:
+            errors.append(
+                f"{path.name}: archived issue `{issue_id}` must have status `verified` or `closed`"
+            )
+    return errors
+
 
 def validate_integration_queue(path: Path, front_matter: dict[str, str], errors: list[str]) -> None:
     status = front_matter.get("status", "")
@@ -1052,6 +1177,10 @@ def validate_file(path: Path, project_root: Path) -> list[str]:
         errors.extend(validate_task_board(path, body, project_root))
     elif path.name == "task-archive.md":
         errors.extend(validate_task_archive(path, body))
+    elif path.name == "issue-list.md":
+        validate_issue_list(path, front_matter, body, errors)
+    elif path.name == "issue-archive.md":
+        errors.extend(validate_issue_archive(path, body))
     elif path.name == "test-report.md":
         validate_test_report(path, front_matter, body, errors)
     elif path.name == "integration-queue.md":
@@ -1969,6 +2098,10 @@ def validate_v4_state(state_dir: Path) -> list[str]:
         path = state_dir / filename
         if path.exists():
             errors.extend(validate_file(path, project_root))
+    if (state_dir / "test-archive.md").exists() and (state_dir / "test-report-archive.md").exists():
+        errors.append(
+            "both test-archive.md and legacy test-report-archive.md exist; keep only test-archive.md"
+        )
 
     developers_dir = state_dir / "developers"
     if developers_dir.exists():
@@ -2041,6 +2174,14 @@ def validate_v5_state(state_dir: Path, catalog_path: Path, *, strict_v5: bool = 
                 strict_v5=strict_v5,
             )
         )
+    legacy_test_archive = state_dir / "test-report-archive.md"
+    canonical_test_archive = state_dir / "test-archive.md"
+    if legacy_test_archive.exists():
+        errors.extend(validate_file(legacy_test_archive, project_root))
+        if canonical_test_archive.exists():
+            errors.append(
+                "both test-archive.md and legacy test-report-archive.md exist; keep only test-archive.md"
+            )
     if catalog:
         errors.extend(validate_project_assets(project_root, manifest, catalog))
 

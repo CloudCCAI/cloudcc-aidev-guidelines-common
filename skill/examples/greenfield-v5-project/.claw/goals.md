@@ -2,9 +2,9 @@
 kind: goals
 schema_version: 5
 init_status: complete
-init_completed_at: 2026-01-01T00:03:00Z
+init_completed_at: 2026-01-01 00:03:00
 init_confirmed_by: sample-owner
-updated_at: 2026-01-01T00:03:00Z
+updated_at: 2026-01-01 00:03:00
 updated_by: sample-owner
 project_mode: greenfield
 ---

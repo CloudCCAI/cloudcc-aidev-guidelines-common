@@ -2,9 +2,9 @@
 kind: current-status
 schema_version: 5
 init_status: complete
-init_completed_at: 2026-01-02T00:11:00Z
+init_completed_at: 2026-01-02 00:11:00
 init_confirmed_by: sample-maintainer
-updated_at: 2026-01-02T00:11:00Z
+updated_at: 2026-01-02 00:11:00
 updated_by: generate-current-status
 phase: idle
 active_task_count: 0

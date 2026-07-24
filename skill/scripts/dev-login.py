@@ -30,7 +30,7 @@ def is_empty(value: object) -> bool:
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def run_command(args: list[str], input_text: str | None = None) -> subprocess.CompletedProcess[str]:

@@ -322,6 +322,20 @@
       "create_on": "issue_discovered"
     },
     {
+      "id": "issue_archive",
+      "kind": "issue-archive",
+      "schema_version": 5,
+      "path": ".claw/issue-archive.md",
+      "template": "templates/project-state/issue-archive.md",
+      "module": "project_state",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "cold",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "issue_archived"
+    },
+    {
       "id": "test_report",
       "kind": "test-report",
       "schema_version": 5,
@@ -334,6 +348,20 @@
       "required_when": "event",
       "initialization_required": false,
       "create_on": "verification_executed"
+    },
+    {
+      "id": "test_archive",
+      "kind": "test-archive",
+      "schema_version": 5,
+      "path": ".claw/test-archive.md",
+      "template": "templates/project-state/test-archive.md",
+      "module": "project_state",
+      "category": "event",
+      "lifecycle": "event",
+      "temperature": "cold",
+      "required_when": "event",
+      "initialization_required": false,
+      "create_on": "test_archived"
     },
     {
       "id": "task_archive",

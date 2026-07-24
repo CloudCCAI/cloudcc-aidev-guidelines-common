@@ -4,10 +4,10 @@ schema_version: 5
 title: Inventory service project baseline
 status: verified
 init_status: complete
-init_completed_at: 2026-01-02T00:04:00Z
+init_completed_at: 2026-01-02 00:04:00
 init_confirmed_by: sample-maintainer
 owner_role: shared
-updated_at: 2026-01-02T00:04:00Z
+updated_at: 2026-01-02 00:04:00
 updated_by: sample-maintainer
 project_mode: brownfield
 ---

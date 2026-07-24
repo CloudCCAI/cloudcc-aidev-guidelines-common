@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 from lib.project_docs_html import (
@@ -26,12 +27,18 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("target", help="Project root or one Markdown file under docs/design or docs/specs")
     parser.add_argument("--write", action="store_true", help="Atomically create or refresh paired HTML files")
     parser.add_argument("--json", action="store_true", help="Print machine-readable output")
-    parser.add_argument("--now", default="", help="Override generated time using YYYY-MM-DDTHH:MM:SSZ")
+    parser.add_argument("--now", default="", help="Override generated time using YYYY-MM-DD HH:MM:SS")
     return parser
 
 
 def main() -> int:
-    args = build_parser().parse_args()
+    parser = build_parser()
+    args = parser.parse_args()
+    if args.now and not re.fullmatch(
+        r"[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}",
+        args.now,
+    ):
+        parser.error("--now must use YYYY-MM-DD HH:MM:SS")
     target = Path(args.target).expanduser().resolve()
     generated_at = args.now or None
 

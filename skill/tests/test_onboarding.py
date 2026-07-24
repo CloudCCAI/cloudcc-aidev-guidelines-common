@@ -16,7 +16,7 @@ ONBOARDING = SCRIPTS_DIR / "project-onboarding.py"
 CONFIGURE_MODULES = SCRIPTS_DIR / "configure-modules.py"
 VALIDATE_STATE = SCRIPTS_DIR / "validate-state.py"
 INIT_WRAPPER = SCRIPTS_DIR / "init-state.sh"
-FIXED_NOW = "2026-07-18T02:00:00Z"
+FIXED_NOW = "2026-07-18 02:00:00"
 ONBOARDING_INCOMPLETE_SENTINEL = "<!-- cc-aidev:onboarding-incomplete -->"
 
 
@@ -229,7 +229,7 @@ class OnboardingCliTests(unittest.TestCase):
                 "--environment",
                 "Production-CustomerA",
                 "--now",
-                "2026-07-18T03:00:00Z",
+                "2026-07-18 03:00:00",
                 "--json",
             )
             self.assertEqual(code, 2, repeated)
@@ -320,7 +320,9 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertIn("# 产品与功能设计文档", design_index.read_text(encoding="utf-8"))
             for event_path in (
                 ".claw/issue-list.md",
+                ".claw/issue-archive.md",
                 ".claw/test-report.md",
+                ".claw/test-archive.md",
                 ".claw/task-archive.md",
                 ".claw/integration-queue.md",
                 ".claw/team-status.md",
@@ -377,7 +379,7 @@ class OnboardingCliTests(unittest.TestCase):
                 "--confirmed-by",
                 "Another User",
                 "--now",
-                "2026-07-19T02:00:00Z",
+                "2026-07-19 02:00:00",
                 "--json",
             )
             self.assertEqual(code, 0, repeated_finalize)
@@ -523,6 +525,7 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertIn("schema_version: 5", baseline_text)
             self.assertFalse((project / ".claw" / "tasks").exists())
             self.assertFalse((project / ".claw" / "issue-list.md").exists())
+            self.assertFalse((project / ".claw" / "issue-archive.md").exists())
 
             self.mark_all_required_complete(project)
             code, finalized, _ = self.run_python(
@@ -851,6 +854,7 @@ class OnboardingCliTests(unittest.TestCase):
             "task_status",
             "issue_list",
             "test_report",
+            "test_archive",
             "task_archive",
             "developer",
             "assignment",
@@ -999,6 +1003,23 @@ class OnboardingCliTests(unittest.TestCase):
             self.assertEqual(completed.returncode, 6)
             self.assertIn("Only the fixed .claw state directory", completed.stderr)
             self.assertFalse((Path(temporary) / ".claw").exists())
+
+    def test_onboarding_rejects_historical_timestamp_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            code, payload, _ = self.run_python(
+                ONBOARDING,
+                "start",
+                temporary,
+                "--mode",
+                "greenfield",
+                "--now",
+                "2026-07-18T02:00:00Z",
+                "--json",
+            )
+
+            self.assertEqual(code, 6)
+            self.assertEqual(payload["error"], "invalid_timestamp")
+            self.assertIn("YYYY-MM-DD HH:MM:SS", payload["message"])
 
 
 if __name__ == "__main__":

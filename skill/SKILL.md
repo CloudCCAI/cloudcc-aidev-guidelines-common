@@ -2,7 +2,7 @@
 name: cc-aidev-guidelines-common
 description: 通过 `.claw` manifest、引导式 Greenfield/Brownfield 初始化、逐文件初始化状态、按用户递增的 FEAT/TASK、多个并行工作流、项目经理身份门禁和可选 Codeup/GitHub 评审，持久化并渐进加载 AI 软件项目状态。用于首次接入项目、恢复未完成初始化、开始新 AI 会话、讨论和设计开发工作、拆解任务、跨会话交接、多人并行授权、创建代码合并申请、验证或维护项目状态。
 metadata:
-  skill_version: "5.0.5"
+  skill_version: "5.1.0"
 ---
 
 # AI 项目初始化与交付路由
@@ -173,6 +173,30 @@ python3 scripts/generate-project-docs-html.py /path/to/project --write
 python3 scripts/generate-current-status.py /path/to/project/.claw --write
 ```
 
+`task-board.md` 的已完成区只保留最新 5 张 `done` 或 `canceled` 卡片。每次任务进入终态后先运行：
+
+```bash
+python3 scripts/archive-completed-tasks.py /path/to/project/.claw --write
+```
+
+命令把第 6 张及更旧卡片移动到 `task-archive.md`，不删除 `.claw/tasks/TASK-*.md` 事实文件。
+
+`issue-list.md` 保留全部未闭环问题和最近 5 条关闭索引。问题状态变为 `verified` 或 `closed` 后运行：
+
+```bash
+python3 scripts/archive-resolved-issues.py /path/to/project/.claw --write
+```
+
+完整终态记录移动到冷文件 `issue-archive.md`；`fixed` 表示仍待验证，不能归档。
+
+`test-report.md` 只保留最新摘要、未解决状态索引和最近 5 条详细测试记录。新增第 6 条后运行：
+
+```bash
+python3 scripts/archive-test-reports.py /path/to/project/.claw --write
+```
+
+更早的完整验证证据移动到冷文件 `test-archive.md`；归档不能把未执行的验证改写成通过。
+
 每个聊天只更新自己选中的 task status；热索引按字段事实源重建，不使用最后写入覆盖其他工作流。
 
 ## 10. 身份硬门禁
@@ -185,7 +209,7 @@ python3 scripts/generate-current-status.py /path/to/project/.claw --write
 
 ## 11. 写入与验证
 
-- 时间使用 `YYYY-MM-DDTHH:MM:SSZ`。
+- 新写入时间使用普通 UTC 日期时间格式 `YYYY-MM-DD HH:MM:SS`；读取和校验已有项目时兼容历史格式 `YYYY-MM-DDTHH:MM:SSZ`，不得仅为改格式批量回写旧状态。
 - 只更新事实真正变化的文件；不要机械回写全部状态。
 - 只有真实命令或检查运行后才能写 test report。
 - 初始化、编号分配和热索引生成使用锁、临时文件和原子替换。

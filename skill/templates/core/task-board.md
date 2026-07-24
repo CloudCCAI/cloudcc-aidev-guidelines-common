@@ -28,3 +28,4 @@ board_status: active
 - 每张任务卡必须引用真实任务状态文件。
 - 非平凡交付工作必须引用真实 FEAT。
 - 不要在本索引保存长篇进度、验证、变更文件和交接记录。
+- 已完成区只保留最新 5 张 `done` 或 `canceled` 卡片；任务进入终态后运行 `archive-completed-tasks.py .claw --write`。

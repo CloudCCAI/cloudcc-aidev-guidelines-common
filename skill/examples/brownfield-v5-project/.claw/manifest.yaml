@@ -1,11 +1,11 @@
 schema_version: 5
-skill_version: "5.0.5"
+skill_version: "5.1.0"
 language: zh-CN
 project_mode: brownfield
 initialization:
   status: ready
-  started_at: "2026-01-02T00:00:00Z"
-  completed_at: "2026-01-02T00:12:00Z"
+  started_at: "2026-01-02 00:00:00"
+  completed_at: "2026-01-02 00:12:00"
   confirmed_by: "sample-maintainer"
 modules:
   project_state: true
@@ -18,7 +18,7 @@ compatibility:
   legacy_documents_allowed: true
   legacy_index_path: "none"
   new_document_policy_version: 3
-  policy_effective_at: "2026-01-02T00:00:00Z"
+  policy_effective_at: "2026-01-02 00:00:00"
 file_status:
   manifest: complete
   project_baseline: complete

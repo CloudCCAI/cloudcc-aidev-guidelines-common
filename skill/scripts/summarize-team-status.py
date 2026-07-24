@@ -297,7 +297,7 @@ def render_team_status(state_dir: Path, language: str | None = None) -> str:
     integrated_tasks = [row for row in task_rows if row["integration_status"] == "integrated"]
     blocked_tasks = [row for row in task_rows if row["contribution_status"] == "blocked" or row["integration_status"] == "blocked"]
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     lines = [
         "---",
         "kind: team-status",

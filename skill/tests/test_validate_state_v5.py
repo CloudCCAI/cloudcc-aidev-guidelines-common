@@ -18,7 +18,7 @@ sys.path.insert(0, str(SKILL_ROOT / "scripts"))
 from lib.project_docs_html import project_root_for_document, write_companion  # noqa: E402
 
 SKILL_REPO_URL = "https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
-TIMESTAMP = "2026-07-18T03:00:00Z"
+TIMESTAMP = "2026-07-18 03:00:00"
 
 
 def write(path: Path, content: str) -> None:

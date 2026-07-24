@@ -31,7 +31,7 @@ feature_id: FEAT-alice-001
 title: "登录体验"
 status: approved
 owner_slug: alice
-updated_at: 2026-07-23T01:02:03Z
+updated_at: 2026-07-23 01:02:03
 updated_by: "Alice"
 ---
 
@@ -83,7 +83,7 @@ class ProjectDocsHtmlTests(unittest.TestCase):
         rendered = render_document(
             source,
             project_root=root,
-            generated_at="2026-07-23T02:00:00Z",
+            generated_at="2026-07-23 02:00:00",
         )
 
         self.assertIn("<!doctype html>", rendered)
@@ -113,7 +113,7 @@ class ProjectDocsHtmlTests(unittest.TestCase):
             str(root),
             "--write",
             "--now",
-            "2026-07-23T02:00:00Z",
+            "2026-07-23 02:00:00",
             "--json",
         )
         self.assertEqual(written.returncode, 0, written.stderr)
@@ -162,7 +162,7 @@ class ProjectDocsHtmlTests(unittest.TestCase):
             str(first),
             "--write",
             "--now",
-            "2026-07-23T02:00:00Z",
+            "2026-07-23 02:00:00",
             "--json",
         )
 
@@ -181,6 +181,19 @@ class ProjectDocsHtmlTests(unittest.TestCase):
 
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("docs/design or docs/specs", result.stderr)
+
+    def test_cli_rejects_historical_timestamp_override(self) -> None:
+        root = self.make_project()
+
+        result = self.run_generator(
+            str(root),
+            "--write",
+            "--now",
+            "2026-07-23T02:00:00Z",
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--now must use YYYY-MM-DD HH:MM:SS", result.stderr)
 
 
 if __name__ == "__main__":

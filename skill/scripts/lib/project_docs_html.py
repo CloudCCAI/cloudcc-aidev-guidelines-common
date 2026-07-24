@@ -16,7 +16,7 @@ from .state_io import SimpleYamlError, clean_value, split_front_matter
 DOCUMENT_ROOTS = (Path("docs/design"), Path("docs/specs"))
 SOURCE_DIGEST_META = "cc-aidev-source-sha256"
 GENERATOR_VERSION_META = "cc-aidev-generator-version"
-GENERATOR_VERSION = "3"
+GENERATOR_VERSION = "4"
 _DIGEST_RE = re.compile(
     rf'<meta\s+name="{SOURCE_DIGEST_META}"\s+content="([0-9a-f]{{64}})"\s*/?>',
     re.IGNORECASE,
@@ -42,7 +42,7 @@ class PairStatus:
 
 
 def utc_now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def source_digest(path: Path) -> str:

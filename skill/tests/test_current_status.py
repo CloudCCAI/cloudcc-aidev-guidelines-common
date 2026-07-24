@@ -39,7 +39,7 @@ class CurrentStatusTests(unittest.TestCase):
             """---
 kind: task-board
 version: 5
-updated_at: 2026-07-18T00:00:00Z
+updated_at: 2026-07-18 00:00:00
 updated_by: test
 ---
 
@@ -77,7 +77,7 @@ assignee: legacy-user
 owner_role: shared
 status: in_progress
 branch: legacy
-updated_at: 2026-07-18T00:00:00Z
+updated_at: 2026-07-18 00:00:00
 updated_by: test
 ---
 
@@ -98,7 +98,7 @@ owner_role: shared
 status: in_progress
 branch: feat/TASK-bimo-001-new-task
 next_action: implement the parser
-updated_at: 2026-07-18T00:00:00Z
+updated_at: 2026-07-18 00:00:00
 updated_by: test
 ---
 
@@ -311,7 +311,7 @@ status: done
 kind: current-status
 schema_version: 5
 init_status: complete
-init_completed_at: 2026-07-18T00:00:00Z
+init_completed_at: 2026-07-18 00:00:00
 init_confirmed_by: user
 ---
 """,
