@@ -1,6 +1,6 @@
 ---
 title: State Model Reference
-version: 5.1.2
+version: 5.1.3
 ---
 
 # State Model Reference
@@ -52,7 +52,7 @@ manifest 至少表达以下逻辑字段：
 
 ```yaml
 schema_version: 5
-skill_version: 5.1.2
+skill_version: 5.1.3
 language: zh-CN
 project_mode: pending | greenfield | brownfield | not_applicable
 initialization:
@@ -438,6 +438,6 @@ Codeup token 保存于 `.claw-local/codeup.env`；GitHub secret 使用平台 sec
 
 ## 21. 项目指令锚点
 
-项目根 README 和 AGENTS 必须保留受控声明块，要求所有 Agent 在项目工作前加载本 Skill，并给出安装来源。它们是指令锚点，不是状态文件，不计入 init completion。
+项目根 README 和 AGENTS 必须保留受控声明块，要求所有 Agent 在项目工作前加载本 Skill，并给出安装来源。新生成的声明块必须明确安装到技能根目录时，目标目录名为 `cc-aidev-guidelines-common`，不得使用仓库源目录名 `skill`。它们是指令锚点，不是状态文件，不计入 init completion；已有完整受控块继续保持原样，不因初始化或同步被静默覆盖。
 
-新生成的 AGENTS 受控声明块还必须要求每个新聊天或新会话运行已安装技能中的 `scripts/check-skill-version.py --json`。检查器优先使用 `git ls-remote` 解析 GitHub `main` 提交 SHA，Git 不可用时才回退到带随机查询参数和 `no-cache` 的 GitHub API 请求，再读取该提交下不可变的 `skill/SKILL.md`；不得直接依赖固定 `main` Raw URL。发现新版本时按返回的 `upstream_install_url` 更新完整技能包并重新加载本 Skill；检查失败时版本状态为未知。已有完整受控块继续保持原样，不因初始化或同步被静默覆盖。
+新生成的 AGENTS 受控声明块还必须要求每个新聊天或新会话运行已安装技能中的 `scripts/check-skill-version.py --json`。检查器优先使用 `git ls-remote` 解析 GitHub `main` 提交 SHA，Git 不可用时才回退到带随机查询参数和 `no-cache` 的 GitHub API 请求，再读取该提交下不可变的 `skill/SKILL.md`；不得直接依赖固定 `main` Raw URL。发现新版本时按返回的 `upstream_install_url` 更新完整技能包并重新加载本 Skill；检查失败时版本状态为未知。

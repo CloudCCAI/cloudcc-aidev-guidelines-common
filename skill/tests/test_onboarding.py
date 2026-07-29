@@ -59,12 +59,17 @@ class OnboardingCliTests(unittest.TestCase):
             manifest = (project / ".claw" / "manifest.yaml").read_text(encoding="utf-8")
             self.assertIn('language: "zh-CN"', manifest)
             self.assertIn("# 项目目标", (project / ".claw" / "goals.md").read_text(encoding="utf-8"))
-            self.assertIn("## AI 开发协议", (project / "README.md").read_text(encoding="utf-8"))
+            readme = (project / "README.md").read_text(encoding="utf-8")
+            self.assertIn("## AI 开发协议", readme)
+            self.assertIn("目标目录必须命名为 `cc-aidev-guidelines-common`", readme)
+            self.assertIn("不得命名为 `skill`", readme)
             agents = (project / "AGENTS.md").read_text(encoding="utf-8")
             self.assertIn("metadata.skill_version", agents)
             self.assertIn("check-skill-version.py --json", agents)
             self.assertIn("不得直接依赖固定 `main` Raw URL", agents)
             self.assertIn("upstream_install_url", agents)
+            self.assertIn("目标目录必须命名为 `cc-aidev-guidelines-common`", agents)
+            self.assertIn("不得命名为 `skill`", agents)
             self.assertIn(
                 "# 产品帮助与使用手册",
                 (project / "docs" / "help" / "README.md").read_text(encoding="utf-8"),

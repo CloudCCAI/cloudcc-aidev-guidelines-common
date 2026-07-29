@@ -2,7 +2,7 @@
 
 用于开发和发布 AI 软件项目初始化、状态管理、多人协作门禁与代码评审管理 Skill。
 
-当前 Skill 版本：`5.1.2`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
+当前 Skill 版本：`5.1.3`。唯一权威版本位于 [skill/SKILL.md](skill/SKILL.md) 的 `metadata.skill_version`。
 
 ## 核心能力
 
@@ -44,12 +44,20 @@
 
 `skill/` 是独立可发布包；仓库根目录用于开发该 Skill。
 
+## 安装技能
+
+从 [GitHub 技能目录](https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill) 安装 `skill/` 中的完整内容。安装到技能根目录后，目标目录必须命名为 `cc-aidev-guidelines-common`，不得沿用仓库中的源目录名 `skill`：
+
+```text
+/path/to/skills/cc-aidev-guidelines-common/
+```
+
 ## 检查技能更新
 
 每个新聊天或新会话运行已安装 Skill 中的版本检查器：
 
 ```bash
-python3 /path/to/skill/scripts/check-skill-version.py --json
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/check-skill-version.py --json
 ```
 
 检查器优先使用 `git ls-remote` 解析 GitHub `main` 当前提交 SHA；Git 不可用时才以随机查询参数和 `no-cache` 请求 GitHub API。随后从该不可变提交读取 `skill/SKILL.md`。输出包含 `local_version`、`upstream_version`、`upstream_commit`、提交固定的 `upstream_skill_url`、完整技能包 `upstream_install_url` 和 `update_available`。网络或响应校验失败时返回非零状态，不回退到可能缓存的固定分支 Raw URL。
@@ -60,13 +68,13 @@ python3 /path/to/skill/scripts/check-skill-version.py --json
 
 ```bash
 mkdir -p /path/to/project
-python3 /path/to/skill/scripts/project-preflight.py /path/to/project --json
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/project-preflight.py /path/to/project --json
 ```
 
 未初始化时开始引导：
 
 ```bash
-python3 /path/to/skill/scripts/project-onboarding.py start /path/to/project \
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/project-onboarding.py start /path/to/project \
   --mode greenfield \
   --project-state on \
   --collaboration-gate off \
@@ -76,16 +84,16 @@ python3 /path/to/skill/scripts/project-onboarding.py start /path/to/project \
 恢复、查看和完成：
 
 ```bash
-python3 /path/to/skill/scripts/project-onboarding.py resume /path/to/project --json
-python3 /path/to/skill/scripts/project-onboarding.py status /path/to/project --json
-python3 /path/to/skill/scripts/project-onboarding.py devops-assets /path/to/project --recommended-environments
-python3 /path/to/skill/scripts/project-onboarding.py finalize /path/to/project --confirmed-by user
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/project-onboarding.py resume /path/to/project --json
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/project-onboarding.py status /path/to/project --json
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/project-onboarding.py devops-assets /path/to/project --recommended-environments
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/project-onboarding.py finalize /path/to/project --confirmed-by user
 ```
 
 兼容入口：
 
 ```bash
-bash /path/to/skill/scripts/init-state.sh /path/to/project
+bash /path/to/skills/cc-aidev-guidelines-common/scripts/init-state.sh /path/to/project
 ```
 
 初始化器不会创建虚假首任务，也不会预建 issue、test、archive、integration、team 或空门禁目录。
@@ -103,7 +111,7 @@ bash /path/to/skill/scripts/init-state.sh /path/to/project
 初始化后可显式调整开关；启用模块会进入待确认状态并创建缺失配置：
 
 ```bash
-python3 /path/to/skill/scripts/configure-modules.py set /path/to/project \
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/configure-modules.py set /path/to/project \
   --project-state on \
   --collaboration-gate off \
   --change-review on
@@ -129,7 +137,7 @@ TASK-<username>-<personal-sequence>-<description>.md
 使用脚本分配个人编号，避免并发聊天重复：
 
 ```bash
-python3 /path/to/skill/scripts/allocate-document-id.py feature \
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/allocate-document-id.py feature \
   --project-root /path/to/project \
   --description user-login
 ```
@@ -137,7 +145,7 @@ python3 /path/to/skill/scripts/allocate-document-id.py feature \
 创建或修改 design/specs Markdown 后生成同目录配对 HTML：
 
 ```bash
-python3 /path/to/skill/scripts/generate-project-docs-html.py \
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/generate-project-docs-html.py \
   /path/to/project/docs/specs/FEAT-user-001-login.md --write
 ```
 
@@ -148,7 +156,7 @@ python3 /path/to/skill/scripts/generate-project-docs-html.py \
 生成当前用户的本地活跃任务热索引：
 
 ```bash
-python3 /path/to/skill/scripts/generate-current-status.py \
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/generate-current-status.py \
   /path/to/project/.claw --user <owner-slug> --write
 ```
 
@@ -161,7 +169,7 @@ python3 /path/to/skill/scripts/generate-current-status.py \
 显式采用 v5 时先登记历史边界：
 
 ```bash
-python3 /path/to/skill/scripts/project-onboarding.py adopt /path/to/project \
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/project-onboarding.py adopt /path/to/project \
   --mode brownfield \
   --confirmed-by user
 ```
@@ -173,7 +181,7 @@ python3 /path/to/skill/scripts/project-onboarding.py adopt /path/to/project \
 启用门禁后，任何实现或交付状态写入前必须完成本地 SSH challenge-response：
 
 ```bash
-python3 /path/to/skill/scripts/dev-login.py .claw \
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/dev-login.py .claw \
   --ssh-key /path/to/key \
   --task TASK-bimo-001 \
   --files path/to/file
@@ -186,7 +194,7 @@ CI/评审使用 `check-assignment.py`。聊天身份、Git author、本地缓存
 启用 `change_review` 后，用户明确要求“推送到测试环境”时使用：
 
 ```bash
-python3 /path/to/skill/scripts/push-test-environment.py \
+python3 /path/to/skills/cc-aidev-guidelines-common/scripts/push-test-environment.py \
   --source-branch feat/TASK-bimo-001-description \
   --target-branch dev \
   --remote origin
@@ -210,7 +218,7 @@ git diff --check
 采用项目必须在根 `README.md` 和 `AGENTS.md` 保留受控声明块：
 
 ```bash
-bash /path/to/skill/scripts/ensure-agent-guidance.sh /path/to/project
+bash /path/to/skills/cc-aidev-guidelines-common/scripts/ensure-agent-guidance.sh /path/to/project
 ```
 
 该声明要求所有 AI Agent 在项目工作前加载本 Skill；README/AGENTS 是指令锚点，不是项目状态文件。
@@ -222,5 +230,6 @@ bash /path/to/skill/scripts/ensure-agent-guidance.sh /path/to/project
 
 - 所有 AI 智能体在进行项目分析、规划、编码、测试和维护前，必须自动使用此技能。
 - 如果当前智能体尚未安装此技能，必须先从 GitHub 安装：https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill
+- 安装到技能根目录时，目标目录必须命名为 `cc-aidev-guidelines-common`，不得命名为 `skill`。
 - 如果当前环境支持 `AGENTS.md`，应将 README 中的本节和 `AGENTS.md` 同时视为必须遵守的项目级指令。
 <!-- cc-aidev-guidelines-common:end -->

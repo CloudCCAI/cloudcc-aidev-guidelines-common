@@ -2,7 +2,7 @@
 name: cc-aidev-guidelines-common
 description: 通过 `.claw` manifest、引导式 Greenfield/Brownfield 初始化、逐文件初始化状态、按用户递增的 FEAT/TASK、多个并行工作流、项目经理身份门禁和可选 Codeup/GitHub 评审，持久化并渐进加载 AI 软件项目状态。用于首次接入项目、恢复未完成初始化、开始新 AI 会话、讨论和设计开发工作、拆解任务、跨会话交接、多人并行授权、创建代码合并申请、验证或维护项目状态。
 metadata:
-  skill_version: "5.1.2"
+  skill_version: "5.1.3"
 ---
 
 # AI 项目初始化与交付路由
@@ -86,7 +86,7 @@ python3 scripts/project-preflight.py /path/to/project --json
 python3 scripts/check-skill-version.py --json
 ```
 
-脚本优先使用 `git ls-remote` 解析 GitHub `main` 的提交 SHA；Git 不可用时才回退到带随机查询参数和 `no-cache` 的 GitHub API 请求。随后按该 SHA 读取不可变的 `skill/SKILL.md`，不得直接依赖固定 `main` Raw URL。`update_available=true` 时按返回的 `upstream_install_url` 更新完整技能包并重新加载本 Skill，再继续项目流程。检查失败时把线上版本状态标为未知，不得把本地版本宣称为最新。
+脚本优先使用 `git ls-remote` 解析 GitHub `main` 的提交 SHA；Git 不可用时才回退到带随机查询参数和 `no-cache` 的 GitHub API 请求。随后按该 SHA 读取不可变的 `skill/SKILL.md`，不得直接依赖固定 `main` Raw URL。`update_available=true` 时按返回的 `upstream_install_url` 更新完整技能包；安装到技能根目录时，目标目录必须命名为 `cc-aidev-guidelines-common`，不得沿用仓库源目录名 `skill`。更新后重新加载本 Skill，再继续项目流程。检查失败时把线上版本状态标为未知，不得把本地版本宣称为最新。
 
 仅在 `project_state=true` 或 legacy 项目已有该文件时，每个新 AI 会话先读本地个人状态 `.claw/current-status.md`；它必须被 Git 忽略并由当前用户独立维护。文件缺失时先运行 `generate-current-status.py` 重建，不得把缺失视为共享项目尚未初始化。项目状态模块关闭时不得为此加载或创建该文件。
 

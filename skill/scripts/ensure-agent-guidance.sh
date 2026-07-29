@@ -10,6 +10,7 @@ AGENTS_PATH="${TARGET_DIR}/AGENTS.md"
 MARKER_BEGIN="<!-- cc-aidev-guidelines-common:begin -->"
 MARKER_END="<!-- cc-aidev-guidelines-common:end -->"
 SKILL_REPO_URL="https://github.com/CloudCCAI/cloudcc-aidev-guidelines-common/tree/main/skill"
+SKILL_INSTALL_DIR="cc-aidev-guidelines-common"
 SKILL_VERSION_CHECK="scripts/check-skill-version.py --json"
 
 README_BLOCK=$(cat <<EOF
@@ -18,6 +19,7 @@ ${MARKER_BEGIN}
 
 - 所有 AI 智能体在进行项目分析、规划、编码、测试和维护前，必须自动使用此技能。
 - 如果当前智能体尚未安装此技能，必须先从 GitHub 安装：${SKILL_REPO_URL}
+- 安装到技能根目录时，目标目录必须命名为 \`${SKILL_INSTALL_DIR}\`，不得命名为 \`skill\`。
 - 如果当前环境支持 \`AGENTS.md\`，应将 README 中的本节和 \`AGENTS.md\` 同时视为必须遵守的项目级指令。
 ${MARKER_END}
 EOF
@@ -30,6 +32,7 @@ ${MARKER_BEGIN}
 - 本项目遵循 \`cc-aidev-guidelines-common\` 技能。
 - 所有 AI 智能体在开始任何项目工作前，都必须自动加载并使用此技能。
 - 如果当前环境尚未安装该技能，必须先从 GitHub 安装：${SKILL_REPO_URL}
+- 安装到技能根目录时，目标目录必须命名为 \`${SKILL_INSTALL_DIR}\`，不得命名为 \`skill\`。
 - 技能可用后，必须按技能中的 Greenfield 或 Brownfield 流程维护 \`README.md\`、\`AGENTS.md\`、\`.claw/\` 以及 \`docs/specs/\`。
 - 每次开启新聊天或新会话时，必须运行已安装技能中的 \`${SKILL_VERSION_CHECK}\` 检查 \`metadata.skill_version\`；该命令按 GitHub 提交 SHA 获取版本，不得直接依赖固定 \`main\` Raw URL。发现新版本时按返回的 \`upstream_install_url\` 自动更新完整技能包并重新加载；检查失败时不得宣称本地版本是最新版本。
 ${MARKER_END}
